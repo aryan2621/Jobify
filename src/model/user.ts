@@ -6,7 +6,6 @@ export class User {
     email: string;
     password: string;
     confirmPassword: string;
-    isAdmin: boolean;
     createdAt: string;
     jobs: string[];
     applications: string[];
@@ -20,7 +19,6 @@ export class User {
         email: string,
         password: string,
         confirmPassword: string,
-        isAdmin: boolean,
         createdAt: string,
         jobs: string[],
         applications: string[],
@@ -32,7 +30,6 @@ export class User {
         this.username = username;
         this.email = email;
         this.password = password;
-        this.isAdmin = isAdmin;
         this.createdAt = createdAt;
         this.jobs = jobs;
         this.applications = applications;

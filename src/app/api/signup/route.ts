@@ -16,7 +16,6 @@ export async function POST(req: NextRequest) {
             body.email,
             hashedPassword,
             hashedPassword,
-            body.isAdmin,
             body.createdAt,
             body.jobs,
             body.applications,

@@ -24,7 +24,7 @@ export default function Component() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [req, setReq] = useState<LoginUserRequest>(
-        new LoginUserRequest('', '', false)
+        new LoginUserRequest('', '')
     );
     const validateReq = (req: LoginUserRequest) => {
         if (!req.username) {
@@ -127,16 +127,6 @@ export default function Component() {
                             </Button>
                         </div>
                         <div className='flex items-center justify-between'>
-                            <div className='flex items-center gap-2'>
-                                <Label htmlFor='admin'>as Admin</Label>
-                                <Switch
-                                    checked={req.isAdmin}
-                                    onCheckedChange={(isAdmin) =>
-                                        setReq({ ...req, isAdmin })
-                                    }
-                                    id='admin'
-                                />
-                            </div>
                             <Button variant='outline' className='px-4 py-2'>
                                 <ChromeIcon className='mr-2 h-4 w-4' />
                                 Sign in with Google

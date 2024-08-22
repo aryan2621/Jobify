@@ -57,12 +57,6 @@ function createUserCollection() {
                     50,
                     true
                 ),
-                database.createBooleanAttribute(
-                    DB_NAME,
-                    USER_COLLECTION,
-                    'isAdmin',
-                    true
-                ),
                 database.createDatetimeAttribute(
                     DB_NAME,
                     USER_COLLECTION,
@@ -182,7 +176,6 @@ async function createUserDocument(user: User) {
                 username: user.username,
                 email: user.email,
                 password: user.password,
-                isAdmin: user.isAdmin,
                 createdAt: user.createdAt,
                 jobs: user.jobs ?? [],
                 applications: user.applications ?? [],
@@ -210,19 +203,10 @@ async function fetchUserByUserId(userId: string) {
     return await database.getDocument(DB_NAME, USER_COLLECTION, userId);
 }
 
-async function isUserIsAdmin(userId: string) {
-    const user = await fetchUserByUserId(userId);
-    if (!user) {
-        throw new InternalServerError('User not found');
-    }
-    return user.isAdmin;
-}
-
 export {
     createUserCollection,
     createUserDocument,
     fetchUserByEmail,
     fetchUserByUsername,
     fetchUserByUserId,
-    isUserIsAdmin,
 };

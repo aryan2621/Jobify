@@ -34,7 +34,6 @@ export default function Component() {
             '',
             '',
             '',
-            false,
             new Date().toISOString(),
             [],
             [],
@@ -266,8 +265,7 @@ export default function Component() {
                         </div>
 
                         <div className='flex items-center gap-2'>
-                            <Checkbox
-                                name='tnC'
+                            <Switch
                                 checked={formData.tnC}
                                 onCheckedChange={(checked: boolean) =>
                                     setFormData((prev) => ({
@@ -283,20 +281,6 @@ export default function Component() {
                             </Label>
                         </div>
                         <div className='flex items-center justify-between'>
-                            <div className='flex items-center gap-2'>
-                                <Label htmlFor='isAdmin'>as Admin</Label>
-                                <Switch
-                                    name='isAdmin'
-                                    checked={formData.isAdmin}
-                                    onCheckedChange={(checked: boolean) =>
-                                        setFormData((prev) => ({
-                                            ...prev,
-                                            isAdmin: checked,
-                                        }))
-                                    }
-                                    id='isAdmin'
-                                />
-                            </div>
                             <Button
                                 variant='outline'
                                 className='px-4 py-2'
