@@ -109,7 +109,7 @@ export default function Component() {
 
     return (
         <div className='grid grid-cols-1 md:grid-cols-2 items-center justify-center min-h-screen bg-background'>
-            <div className='flex justify-center items-center hidden md:flex'>
+            <div className='h-full flex justify-center items-center hidden md:flex bg-black'>
                 <Image
                     src='/signup.jpeg'
                     alt='Signup Image'
@@ -325,6 +325,7 @@ export default function Component() {
                         <p className='mt-4'>
                             Already have an account?
                             <Link href='/login' className='hover:underline'>
+                                {' '}
                                 Sign In
                             </Link>
                         </p>

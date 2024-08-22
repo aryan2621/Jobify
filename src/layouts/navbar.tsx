@@ -1,13 +1,16 @@
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
+    BarChartIcon,
     CircleHelpIcon,
     ClipboardIcon,
     FileIcon,
+    FileTextIcon,
     InfoIcon,
     MenuIcon,
     ProfileIcon,
 } from '@/elements/icon';
+import { BookCopyIcon, BookPlus, HouseIcon, ScrollTextIcon } from 'lucide-react';
 import Link from 'next/link';
 
 interface NavbarLayoutProps {
@@ -19,19 +22,34 @@ const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
         <div className='flex min-h-screen w-full'>
             <aside className='hidden w-[240px] flex-col border-r bg-background p-4 md:flex'>
                 <nav className='flex flex-col gap-2'>
+                <NavItem
+                        href='/'
+                        icon={<HouseIcon className='h-5 w-5' />}
+                        label='Home'
+                    />
                     <NavItem
-                        href='/admin/dashboard'
+                        href='/apply'
+                        icon={<BookPlus className='h-5 w-5' />}
+                        label='Apply'
+                    />
+                     <NavItem
+                        href='/applications'
+                        icon={<ScrollTextIcon className='h-5 w-5' />}
+                        label='Applications'
+                    />
+                     <NavItem
+                        href='/post'
                         icon={<FileIcon className='h-5 w-5' />}
-                        label='Job Form'
+                        label='Post'
+                    />
+                     <NavItem
+                        href='/posts'
+                        icon={<BookCopyIcon className='h-5 w-5' />}
+                        label='Posts'
                     />
                     <NavItem
-                        href='/admin/posted'
-                        icon={<ClipboardIcon className='h-5 w-5' />}
-                        label='Jobs Posted'
-                    />
-                    <NavItem
-                        href='/admin/analytics'
-                        icon={<InfoIcon className='h-5 w-5' />}
+                        href='/analytics'
+                        icon={<BarChartIcon className='h-5 w-5' />}
                         label='Analytics'
                     />
                     <NavItem

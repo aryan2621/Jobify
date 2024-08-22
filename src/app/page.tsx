@@ -1,118 +1,422 @@
+import Link from 'next/link';
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+    CardContent,
+    CardFooter,
+} from '@/components/ui/card';
+import { BriefcaseIcon } from '@/elements/icon';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import Image from 'next/image';
 
-export default function Home() {
+export default function Component() {
     return (
-        <main className='flex min-h-screen flex-col items-center justify-between p-24'>
-            <div className='z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex'>
-                <p className='fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30'>
-                    Get started by editing&nbsp;
-                    <code className='font-mono font-bold'>
-                        src/app/page.tsx
-                    </code>
-                </p>
-                <div className='fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none'>
-                    <a
-                        className='pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0'
-                        href='https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app'
-                        target='_blank'
-                        rel='noopener noreferrer'
+        <div className='flex flex-col min-h-[100dvh]'>
+            <header className='px-4 lg:px-6 h-14 flex items-center'>
+                <Link
+                    href='#'
+                    className='flex items-center justify-center'
+                    prefetch={false}
+                >
+                    <BriefcaseIcon className='h-6 w-6' />
+                    <span className='sr-only'>Job Board</span>
+                </Link>
+                <nav className='ml-auto flex gap-4 sm:gap-6'>
+                    <Link
+                        href='#'
+                        className='text-sm font-medium hover:underline underline-offset-4'
+                        prefetch={false}
                     >
-                        By
-                        <Image
-                            src='/vercel.svg'
-                            alt='Vercel Logo'
-                            className='dark:invert'
-                            width={100}
-                            height={24}
-                            priority
-                        />
-                    </a>
-                </div>
-            </div>
-
-            <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-                <Image
-                    className='relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert'
-                    src='/next.svg'
-                    alt='Next.js Logo'
-                    width={180}
-                    height={37}
-                    priority
-                />
-            </div>
-
-            <div className='mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left'>
-                <a
-                    href='https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app'
-                    className='group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                >
-                    <h2 className='mb-3 text-2xl font-semibold'>
-                        Docs
-                        <span className='inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none'>
-                            -&gt;
-                        </span>
-                    </h2>
-                    <p className='m-0 max-w-[30ch] text-sm opacity-50'>
-                        Find in-depth information about Next.js features and
-                        API.
-                    </p>
-                </a>
-
-                <a
-                    href='https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app'
-                    className='group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                >
-                    <h2 className='mb-3 text-2xl font-semibold'>
-                        Learn
-                        <span className='inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none'>
-                            -&gt;
-                        </span>
-                    </h2>
-                    <p className='m-0 max-w-[30ch] text-sm opacity-50'>
-                        Learn about Next.js in an interactive course
-                        with&nbsp;quizzes!
-                    </p>
-                </a>
-
-                <a
-                    href='https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app'
-                    className='group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                >
-                    <h2 className='mb-3 text-2xl font-semibold'>
-                        Templates
-                        <span className='inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none'>
-                            -&gt;
-                        </span>
-                    </h2>
-                    <p className='m-0 max-w-[30ch] text-sm opacity-50'>
-                        Explore starter templates for Next.js.
-                    </p>
-                </a>
-
-                <a
-                    href='https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app'
-                    className='group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                >
-                    <h2 className='mb-3 text-2xl font-semibold'>
-                        Deploy
-                        <span className='inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none'>
-                            -&gt;
-                        </span>
-                    </h2>
-                    <p className='m-0 max-w-[30ch] text-balance text-sm opacity-50'>
-                        Instantly deploy your Next.js site to a shareable URL
-                        with Vercel.
-                    </p>
-                </a>
-            </div>
-        </main>
+                        Find Jobs
+                    </Link>
+                    <Link
+                        href='#'
+                        className='text-sm font-medium hover:underline underline-offset-4'
+                        prefetch={false}
+                    >
+                        Post a Job
+                    </Link>
+                    <Link
+                        href='#'
+                        className='text-sm font-medium hover:underline underline-offset-4'
+                        prefetch={false}
+                    >
+                        About
+                    </Link>
+                    <Link
+                        href='#'
+                        className='text-sm font-medium hover:underline underline-offset-4'
+                        prefetch={false}
+                    >
+                        Contact
+                    </Link>
+                </nav>
+            </header>
+            <main className='flex-1'>
+                <section className='w-full py-12 md:py-24 lg:py-32 bg-black'>
+                    <div className='container px-4 md:px-6'>
+                        <div className='grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]'>
+                            <div className='flex flex-col justify-center space-y-4'>
+                                <div className='space-y-2'>
+                                    <h1 className='text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none text-white'>
+                                        Find Your Dream Job
+                                    </h1>
+                                    <p className='max-w-[600px] text-muted-foreground md:text-xl'>
+                                        Discover the best job opportunities in
+                                        your field and take the next step in
+                                        your career.
+                                    </p>
+                                </div>
+                                <div className='flex flex-col gap-2 min-[400px]:flex-row'>
+                                    <Link
+                                        href='#'
+                                        className='inline-flex h-10 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50'
+                                        prefetch={false}
+                                    >
+                                        Apply for Jobs
+                                    </Link>
+                                    <Link
+                                        href='#'
+                                        className='inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-8 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50'
+                                        prefetch={false}
+                                    >
+                                        Post a Job
+                                    </Link>
+                                </div>
+                            </div>
+                            <Image
+                                src='/hero.jpeg'
+                                width='550'
+                                height='550'
+                                alt='Hero'
+                                className='mx-auto aspect-video overflow-hidden rounded-xl object-bottom sm:w-full lg:order-last lg:aspect-square'
+                            />
+                        </div>
+                    </div>
+                </section>
+                <section className='w-full py-12 md:py-24 lg:py-32'>
+                    <div className='container px-4 md:px-6'>
+                        <div className='flex flex-col items-center justify-center space-y-4 text-center'>
+                            <div className='space-y-2'>
+                                <div className='inline-block rounded-lg bg-black text-white px-3 py-1 text-sm'>
+                                    Featured Jobs
+                                </div>
+                                <h2 className='text-3xl font-bold tracking-tighter sm:text-5xl'>
+                                    Explore Top Job Opportunities
+                                </h2>
+                                <p className='max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed'>
+                                    Browse through our curated list of the best
+                                    job openings in your industry.
+                                </p>
+                            </div>
+                            <div className='grid w-full max-w-5xl grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3'>
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Software Engineer</CardTitle>
+                                        <CardDescription>
+                                            Acme Inc.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className='text-muted-foreground'>
+                                            Seeking a talented software engineer
+                                            to join our fast-paced team.
+                                            Experience with React and Node.js
+                                            required.
+                                        </p>
+                                    </CardContent>
+                                    <CardFooter>
+                                        <Link
+                                            href='#'
+                                            className='inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50'
+                                            prefetch={false}
+                                        >
+                                            Apply Now
+                                        </Link>
+                                    </CardFooter>
+                                </Card>
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Marketing Manager</CardTitle>
+                                        <CardDescription>
+                                            Globex Corporation
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className='text-muted-foreground'>
+                                            Experienced marketing professional
+                                            needed to lead our digital marketing
+                                            initiatives. Strong analytical and
+                                            communication skills required.
+                                        </p>
+                                    </CardContent>
+                                    <CardFooter>
+                                        <Link
+                                            href='#'
+                                            className='inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50'
+                                            prefetch={false}
+                                        >
+                                            Apply Now
+                                        </Link>
+                                    </CardFooter>
+                                </Card>
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Product Designer</CardTitle>
+                                        <CardDescription>
+                                            Stark Industries
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className='text-muted-foreground'>
+                                            Seeking a talented product designer
+                                            to join our innovative team.
+                                            Experience with Figma and
+                                            user-centered design required.
+                                        </p>
+                                    </CardContent>
+                                    <CardFooter>
+                                        <Link
+                                            href='#'
+                                            className='inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50'
+                                            prefetch={false}
+                                        >
+                                            Apply Now
+                                        </Link>
+                                    </CardFooter>
+                                </Card>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <section className='w-full py-12 md:py-24 lg:py-32 bg-black'>
+                    <div className='container px-4 md:px-6'>
+                        <div className='flex flex-col items-center justify-center space-y-4 text-center'>
+                            <div className='space-y-1'>
+                                <h2 className='text-3xl font-bold tracking-tighter sm:text-5xl text-white'>
+                                    Discover the Power of Our Job Board
+                                </h2>
+                                <p className='max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed'>
+                                    Our job board is designed to connect top
+                                    talent with leading companies across
+                                    industries. With advanced search and
+                                    filtering capabilities, you can easily find
+                                    the perfect candidates for your open
+                                    positions.
+                                </p>
+                            </div>
+                            <div className='grid w-full max-w-5xl grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3'>
+                                {[
+                                    {
+                                        title: 'Powerful Search',
+                                        description:
+                                            'Easily find the best candidates with our advanced search and filtering tools.',
+                                    },
+                                    {
+                                        title: 'Seamless Hiring',
+                                        description:
+                                            'Streamline your hiring process with our user-friendly platform.',
+                                    },
+                                    {
+                                        title: 'Trusted by Thousands',
+                                        description:
+                                            'Our job board is trusted by leading companies across industries.',
+                                    },
+                                ].map((feature, index) => (
+                                    <div
+                                        key={index}
+                                        className='bg-slate-900 text-white rounded-lg p-6 shadow-lg hover:shadow-xl transition-shadow duration-300'
+                                    >
+                                        <div className='space-y-2'>
+                                            <h3 className='text-xl font-bold'>
+                                                {feature.title}
+                                            </h3>
+                                            <p className='text-gray-300'>
+                                                {feature.description}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <section className='w-full py-12 md:py-24 lg:py-32 border-t'>
+                    <div className='container px-4 md:px-6'>
+                        <div className='flex flex-col items-center justify-center space-y-4 text-center'>
+                            <div className='space-y-2'>
+                                <div className='inline-block rounded-lg bg-black px-3 py-1 text-sm text-white'>
+                                    Trusted by Thousands
+                                </div>
+                                <h2 className='text-3xl font-bold tracking-tighter sm:text-5xl'>
+                                    Join the Best Companies
+                                </h2>
+                                <p className='max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed'>
+                                    Our job board is trusted by leading
+                                    companies across industries. Post your job
+                                    and connect with top talent today.
+                                </p>
+                            </div>
+                            <div className='divide-y rounded-lg border'>
+                                <div className='grid w-full grid-cols-3 items-stretch justify-center divide-x md:grid-cols-6'>
+                                    <div className='mx-auto flex w-full items-center justify-center p-4 sm:p-8'>
+                                        <img
+                                            src='/placeholder.svg'
+                                            width='140'
+                                            height='70'
+                                            alt='Logo'
+                                            className='aspect-[2/1] overflow-hidden rounded-lg object-contain object-center'
+                                        />
+                                    </div>
+                                    <div className='mx-auto flex w-full items-center justify-center p-4 sm:p-8'>
+                                        <img
+                                            src='/placeholder.svg'
+                                            width='140'
+                                            height='70'
+                                            alt='Logo'
+                                            className='aspect-[2/1] overflow-hidden rounded-lg object-contain object-center'
+                                        />
+                                    </div>
+                                    <div className='mx-auto flex w-full items-center justify-center p-8'>
+                                        <img
+                                            src='/placeholder.svg'
+                                            width='140'
+                                            height='70'
+                                            alt='Logo'
+                                            className='aspect-[2/1] overflow-hidden rounded-lg object-contain object-center'
+                                        />
+                                    </div>
+                                    <div className='mx-auto flex w-full items-center justify-center p-4 sm:p-8'>
+                                        <img
+                                            src='/placeholder.svg'
+                                            width='140'
+                                            height='70'
+                                            alt='Logo'
+                                            className='aspect-[2/1] overflow-hidden rounded-lg object-contain object-center'
+                                        />
+                                    </div>
+                                    <div className='mx-auto flex w-full items-center justify-center p-4 sm:p-8'>
+                                        <img
+                                            src='/placeholder.svg'
+                                            width='140'
+                                            height='70'
+                                            alt='Logo'
+                                            className='aspect-[2/1] overflow-hidden rounded-lg object-contain object-center'
+                                        />
+                                    </div>
+                                    <div className='mx-auto flex w-full items-center justify-center p-4 sm:p-8'>
+                                        <img
+                                            src='/placeholder.svg'
+                                            width='140'
+                                            height='70'
+                                            alt='Logo'
+                                            className='aspect-[2/1] overflow-hidden rounded-lg object-contain object-center'
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <section className='w-full py-12 md:py-24 lg:py-32 bg-black'>
+                    <div className='container px-4 md:px-6'>
+                        <div className='flex flex-col items-center justify-center space-y-4 text-center mb-12'>
+                            <div className='space-y-2'>
+                                <h2 className='text-3xl font-bold tracking-tighter sm:text-5xl text-white'>
+                                    What Our Users Say
+                                </h2>
+                                <p className='max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed text-gray-300'>
+                                    Hear from our satisfied users about their
+                                    experience with our job board.
+                                </p>
+                            </div>
+                        </div>
+                        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8'>
+                            {[
+                                {
+                                    name: 'John Doe',
+                                    position: 'Software Engineer',
+                                    image: '/placeholder-user.jpg',
+                                    comment:
+                                        'I found my dream job on this job board. The process was quick and easy, and the job listings were highly relevant to my skills.',
+                                    date: 'May 2023',
+                                },
+                                {
+                                    name: 'John Doe',
+                                    position: 'Software Engineer',
+                                    image: '/placeholder-user.jpg',
+                                    comment:
+                                        'I found my dream job on this job board. The process was quick and easy, and the job listings were highly relevant to my skills.',
+                                    date: 'May 2023',
+                                },{
+                                    name: 'John Doe',
+                                    position: 'Software Engineer',
+                                    image: '/placeholder-user.jpg',
+                                    comment:
+                                        'I found my dream job on this job board. The process was quick and easy, and the job listings were highly relevant to my skills.',
+                                    date: 'May 2023',
+                                },{
+                                    name: 'John Doe',
+                                    position: 'Software Engineer',
+                                    image: '/placeholder-user.jpg',
+                                    comment:
+                                        'I found my dream job on this job board. The process was quick and easy, and the job listings were highly relevant to my skills.',
+                                    date: 'May 2023',
+                                }
+                            ].map((testimonial, index) => (
+                                <div
+                                    key={index}
+                                    className='bg-slate-900 text-white rounded-lg p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between'
+                                >
+                                    <div>
+                                        <div className='flex items-center mb-4'>
+                                            <img
+                                                src={testimonial.image}
+                                                alt={testimonial.name}
+                                                className='w-16 h-16 rounded-full mr-4 border-2 border-blue-500'
+                                            />
+                                            <div>
+                                                <div className='text-lg font-bold'>
+                                                    {testimonial.name}
+                                                </div>
+                                                <div className='text-blue-400'>
+                                                    {testimonial.position}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p className='text-gray-300 mb-4'>
+                                            "{testimonial.comment}"
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            </main>
+            <footer className='flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t'>
+                <p className='text-xs text-muted-foreground'>
+                    &copy; 2024 Job Board. All rights reserved.
+                </p>
+                <nav className='sm:ml-auto flex gap-4 sm:gap-6'>
+                    <Link
+                        href='#'
+                        className='text-xs hover:underline underline-offset-4'
+                        prefetch={false}
+                    >
+                        Terms of Service
+                    </Link>
+                    <Link
+                        href='#'
+                        className='text-xs hover:underline underline-offset-4'
+                        prefetch={false}
+                    >
+                        Privacy
+                    </Link>
+                </nav>
+            </footer>
+        </div>
     );
 }

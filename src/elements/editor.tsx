@@ -1,11 +1,11 @@
 import React from 'react';
+import dynamic from 'next/dynamic';
+import '../../node_modules/react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
+import { EditorState } from 'draft-js';
 const Editor = dynamic(
     () => import('react-draft-wysiwyg').then((mod) => mod.Editor),
     { ssr: false }
 );
-import '../../node_modules/react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
-import { EditorState } from 'draft-js';
-import dynamic from 'next/dynamic';
 
 interface EditorElementProps {
     content: EditorState;
