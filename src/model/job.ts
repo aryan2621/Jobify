@@ -12,23 +12,13 @@ export enum WorkplaceTypes {
     HYBRID = 'Hybrid',
     ONSITE = 'Onsite',
 }
-
-export enum JobSource {
-    LINKEDIN = 'LinkedIn',
-    ANGEL_LIST = 'Angel List',
-    REFERRAL = 'Referral',
-    JOB_PORTAL = 'Job Portal',
-    COMPANY_WEBSITE = 'Company Website',
-    OTHER = 'Other',
-}
-
 export class Job {
     id: string;
     profile: string;
     description: string;
+    company: string;
     type: JobType;
     workplaceType: WorkplaceTypes;
-    source: JobSource;
     lastDateToApply: string;
     location: string;
     skills: string[];
@@ -42,9 +32,9 @@ export class Job {
         id: string,
         profile: string,
         description: string,
+        company: string,
         type: JobType,
         workplaceType: WorkplaceTypes,
-        source: JobSource,
         lastDateToApply: string,
         location: string,
         skills: string[],
@@ -57,9 +47,9 @@ export class Job {
         this.id = id;
         this.profile = profile;
         this.description = description;
+        this.company = company;
         this.type = type;
         this.workplaceType = workplaceType;
-        this.source = source;
         this.lastDateToApply = lastDateToApply;
         this.location = location;
         this.skills = skills;

@@ -1,366 +1,146 @@
 'use client';
 
-import { useState } from 'react';
-import {
-    Card,
-    CardHeader,
-    CardTitle,
-    CardDescription,
-    CardContent,
-} from '@/components/ui/card';
+import { useEffect, useState } from 'react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    DialogClose,
-    DialogFooter,
-} from '@/components/ui/dialog';
 import NavbarLayout from '@/layouts/navbar';
-import { jobs } from '@/utils';
-import {
-    Pagination,
-    PaginationContent,
-    PaginationEllipsis,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from '@/components/ui/pagination';
+import { Job } from '@/model/job';
+import ky from 'ky';
+import ApplicationS from '@/components/ui/application';
+import LoadingSkeleton from '@/elements/post-skeleton';
+import Link from 'next/link';
+import { SendIcon } from 'lucide-react';
 
 export default function Component() {
-    const [selectedJob, setSelectedJob] = useState<any>(null);
-    const [selectedApplicant, setSelectedApplicant] = useState<any>(null);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [applicantsPerPage] = useState(5);
+    const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+    const [loading, setLoading] = useState(true);
 
-    const indexOfLastApplicant = currentPage * applicantsPerPage;
-    const indexOfFirstApplicant = indexOfLastApplicant - applicantsPerPage;
-    const currentApplicants = selectedJob
-        ? selectedJob.applicants.slice(
-              indexOfFirstApplicant,
-              indexOfLastApplicant
-          )
-        : [];
-    const totalPages = selectedJob
-        ? Math.ceil(selectedJob.applicants.length / applicantsPerPage)
-        : 1;
-
-    const handlePageChange = (pageNumber: number) => {
-        setCurrentPage(pageNumber);
+    const handleJobSelection = (job: Job) => {
+        if (selectedJob !== job) {
+            setSelectedJob(job);
+        } else {
+            setSelectedJob(null);
+        }
     };
 
-    const handleApplicantClick = (applicant: any) => {
-        setSelectedApplicant(applicant);
-    };
+    const [jobs, setJobs] = useState<Job[]>([]);
+    useEffect(() => {
+        const fetchJobs = async () => {
+            const res = await ky.get('/api/posts').json();
+            setJobs(
+                (res as any[]).map(
+                    (job: Job) =>
+                        new Job(
+                            job.id,
+                            job.profile,
+                            job.description,
+                            job.company,
+                            job.type,
+                            job.workplaceType,
+                            job.lastDateToApply,
+                            job.location,
+                            job.skills,
+                            job.rejectionContent,
+                            job.selectionContent,
+                            job.createdAt,
+                            job.createdBy,
+                            job.applications
+                        )
+                )
+            );
+            setLoading(false);
+        };
+        fetchJobs();
+    }, []);
 
-    const toggleJobSelection = (job: any) => {
-        setSelectedJob(selectedJob === job ? null : job);
-        setCurrentPage(1);
-        setSelectedApplicant(null);
+    const formatDate = (date: string) => {
+        const d = new Date(date);
+        return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
     };
 
     return (
         <NavbarLayout>
-            <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
-                <div className='col-span-2 space-y-6'>
-                    {jobs.map((job: any, index) => (
-                        <Card
-                            key={index}
-                            onClick={() => toggleJobSelection(job)}
-                            className='cursor-pointer'
-                        >
-                            <CardHeader>
-                                <CardTitle>{job.title}</CardTitle>
-                                <CardDescription>
-                                    {job.company} - {job.location}
-                                </CardDescription>
-                            </CardHeader>
-                            {selectedJob === job && (
-                                <CardContent>
-                                    <div className='grid gap-4'>
-                                        <div className='flex items-center justify-between'>
-                                            <div>
-                                                <h4 className='text-sm font-medium'>
-                                                    Status
-                                                </h4>
-                                                <Badge
-                                                    variant='outline'
-                                                    className={`bg-${
-                                                        job.status === 'Pending'
-                                                            ? 'yellow'
-                                                            : job.status ===
-                                                                'Accepted'
-                                                              ? 'green'
-                                                              : 'red'
-                                                    }-500 text-${
-                                                        job.status === 'Pending'
-                                                            ? 'yellow'
-                                                            : job.status ===
-                                                                'Accepted'
-                                                              ? 'green'
-                                                              : 'red'
-                                                    }-50`}
-                                                >
-                                                    {job.status}
-                                                </Badge>
-                                            </div>
-                                            <div>
-                                                <h4 className='text-sm font-medium'>
-                                                    Applied On
-                                                </h4>
-                                                <p className='text-xs text-muted-foreground'>
-                                                    {job.appliedDate}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className='grid gap-2'>
-                                            <h4 className='text-sm font-medium'>
-                                                About the Role
-                                            </h4>
-                                            <p>
-                                                This is a {job.title} role at
-                                                {job.company} in {job.location}.
-                                                The company is looking for a
-                                                skilled individual to join their
-                                                team and contribute to their
-                                                ongoing projects.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            )}
-                        </Card>
-                    ))}
+            {loading ? (
+                <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
+                    <div className='col-span-2 space-y-6'>
+                        {[...Array(3)].map((_, index) => (
+                            <LoadingSkeleton key={index} />
+                        ))}
+                    </div>
+                    <div className='hidden md:block'></div>
                 </div>
-                <div className='space-y-6'>
-                    {selectedJob && (
-                        <div>
-                            <h3 className='text-lg font-medium mb-4'>
-                                Applicants
-                            </h3>
-                            <div className='space-y-4'>
-                                {currentApplicants.map(
-                                    (applicant: any, index: any) => (
-                                        <div
-                                            key={index}
-                                            className='border rounded-md p-4 cursor-pointer hover:bg-muted'
-                                            onClick={() =>
-                                                handleApplicantClick(applicant)
-                                            }
-                                        >
-                                            <div className='flex items-center justify-between'>
-                                                <div>
-                                                    <h4 className='font-medium'>
-                                                        {applicant.name}
-                                                    </h4>
-                                                    <p className='text-sm text-muted-foreground'>
-                                                        {applicant.email}
-                                                    </p>
+            ) : jobs.length === 0 ? (
+                <div className='col-span-full text-center'>
+                    <h2 className='text-lg font-semibold text-muted-foreground'>No Jobs Found</h2>
+                    <p className='text-sm text-muted-foreground'>There are no job listings available at the moment. Please check back later.</p>
+                </div>
+            ) : (
+                <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
+                    {jobs.length === 0 ? (
+                        <div className='col-span-full text-center'>
+                            <h2 className='text-lg font-semibold text-muted-foreground'>No Jobs Found</h2>
+                            <p className='text-sm text-muted-foreground'>
+                                There are no job listings available at the moment. Please check back later.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className='col-span-2 space-y-6'>
+                            {(jobs ?? []).map((job: Job, index: number) => (
+                                <Card key={index} onClick={() => handleJobSelection(job)} className='cursor-pointer'>
+                                    <CardHeader className='flex flex-row justify-between'>
+                                        <div>
+                                            <CardTitle>{job.profile}</CardTitle>
+                                            <div className='flex items-center'>
+                                                <CardDescription>
+                                                    {job.company ?? 'NA'} - {job.location}
+                                                </CardDescription>
+                                                <div className='flex items-center ml-4'>
+                                                    <h4 className='text-sm font-medium mr-2'>Applicants</h4>
+                                                    <span className='text-sm text-muted-foreground'>{job.applications.length}</span>
                                                 </div>
-                                                <Badge
-                                                    variant='outline'
-                                                    className={`bg-${
-                                                        selectedJob.status ===
-                                                        'Pending'
-                                                            ? 'yellow'
-                                                            : selectedJob.status ===
-                                                                'Accepted'
-                                                              ? 'green'
-                                                              : 'red'
-                                                    }-500 text-${
-                                                        selectedJob.status ===
-                                                        'Pending'
-                                                            ? 'yellow'
-                                                            : selectedJob.status ===
-                                                                'Accepted'
-                                                              ? 'green'
-                                                              : 'red'
-                                                    }-50`}
-                                                >
-                                                    {selectedJob.status}
-                                                </Badge>
+                                            </div>
+                                            <div className='flex space-x-4 mt-2'>
+                                                <Badge variant='outline'>{job.type}</Badge>
+                                                <Badge variant='outline'>{job.workplaceType}</Badge>
                                             </div>
                                         </div>
-                                    )
-                                )}
-                            </div>
-                            <div className='flex justify-center mt-4'>
-                                <Pagination>
-                                    <PaginationContent>
-                                        <PaginationItem>
-                                            <PaginationPrevious
-                                                onClick={() =>
-                                                    handlePageChange(
-                                                        currentPage > 1
-                                                            ? currentPage - 1
-                                                            : 1
-                                                    )
-                                                }
-                                                className={`cursor-pointer ${currentPage === 1 ? 'cursor-not-allowed' : ''}`}
-                                            />
-                                        </PaginationItem>
-                                        {Array.from(
-                                            { length: totalPages },
-                                            (_, i) => (
-                                                <PaginationItem key={i + 1}>
-                                                    <PaginationLink
-                                                        isActive={
-                                                            currentPage ===
-                                                            i + 1
-                                                        }
-                                                        onClick={() =>
-                                                            handlePageChange(
-                                                                i + 1
-                                                            )
-                                                        }
-                                                        className='cursor-pointer'
-                                                    >
-                                                        {i + 1}
-                                                    </PaginationLink>
-                                                </PaginationItem>
-                                            )
-                                        )}
-                                        {totalPages > 5 && (
-                                            <>
-                                                <PaginationEllipsis />
-                                                <PaginationItem>
-                                                    <PaginationLink
-                                                        onClick={() =>
-                                                            handlePageChange(
-                                                                totalPages
-                                                            )
-                                                        }
-                                                        className='cursor-pointer'
-                                                    >
-                                                        {totalPages}
-                                                    </PaginationLink>
-                                                </PaginationItem>
-                                            </>
-                                        )}
-                                        <PaginationItem>
-                                            <PaginationNext
-                                                onClick={() =>
-                                                    handlePageChange(
-                                                        currentPage < totalPages
-                                                            ? currentPage + 1
-                                                            : totalPages
-                                                    )
-                                                }
-                                                className={`cursor-pointer ${currentPage === totalPages ? 'cursor-not-allowed' : ''}`}
-                                            />
-                                        </PaginationItem>
-                                    </PaginationContent>
-                                </Pagination>
-                            </div>
-                            {selectedApplicant && (
-                                <Dialog
-                                    open
-                                    onOpenChange={() =>
-                                        setSelectedApplicant(null)
-                                    }
-                                >
-                                    <DialogContent className='p-6 max-w-2xl'>
-                                        <DialogHeader>
-                                            <DialogTitle>
-                                                {selectedApplicant.name}
-                                            </DialogTitle>
-                                            <DialogDescription>
-                                                {selectedApplicant.email}
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <div className='grid gap-4'>
-                                            <div className='flex items-center justify-between'>
-                                                <div>
-                                                    <h5 className='text-xs font-medium'>
-                                                        Phone
-                                                    </h5>
-                                                    <p className='text-sm'>
-                                                        {
-                                                            selectedApplicant.phone
-                                                        }
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <h5 className='text-xs font-medium'>
-                                                        Country
-                                                    </h5>
-                                                    <p className='text-sm'>
-                                                        {
-                                                            selectedApplicant.country
-                                                        }
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <h5 className='text-xs font-medium'>
-                                                    Resume
-                                                </h5>
-                                                <a
-                                                    href={
-                                                        selectedApplicant.resumeLink
-                                                    }
-                                                    target='_blank'
-                                                    rel='noopener noreferrer'
-                                                    className='text-sm text-blue-600'
-                                                >
-                                                    View Resume
-                                                </a>
-                                            </div>
-                                            <div>
-                                                <h5 className='text-xs font-medium'>
-                                                    Experience
-                                                </h5>
-                                                <p className='text-sm'>
-                                                    {
-                                                        selectedApplicant.experience
-                                                    }
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <h5 className='text-xs font-medium'>
-                                                    Current Job
-                                                </h5>
-                                                <p className='text-sm'>
-                                                    {
-                                                        selectedApplicant.currentJob
-                                                    }
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <h5 className='text-xs font-medium'>
-                                                    Skills
-                                                </h5>
-                                                <p className='text-sm'>
-                                                    {selectedApplicant.skills.join(
-                                                        ', '
-                                                    )}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <h5 className='text-xs font-medium'>
-                                                    Cover Letter
-                                                </h5>
-                                                <p className='text-sm'>
-                                                    {
-                                                        selectedApplicant.coverLetter
-                                                    }
-                                                </p>
-                                            </div>
+                                        <div className='text-right'>
+                                            <h4 className='text-sm font-medium'>Last Date to Apply</h4>
+                                            <p className='text-xs text-muted-foreground'>{formatDate(job.lastDateToApply)}</p>
+                                            <p className='text-xs text-muted-foreground'>Posted on: {formatDate(job.createdAt)}</p>
                                         </div>
-                                        <DialogClose asChild>
-                                            <Button>Close</Button>
-                                        </DialogClose>
-                                    </DialogContent>
-                                </Dialog>
-                            )}
+                                    </CardHeader>
+                                    {selectedJob === job && (
+                                        <CardContent className='flex items-start justify-between space-x-4'>
+                                            <div className='flex-1'>
+                                                <h4 className='text-lg font-semibold mb-2'>About the Role</h4>
+                                                <p className='text-sm text-muted-foreground'>{job.description}</p>
+                                                <div className='flex flex-wrap gap-2 mt-2'>
+                                                    {job.skills.map((skill, idx) => (
+                                                        <Badge key={idx} variant='secondary' className='text-sm'>
+                                                            {skill}
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className='flex-shrink-0 flex items-end'>
+                                                <Link
+                                                    href={`/apply/?id=${job.id}`}
+                                                    className='bg-black text-white px-4 py-2 rounded flex items-center space-x-2 hover:bg-gray-800 transition-colors'
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <SendIcon className='h-5 w-5' />
+                                                </Link>
+                                            </div>
+                                        </CardContent>
+                                    )}
+                                </Card>
+                            ))}
                         </div>
                     )}
+                    {selectedJob && <ApplicationS job={selectedJob} />}
                 </div>
-            </div>
+            )}
         </NavbarLayout>
     );
 }

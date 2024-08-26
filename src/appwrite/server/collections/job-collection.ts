@@ -1,7 +1,8 @@
 import { IndexType, Permission, Role } from 'node-appwrite';
-import { JobSource, JobType, WorkplaceTypes } from '@/model/job';
+import { Job, JobType, WorkplaceTypes } from '@/model/job';
 import { database } from '../config';
 import { DB_NAME, JOB_COLLECTION } from '@/appwrite/name';
+import { Query } from 'appwrite';
 
 function createJobCollection() {
     database
@@ -13,151 +14,43 @@ function createJobCollection() {
         ])
         .then(() => {
             return Promise.all([
-                database.createStringAttribute(
-                    DB_NAME,
-                    JOB_COLLECTION,
-                    'id',
-                    50,
-                    true
-                ),
-                database.createStringAttribute(
-                    DB_NAME,
-                    JOB_COLLECTION,
-                    'profile',
-                    50,
-                    true
-                ),
-                database.createStringAttribute(
-                    DB_NAME,
-                    JOB_COLLECTION,
-                    'description',
-                    50,
-                    false
-                ),
+                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'id', 50, true),
+                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'profile', 50, true),
+                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'description', 50, false),
+                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'company', 20, true),
                 database.createEnumAttribute(
                     DB_NAME,
                     JOB_COLLECTION,
                     'type',
-                    [
-                        JobType.FULL_TIME,
-                        JobType.PART_TIME,
-                        JobType.INTERNSHIP,
-                        JobType.CONTRACT,
-                        JobType.FREELANCE,
-                        JobType.TEMPORARY,
-                    ],
+                    [JobType.FULL_TIME, JobType.PART_TIME, JobType.INTERNSHIP, JobType.CONTRACT, JobType.FREELANCE, JobType.TEMPORARY],
                     true
                 ),
                 database.createEnumAttribute(
                     DB_NAME,
                     JOB_COLLECTION,
                     'workplaceType',
-                    [
-                        WorkplaceTypes.REMOTE,
-                        WorkplaceTypes.HYBRID,
-                        WorkplaceTypes.ONSITE,
-                    ],
+                    [WorkplaceTypes.REMOTE, WorkplaceTypes.HYBRID, WorkplaceTypes.ONSITE],
                     true
                 ),
-                database.createEnumAttribute(
-                    DB_NAME,
-                    JOB_COLLECTION,
-                    'source',
-                    [
-                        JobSource.LINKEDIN,
-                        JobSource.ANGEL_LIST,
-                        JobSource.REFERRAL,
-                        JobSource.JOB_PORTAL,
-                        JobSource.COMPANY_WEBSITE,
-                        JobSource.OTHER,
-                    ],
-                    true
-                ),
-                database.createDatetimeAttribute(
-                    DB_NAME,
-                    JOB_COLLECTION,
-                    'lastDateToApply',
-                    true
-                ),
-                database.createStringAttribute(
-                    DB_NAME,
-                    JOB_COLLECTION,
-                    'location',
-                    50,
-                    true
-                ),
-                database.createStringAttribute(
-                    DB_NAME,
-                    JOB_COLLECTION,
-                    'skills',
-                    200,
-                    false,
-                    undefined,
-                    true
-                ),
-                database.createStringAttribute(
-                    DB_NAME,
-                    JOB_COLLECTION,
-                    'rejectionContent',
-                    50,
-                    true
-                ),
-                database.createStringAttribute(
-                    DB_NAME,
-                    JOB_COLLECTION,
-                    'selectionContent',
-                    50,
-                    true
-                ),
-                database.createDatetimeAttribute(
-                    DB_NAME,
-                    JOB_COLLECTION,
-                    'createdAt',
-                    true
-                ),
-                database.createStringAttribute(
-                    DB_NAME,
-                    JOB_COLLECTION,
-                    'createdBy',
-                    50,
-                    true
-                ),
-                database.createStringAttribute(
-                    DB_NAME,
-                    JOB_COLLECTION,
-                    'applications',
-                    200,
-                    false,
-                    undefined,
-                    true
-                ),
+
+                database.createDatetimeAttribute(DB_NAME, JOB_COLLECTION, 'lastDateToApply', true),
+                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'location', 50, true),
+                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'skills', 200, false, undefined, true),
+                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'rejectionContent', 50, true),
+                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'selectionContent', 50, true),
+                database.createDatetimeAttribute(DB_NAME, JOB_COLLECTION, 'createdAt', true),
+                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'createdBy', 50, true),
+                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'applications', 200, false, undefined, true),
             ]);
         })
         .catch((error) => {
-            console.log(
-                'Error creating user attributes of job collection',
-                error
-            );
+            console.log('Error creating user attributes of job collection', error);
             throw error;
         })
         .then(() => {
             return Promise.all([
-                database.createIndex(
-                    DB_NAME,
-                    JOB_COLLECTION,
-                    'id',
-                    IndexType.Fulltext,
-                    ['id'],
-                    ['ASC']
-                ),
-                database.createIndex(
-                    DB_NAME,
-                    JOB_COLLECTION,
-                    'createdBy',
-                    IndexType.Fulltext,
-                    ['createdBy'],
-                    ['ASC']
-                ),
+                database.createIndex(DB_NAME, JOB_COLLECTION, 'id', IndexType.Fulltext, ['id'], ['ASC']),
+                database.createIndex(DB_NAME, JOB_COLLECTION, 'createdBy', IndexType.Fulltext, ['createdBy'], ['ASC']),
             ]);
         })
         .catch((error) => {
@@ -165,5 +58,66 @@ function createJobCollection() {
             throw error;
         });
 }
+async function createJobDocument(job: Job) {
+    try {
+        return await database.createDocument(DB_NAME, JOB_COLLECTION, job.id, {
+            id: job.id,
+            profile: job.profile,
+            description: job.description,
+            company: job.company,
+            type: job.type,
+            workplaceType: job.workplaceType,
+            lastDateToApply: job.lastDateToApply,
+            location: job.location,
+            skills: job.skills,
+            rejectionContent: job.rejectionContent,
+            selectionContent: job.selectionContent,
+            createdAt: job.createdAt,
+            createdBy: job.createdBy,
+            applications: job.applications,
+        });
+    } catch (error) {
+        console.log('Error creating job document', error);
+        throw error;
+    }
+}
 
-export { createJobCollection };
+async function fetchJobById(id: string) {
+    try {
+        return await database.getDocument(DB_NAME, JOB_COLLECTION, id);
+    } catch (error) {
+        console.log('Error fetching job by id', error);
+        throw error;
+    }
+}
+async function fetchAllJobs() {
+    try {
+        return await database.listDocuments(DB_NAME, JOB_COLLECTION);
+    } catch (error) {
+        console.log('Error fetching all jobs', error);
+        throw error;
+    }
+}
+async function fetchJobsByUserId(userId: string) {
+    try {
+        const posts = await database.listDocuments(DB_NAME, JOB_COLLECTION, [Query.equal('createdBy', userId)]);
+        return posts.documents;
+    } catch (error) {
+        console.log('Error fetching jobs by user id', error);
+        throw error;
+    }
+}
+async function setApplicationIdToJob(jobId: string, applicationId: string) {
+    try {
+        const job = await fetchJobById(jobId);
+        job.applications.push(applicationId);
+        return await database.updateDocument(DB_NAME, JOB_COLLECTION, job.id, {
+            applications: job.applications,
+        });
+    } catch (error) {
+        console.log('Error setting application id to job', error);
+        throw error;
+    }
+}
+
+export { createJobCollection, createJobDocument, fetchJobById, fetchAllJobs, fetchJobsByUserId, setApplicationIdToJob };

@@ -1,8 +1,6 @@
 import { JSX, SVGProps } from 'react';
 
-export function CalendarIcon(
-    props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>
-) {
+export function CalendarIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -24,9 +22,7 @@ export function CalendarIcon(
     );
 }
 
-export function CircleHelpIcon(
-    props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>
-) {
+export function CircleHelpIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -47,9 +43,7 @@ export function CircleHelpIcon(
     );
 }
 
-export function ClipboardIcon(
-    props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>
-) {
+export function ClipboardIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -69,9 +63,7 @@ export function ClipboardIcon(
     );
 }
 
-export function FileIcon(
-    props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>
-) {
+export function FileIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -91,9 +83,7 @@ export function FileIcon(
     );
 }
 
-export function InfoIcon(
-    props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>
-) {
+export function InfoIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -114,9 +104,7 @@ export function InfoIcon(
     );
 }
 
-export function MenuIcon(
-    props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>
-) {
+export function MenuIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -137,9 +125,7 @@ export function MenuIcon(
     );
 }
 
-export function TrophyIcon(
-    props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>
-) {
+export function TrophyIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -163,9 +149,7 @@ export function TrophyIcon(
     );
 }
 
-export function ProfileIcon(
-    props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>
-) {
+export function ProfileIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -185,9 +169,7 @@ export function ProfileIcon(
     );
 }
 
-export function UploadIcon(
-    props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>
-) {
+export function UploadIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -208,9 +190,7 @@ export function UploadIcon(
     );
 }
 
-export function XIcon(
-    props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>
-) {
+export function XIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -229,9 +209,7 @@ export function XIcon(
         </svg>
     );
 }
-export function ChromeIcon(
-    props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>
-) {
+export function ChromeIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -253,9 +231,7 @@ export function ChromeIcon(
         </svg>
     );
 }
-export function EyeIcon(
-    props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>
-) {
+export function EyeIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -274,9 +250,7 @@ export function EyeIcon(
         </svg>
     );
 }
-export function BriefcaseIcon(
-    props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>
-) {
+export function BriefcaseIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -296,9 +270,7 @@ export function BriefcaseIcon(
     );
 }
 
-export function EyeOffIcon(
-    props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>
-) {
+export function EyeOffIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -321,44 +293,44 @@ export function EyeOffIcon(
 }
 export function BarChartIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
     return (
-      <svg
-        {...props}
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <line x1="12" x2="12" y1="20" y2="10" />
-        <line x1="18" x2="18" y1="20" y2="4" />
-        <line x1="6" x2="6" y1="20" y2="16" />
-      </svg>
-    )
-  }
+        <svg
+            {...props}
+            xmlns='http://www.w3.org/2000/svg'
+            width='24'
+            height='24'
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+        >
+            <line x1='12' x2='12' y1='20' y2='10' />
+            <line x1='18' x2='18' y1='20' y2='4' />
+            <line x1='6' x2='6' y1='20' y2='16' />
+        </svg>
+    );
+}
 
-  export function FileTextIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
+export function FileTextIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
     return (
-      <svg
-        {...props}
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-        <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-        <path d="M10 9H8" />
-        <path d="M16 13H8" />
-        <path d="M16 17H8" />
-      </svg>
-    )
-  }
+        <svg
+            {...props}
+            xmlns='http://www.w3.org/2000/svg'
+            width='24'
+            height='24'
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+        >
+            <path d='M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z' />
+            <path d='M14 2v4a2 2 0 0 0 2 2h4' />
+            <path d='M10 9H8' />
+            <path d='M16 13H8' />
+            <path d='M16 17H8' />
+        </svg>
+    );
+}

@@ -1,19 +1,12 @@
 'use client';
 
-import {
-    Card,
-    CardHeader,
-    CardTitle,
-    CardDescription,
-    CardContent,
-} from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Switch } from '@/components/ui/switch';
-import { Checkbox } from '@/components/ui/checkbox';
 import { v4 as uuidv4 } from 'uuid';
 import { ChromeIcon, EyeIcon, EyeOffIcon } from '@/elements/icon';
 import { FormEvent, ChangeEvent, useState } from 'react';
@@ -25,21 +18,7 @@ import { ReloadIcon } from '@radix-ui/react-icons';
 
 export default function Component() {
     const router = useRouter();
-    const [formData, setFormData] = useState<User>(
-        new User(
-            uuidv4(),
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            new Date().toISOString(),
-            [],
-            [],
-            false
-        )
-    );
+    const [formData, setFormData] = useState<User>(new User(uuidv4(), '', '', '', '', '', '', new Date().toISOString(), [], [], false));
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -70,8 +49,7 @@ export default function Component() {
         if (user.password !== user.confirmPassword) {
             throw new Error('Password and Confirm Password do not match.');
         }
-        const passwordRegex =
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,10}$/;
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,10}$/;
         if (!passwordRegex.test(user.password)) {
             throw new Error(
                 'Password must be 8-10 characters long, with at least one lowercase letter, one uppercase letter, one digit, and one special character.'
@@ -109,19 +87,11 @@ export default function Component() {
     return (
         <div className='grid grid-cols-1 md:grid-cols-2 items-center justify-center min-h-screen bg-background'>
             <div className='h-full flex justify-center items-center hidden md:flex bg-black'>
-                <Image
-                    src='/signup.jpeg'
-                    alt='Signup Image'
-                    width={500}
-                    height={400}
-                    className='object-cover rounded-lg shadow-xl'
-                />
+                <Image src='/signup.jpeg' alt='Signup Image' width={500} height={400} className='object-cover rounded-lg shadow-xl' />
             </div>
             <Card className='w-full max-w-md p-6 space-y-6 mx-auto mt-8 mb-8'>
                 <CardHeader>
-                    <CardTitle className='text-2xl font-bold'>
-                        Create an Account
-                    </CardTitle>
+                    <CardTitle className='text-2xl font-bold'>Create an Account</CardTitle>
                     <CardDescription>Sign up to get started</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -220,17 +190,11 @@ export default function Component() {
                                     setShowPassword((prev) => !prev);
                                 }}
                             >
-                                {showPassword ? (
-                                    <EyeOffIcon className='w-5 h-5' />
-                                ) : (
-                                    <EyeIcon className='w-5 h-5' />
-                                )}
+                                {showPassword ? <EyeOffIcon className='w-5 h-5' /> : <EyeIcon className='w-5 h-5' />}
                             </Button>
                         </div>
                         <div className='relative'>
-                            <Label htmlFor='confirmPassword'>
-                                Confirm Password
-                            </Label>
+                            <Label htmlFor='confirmPassword'>Confirm Password</Label>
                             <Input
                                 name='confirmPassword'
                                 value={formData.confirmPassword}
@@ -256,11 +220,7 @@ export default function Component() {
                                     setShowConfirmPassword((prev) => !prev);
                                 }}
                             >
-                                {showConfirmPassword ? (
-                                    <EyeOffIcon className='w-5 h-5' />
-                                ) : (
-                                    <EyeIcon className='w-5 h-5' />
-                                )}
+                                {showConfirmPassword ? <EyeOffIcon className='w-5 h-5' /> : <EyeIcon className='w-5 h-5' />}
                             </Button>
                         </div>
 
@@ -276,25 +236,15 @@ export default function Component() {
                                 id='terms'
                                 required
                             />
-                            <Label htmlFor='terms'>
-                                I agree to the Terms and Conditions
-                            </Label>
+                            <Label htmlFor='terms'>I agree to the Terms and Conditions</Label>
                         </div>
                         <div className='flex items-center justify-between'>
-                            <Button
-                                variant='outline'
-                                className='px-4 py-2'
-                                type='button'
-                            >
+                            <Button variant='outline' className='px-4 py-2' type='button'>
                                 <ChromeIcon className='mr-2 h-4 w-4' />
                                 Sign up with Google
                             </Button>
                         </div>
-                        <Button
-                            type='submit'
-                            className='w-full'
-                            disabled={loading}
-                        >
+                        <Button type='submit' className='w-full' disabled={loading}>
                             {loading ? (
                                 <>
                                     <ReloadIcon className='mr-2 h-4 w-4 animate-spin' />

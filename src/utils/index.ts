@@ -45,8 +45,7 @@ export const jobs: {
                 graduation: '2020',
                 currentJob: 'Software Engineer',
                 experience: '2 years',
-                coverLetter:
-                    'I believe my skills and experience make me a great fit...',
+                coverLetter: 'I believe my skills and experience make me a great fit...',
                 skills: ['Python', 'Django', 'SQL'],
             },
             {
@@ -58,8 +57,7 @@ export const jobs: {
                 graduation: '2016',
                 currentJob: 'Full-Stack Developer',
                 experience: '5 years',
-                coverLetter:
-                    'I am passionate about building scalable and efficient applications...',
+                coverLetter: 'I am passionate about building scalable and efficient applications...',
                 skills: ['Java', 'Spring', 'AWS'],
             },
         ],
@@ -80,8 +78,7 @@ export const jobs: {
                 graduation: '2019',
                 currentJob: 'UI/UX Designer',
                 experience: '4 years',
-                coverLetter:
-                    'I am excited to bring my design expertise to your team...',
+                coverLetter: 'I am excited to bring my design expertise to your team...',
                 skills: ['Figma', 'Sketch', 'Adobe Creative Suite'],
             },
             {
@@ -93,8 +90,7 @@ export const jobs: {
                 graduation: '2017',
                 currentJob: 'Product Designer',
                 experience: '3 years',
-                coverLetter:
-                    'I am passionate about creating user-centric products...',
+                coverLetter: 'I am passionate about creating user-centric products...',
                 skills: ['Prototyping', 'User Research', 'Interaction Design'],
             },
             {
@@ -106,8 +102,7 @@ export const jobs: {
                 graduation: '2017',
                 currentJob: 'Product Designer',
                 experience: '3 years',
-                coverLetter:
-                    'I am passionate about creating user-centric products...',
+                coverLetter: 'I am passionate about creating user-centric products...',
                 skills: ['Prototyping', 'User Research', 'Interaction Design'],
             },
             {
@@ -119,8 +114,7 @@ export const jobs: {
                 graduation: '2017',
                 currentJob: 'Product Designer',
                 experience: '3 years',
-                coverLetter:
-                    'I am passionate about creating user-centric products...',
+                coverLetter: 'I am passionate about creating user-centric products...',
                 skills: ['Prototyping', 'User Research', 'Interaction Design'],
             },
             {
@@ -132,8 +126,7 @@ export const jobs: {
                 graduation: '2017',
                 currentJob: 'Product Designer',
                 experience: '3 years',
-                coverLetter:
-                    'I am passionate about creating user-centric products...',
+                coverLetter: 'I am passionate about creating user-centric products...',
                 skills: ['Prototyping', 'User Research', 'Interaction Design'],
             },
             {
@@ -145,8 +138,7 @@ export const jobs: {
                 graduation: '2017',
                 currentJob: 'Product Designer',
                 experience: '3 years',
-                coverLetter:
-                    'I am passionate about creating user-centric products...',
+                coverLetter: 'I am passionate about creating user-centric products...',
                 skills: ['Prototyping', 'User Research', 'Interaction Design'],
             },
             {
@@ -158,8 +150,7 @@ export const jobs: {
                 graduation: '2017',
                 currentJob: 'Product Designer',
                 experience: '3 years',
-                coverLetter:
-                    'I am passionate about creating user-centric products...',
+                coverLetter: 'I am passionate about creating user-centric products...',
                 skills: ['Prototyping', 'User Research', 'Interaction Design'],
             },
             {
@@ -171,8 +162,7 @@ export const jobs: {
                 graduation: '2017',
                 currentJob: 'Product Designer',
                 experience: '3 years',
-                coverLetter:
-                    'I am passionate about creating user-centric products...',
+                coverLetter: 'I am passionate about creating user-centric products...',
                 skills: ['Prototyping', 'User Research', 'Interaction Design'],
             },
             {
@@ -184,8 +174,7 @@ export const jobs: {
                 graduation: '2017',
                 currentJob: 'Product Designer',
                 experience: '3 years',
-                coverLetter:
-                    'I am passionate about creating user-centric products...',
+                coverLetter: 'I am passionate about creating user-centric products...',
                 skills: ['Prototyping', 'User Research', 'Interaction Design'],
             },
             {
@@ -197,8 +186,7 @@ export const jobs: {
                 graduation: '2017',
                 currentJob: 'Product Designer',
                 experience: '3 years',
-                coverLetter:
-                    'I am passionate about creating user-centric products...',
+                coverLetter: 'I am passionate about creating user-centric products...',
                 skills: ['Prototyping', 'User Research', 'Interaction Design'],
             },
             {
@@ -210,8 +198,7 @@ export const jobs: {
                 graduation: '2017',
                 currentJob: 'Product Designer',
                 experience: '3 years',
-                coverLetter:
-                    'I am passionate about creating user-centric products...',
+                coverLetter: 'I am passionate about creating user-centric products...',
                 skills: ['Prototyping', 'User Research', 'Interaction Design'],
             },
             {
@@ -223,8 +210,7 @@ export const jobs: {
                 graduation: '2017',
                 currentJob: 'Product Designer',
                 experience: '3 years',
-                coverLetter:
-                    'I am passionate about creating user-centric products...',
+                coverLetter: 'I am passionate about creating user-centric products...',
                 skills: ['Prototyping', 'User Research', 'Interaction Design'],
             },
         ],
@@ -245,8 +231,7 @@ export const jobs: {
                 graduation: '2021',
                 currentJob: 'Freelance Designer',
                 experience: '2 years',
-                coverLetter:
-                    'I am excited to apply my design skills to your team...',
+                coverLetter: 'I am excited to apply my design skills to your team...',
                 skills: ['Figma', 'Adobe XD', 'User Testing'],
             },
         ],
@@ -267,8 +252,7 @@ export const jobs: {
                 graduation: '2019',
                 currentJob: 'Frontend Developer',
                 experience: '3 years',
-                coverLetter:
-                    'I am excited to contribute my frontend development skills...',
+                coverLetter: 'I am excited to contribute my frontend development skills...',
                 skills: ['HTML', 'CSS', 'JavaScript', 'React'],
             },
             {
@@ -280,8 +264,7 @@ export const jobs: {
                 graduation: '2017',
                 currentJob: 'Web Developer',
                 experience: '5 years',
-                coverLetter:
-                    'I believe my experience makes me a great fit for this role...',
+                coverLetter: 'I believe my experience makes me a great fit for this role...',
                 skills: ['Angular', 'TypeScript', 'Responsive Design'],
             },
         ],
@@ -302,8 +285,7 @@ export const jobs: {
                 graduation: '2018',
                 currentJob: 'Data Analyst',
                 experience: '4 years',
-                coverLetter:
-                    'I am excited to apply my data analysis skills to your team...',
+                coverLetter: 'I am excited to apply my data analysis skills to your team...',
                 skills: ['SQL', 'Python', 'Power BI', 'Tableau'],
             },
         ],
@@ -1280,3 +1262,5 @@ export const countries = [
         part_of: ['FI'],
     },
 ];
+
+export const APPLICANTS_DEFAULT_PAGE_SIZE = 5;

@@ -2,22 +2,17 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import '../../node_modules/react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 import { EditorState } from 'draft-js';
-const Editor = dynamic(
-    () => import('react-draft-wysiwyg').then((mod) => mod.Editor),
-    { ssr: false }
-);
+const Editor = dynamic(() => import('react-draft-wysiwyg').then((mod) => mod.Editor), {
+    ssr: false,
+});
 
 interface EditorElementProps {
     content: EditorState;
-    setContent: (content: EditorState) => void;
+    onValueChange: (content: EditorState) => void;
     placeholder: string;
 }
 
-export const EditorElement: React.FC<EditorElementProps> = ({
-    content,
-    setContent,
-    placeholder,
-}) => {
+export const EditorElement: React.FC<EditorElementProps> = ({ content, onValueChange, placeholder }) => {
     return (
         <div className='editor-container'>
             <Editor
@@ -29,7 +24,7 @@ export const EditorElement: React.FC<EditorElementProps> = ({
                     borderRadius: '5px',
                 }}
                 placeholder={placeholder}
-                onEditorStateChange={setContent}
+                onEditorStateChange={onValueChange}
                 toolbarClassName='toolbar-class'
                 wrapperClassName='wrapper-class'
                 editorClassName='editor-class'

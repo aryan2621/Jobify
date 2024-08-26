@@ -10,31 +10,19 @@ export async function POST(request: NextRequest) {
         const { username, password } = body as LoginUserRequest;
         const users = await fetchUserByUsername(username);
         if (users.documents.length === 0) {
-            return NextResponse.json(
-                { message: 'User not found' },
-                { status: 404 }
-            );
+            return NextResponse.json({ message: 'User not found' }, { status: 404 });
         }
         if (users.documents.length > 1) {
-            return NextResponse.json(
-                { message: 'Multiple users found' },
-                { status: 409 }
-            );
+            return NextResponse.json({ message: 'Multiple users found' }, { status: 409 });
         }
         const user = users.documents[0];
-        console.log(user.password, password);
         const isPasswordValid = bcryptjs.compareSync(password, user.password);
         if (!isPasswordValid) {
-            return NextResponse.json(
-                { message: 'Invalid password' },
-                { status: 401 }
-            );
+            return NextResponse.json({ message: 'Invalid password' }, { status: 401 });
         }
-        const token = jwt.sign(
-            { id: user.id },
-            process.env.NEXT_PUBLIC_JWT_SECRET!,
-            { expiresIn: '1d' }
-        );
+        const token = jwt.sign({ id: user.id }, process.env.NEXT_PUBLIC_JWT_SECRET!, {
+            expiresIn: '1d',
+        });
         const response = NextResponse.json({ token }, { status: 200 });
 
         response.cookies.set('token', token, {
@@ -44,11 +32,6 @@ export async function POST(request: NextRequest) {
         });
         return response;
     } catch (error) {
-        return NextResponse.json(
-            {
-                message: 'Error while signing in, please try again later',
-            },
-            { status: 500 }
-        );
+        return NextResponse.json({ message: 'Error while signing in, please try again later' }, { status: 500 });
     }
 }
