@@ -7,7 +7,7 @@ import NavbarLayout from '@/layouts/navbar';
 import { Job } from '@/model/job';
 import ky from 'ky';
 import ApplicationS from '@/components/ui/application';
-import LoadingSkeleton from '@/elements/post-skeleton';
+import { LoadingSkeleton } from '@/elements/post-skeleton';
 import Link from 'next/link';
 import { SendIcon } from 'lucide-react';
 

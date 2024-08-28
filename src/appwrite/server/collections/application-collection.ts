@@ -2,6 +2,7 @@ import { IndexType, Permission, Role } from 'node-appwrite';
 import { DB_NAME, APPLICATION_COLLECTION } from '../../name';
 import { database } from '../config';
 import { Application, ApplicationStatus, Gender, JobSource } from '@/model/application';
+import { Query } from 'appwrite';
 
 function createApplicationCollection() {
     database
@@ -32,7 +33,7 @@ function createApplicationCollection() {
                 ),
                 database.createStringAttribute(DB_NAME, APPLICATION_COLLECTION, 'resume', 50, true),
                 database.createStringAttribute(DB_NAME, APPLICATION_COLLECTION, 'socialLinks', 200, true),
-                database.createStringAttribute(DB_NAME, APPLICATION_COLLECTION, 'coverLetter', 50, true),
+                database.createStringAttribute(DB_NAME, APPLICATION_COLLECTION, 'coverLetter', 200, true),
                 database.createEnumAttribute(
                     DB_NAME,
                     APPLICATION_COLLECTION,
@@ -90,4 +91,23 @@ async function createApplicationDocument(application: Application) {
     }
 }
 
-export { createApplicationCollection, createApplicationDocument };
+async function fetchApplicationById(id: string) {
+    try {
+        return await database.getDocument(DB_NAME, APPLICATION_COLLECTION, id);
+    } catch (error) {
+        console.log('Error fetching application by id', error);
+        throw error;
+    }
+}
+
+async function fetchApplicationsByJobId(jobId: string) {
+    try {
+        const records = await database.listDocuments(DB_NAME, APPLICATION_COLLECTION, [Query.equal('jobId', jobId)]);
+        return records.documents;
+    } catch (error) {
+        console.log('Error fetching application by job id', error);
+        throw error;
+    }
+}
+
+export { createApplicationCollection, createApplicationDocument, fetchApplicationsByJobId, fetchApplicationById };

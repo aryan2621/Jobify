@@ -112,7 +112,7 @@ async function setApplicationIdToJob(jobId: string, applicationId: string) {
         const job = await fetchJobById(jobId);
         job.applications.push(applicationId);
         return await database.updateDocument(DB_NAME, JOB_COLLECTION, job.id, {
-            applications: job.applications,
+            applications: Array.from(new Set(job.applications)),
         });
     } catch (error) {
         console.log('Error setting application id to job', error);

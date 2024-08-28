@@ -8,7 +8,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Switch } from '@/components/ui/switch';
 import { v4 as uuidv4 } from 'uuid';
-import { ChromeIcon, EyeIcon, EyeOffIcon } from '@/elements/icon';
+import { EyeIcon, EyeOffIcon } from '@/elements/icon';
 import { FormEvent, ChangeEvent, useState } from 'react';
 import { User } from '@/model/user';
 import ky from 'ky';
@@ -237,12 +237,6 @@ export default function Component() {
                                 required
                             />
                             <Label htmlFor='terms'>I agree to the Terms and Conditions</Label>
-                        </div>
-                        <div className='flex items-center justify-between'>
-                            <Button variant='outline' className='px-4 py-2' type='button'>
-                                <ChromeIcon className='mr-2 h-4 w-4' />
-                                Sign up with Google
-                            </Button>
                         </div>
                         <Button type='submit' className='w-full' disabled={loading}>
                             {loading ? (

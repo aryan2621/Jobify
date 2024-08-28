@@ -8,15 +8,25 @@ export async function middleware(request: NextRequest) {
     await Promise.all([getOrCreateDatabase(), getOrCreateStorage()]);
     const publicPaths = ['/login', '/signup', '/forgot-password', '/reset-password'];
     const isPublicPath = publicPaths.includes(path);
-    const token = request.cookies.get('token');
+    const token = request.cookies?.get('token');
+
     if (isPublicPath && token) {
-        return NextResponse.redirect(new URL('/', request.nextUrl).toString());
+        return NextResponse.redirect(new URL('/', request.url));
     }
     if (!isPublicPath && !token) {
-        return NextResponse.redirect(new URL('/login', request.nextUrl).toString());
+        return NextResponse.redirect(new URL('/login', request.url));
     }
 }
 
 export const config = {
-    matcher: ['/', '/login', '/signup', '/forgot-password', '/reset-password'],
+    matcher: [
+        '/analytics',
+        '/login',
+        '/signup',
+        '/posts',
+        '/post',
+        '/applications',
+        '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
+        '/',
+    ],
 };

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChromeIcon, EyeIcon, EyeOffIcon } from '@/elements/icon';
+import { EyeIcon, EyeOffIcon } from '@/elements/icon';
 import { Switch } from '@/components/ui/switch';
 import { FormEvent, useState } from 'react';
 import { LoginUserRequest } from '@/model/request';
@@ -100,12 +100,6 @@ export default function Component() {
                                 }}
                             >
                                 {showPassword ? <EyeOffIcon className='w-5 h-5' /> : <EyeIcon className='w-5 h-5' />}
-                            </Button>
-                        </div>
-                        <div className='flex items-center justify-between'>
-                            <Button variant='outline' className='px-4 py-2'>
-                                <ChromeIcon className='mr-2 h-4 w-4' />
-                                Sign in with Google
                             </Button>
                         </div>
                         <Button disabled={loading} type='submit' className='w-full'>

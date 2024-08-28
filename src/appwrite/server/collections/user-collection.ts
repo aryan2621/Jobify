@@ -113,7 +113,7 @@ async function setApplicationToUser(userId: string, applicationId: string) {
         const user = await fetchUserByUserId(userId);
         user.applications.push(applicationId);
         return await database.updateDocument(DB_NAME, USER_COLLECTION, userId, {
-            applications: user.applications,
+            applications: Array.from(new Set(user.applications)),
         });
     } catch (error) {
         console.log('Error setting application to user', error);
@@ -126,7 +126,7 @@ async function setJobToUser(userId: string, jobId: string) {
         const user = await fetchUserByUserId(userId);
         user.jobs.push(jobId);
         return await database.updateDocument(DB_NAME, USER_COLLECTION, userId, {
-            jobs: user.jobs,
+            jobs: Array.from(new Set(user.jobs)),
         });
     } catch (error) {
         console.log('Error setting job to user', error);

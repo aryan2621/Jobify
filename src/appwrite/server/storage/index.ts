@@ -41,7 +41,7 @@ async function uploadResume(file: File) {
 }
 async function getResume(fileId: string) {
     try {
-        return await storage.getFile(RESUME_STORAGE, fileId);
+        return await storage.getFileDownload(RESUME_STORAGE, fileId);
     } catch (error) {
         console.log('Error getting resume', error);
         throw error;

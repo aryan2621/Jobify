@@ -6,6 +6,11 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { APPLICANTS_DEFAULT_PAGE_SIZE } from '@/utils';
+import { Application } from '@/model/application';
+import ky from 'ky';
+import { LoadingApplicationSkeleton } from '@/elements/application-skeleton';
+import { getResume } from '@/appwrite/server/storage';
+import { Badge } from './badge';
 
 interface ApplicationsProps {
     job: Job;
@@ -13,8 +18,10 @@ interface ApplicationsProps {
 
 export default function Component({ job }: ApplicationsProps) {
     const [currentPage, setCurrentPage] = useState(1);
-    const [selectedApplicant, setSelectedApplicant] = useState<any>(null);
+    const [selectedApplications, setSelectedApplications] = useState<Application | null>(null);
+    const [fetchingApplications, setfetchingApplications] = useState(false);
     const [applications, setApplications] = useState<any[]>(job.applications ?? []);
+    const [fetchingResume, setFetchingResume] = useState(false);
 
     const applicantsPerPage = APPLICANTS_DEFAULT_PAGE_SIZE;
     const indexOfLastApplicant = currentPage * applicantsPerPage;
@@ -24,106 +31,172 @@ export default function Component({ job }: ApplicationsProps) {
 
     useEffect(() => {
         setCurrentPage(1);
-        setSelectedApplicant(null);
+        setSelectedApplications(null);
         setApplications(job.applications ?? []);
-    }, [job]);
+        fetchApplications();
+    }, [job.id]);
+
+    const fetchResume = async (resume: string) => {
+        try {
+            setFetchingResume(true);
+            const file = await getResume(resume);
+            const blob = new Blob([file], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        } catch (error) {
+            console.log('Error fetching resume', error);
+        } finally {
+            setFetchingResume(false);
+        }
+    };
+
+    const fetchApplications = async () => {
+        try {
+            setfetchingApplications(true);
+            const response = await ky.get(`/api/applications?jobId=${job.id}`).json();
+            setApplications(
+                (response as any[]).map(
+                    (application) =>
+                        new Application(
+                            application.id,
+                            application.firstName,
+                            application.lastName,
+                            application.email,
+                            application.phone,
+                            application.currentLocation,
+                            application.gender,
+                            JSON.parse(application.education),
+                            JSON.parse(application.experience),
+                            JSON.parse(application.skills),
+                            application.source,
+                            application.resume,
+                            JSON.parse(application.socialLinks),
+                            application.coverLetter,
+                            application.status,
+                            application.jobId,
+                            application.createdAt,
+                            application.createdBy
+                        )
+                )
+            );
+        } catch (error) {
+            console.log('Error fetching applicants', error);
+        } finally {
+            setfetchingApplications(false);
+        }
+    };
 
     return (
         <div>
             {applications.length > 0 ? (
                 <div>
-                    <h3 className='text-lg font-medium mb-4'>Applicants</h3>
-                    <div className='space-y-4'>
-                        {currentApplicants.map((applicant: any, index: number) => (
-                            <div
-                                key={index}
-                                className='border rounded-md p-4 cursor-pointer hover:bg-muted'
-                                onClick={() => setSelectedApplicant(applicant)}
-                            >
-                                <div className='flex items-center justify-between'>
-                                    <div>
-                                        <h4 className='font-medium'>{applicant.name}</h4>
-                                        <p className='text-sm text-muted-foreground'>{applicant.email}</p>
+                    {fetchingApplications ? (
+                        <LoadingApplicationSkeleton />
+                    ) : (
+                        <>
+                            <div className='space-y-4'>
+                                {currentApplicants.map((applicant: Application, index: number) => (
+                                    <div
+                                        key={index}
+                                        className='border rounded-md p-4 cursor-pointer hover:bg-muted'
+                                        onClick={() => setSelectedApplications(applicant)}
+                                    >
+                                        <div className='flex items-center justify-between'>
+                                            <div>
+                                                <h4 className='font-medium'>
+                                                    {applicant.firstName} {applicant.lastName}
+                                                </h4>
+                                                <p className='text-sm text-muted-foreground'>{applicant.email}</p>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className='flex justify-center mt-4'>
-                        <Pagination>
-                            <PaginationContent>
-                                <PaginationItem>
-                                    <PaginationPrevious
-                                        onClick={() => setCurrentPage(currentPage > 1 ? currentPage - 1 : 1)}
-                                        className={`cursor-pointer ${currentPage === 1 ? 'cursor-not-allowed' : ''}`}
-                                    />
-                                </PaginationItem>
-                                {Array.from({ length: totalPages }, (_, i) => (
-                                    <PaginationItem key={i + 1}>
-                                        <PaginationLink
-                                            isActive={currentPage === i + 1}
-                                            onClick={() => setCurrentPage(i + 1)}
-                                            className='cursor-pointer'
-                                        >
-                                            {i + 1}
-                                        </PaginationLink>
-                                    </PaginationItem>
                                 ))}
-                                <PaginationItem>
-                                    <PaginationNext
-                                        onClick={() => setCurrentPage(currentPage < totalPages ? currentPage + 1 : totalPages)}
-                                        className={`cursor-pointer ${currentPage === totalPages ? 'cursor-not-allowed' : ''}`}
-                                    />
-                                </PaginationItem>
-                            </PaginationContent>
-                        </Pagination>
-                    </div>
+                            </div>
 
-                    {selectedApplicant && (
-                        <Dialog open onOpenChange={() => setSelectedApplicant(null)}>
+                            <div className='flex justify-center mt-4'>
+                                <Pagination>
+                                    <PaginationContent>
+                                        <PaginationItem>
+                                            <PaginationPrevious
+                                                onClick={() => setCurrentPage(currentPage > 1 ? currentPage - 1 : 1)}
+                                                className={`cursor-pointer ${currentPage === 1 ? 'cursor-not-allowed' : ''}`}
+                                            />
+                                        </PaginationItem>
+                                        {Array.from({ length: totalPages }, (_, i) => (
+                                            <PaginationItem key={i + 1}>
+                                                <PaginationLink
+                                                    isActive={currentPage === i + 1}
+                                                    onClick={() => setCurrentPage(i + 1)}
+                                                    className='cursor-pointer'
+                                                >
+                                                    {i + 1}
+                                                </PaginationLink>
+                                            </PaginationItem>
+                                        ))}
+                                        <PaginationItem>
+                                            <PaginationNext
+                                                onClick={() => setCurrentPage(currentPage < totalPages ? currentPage + 1 : totalPages)}
+                                                className={`cursor-pointer ${currentPage === totalPages ? 'cursor-not-allowed' : ''}`}
+                                            />
+                                        </PaginationItem>
+                                    </PaginationContent>
+                                </Pagination>
+                            </div>
+                        </>
+                    )}
+
+                    {selectedApplications && (
+                        <Dialog open onOpenChange={() => setSelectedApplications(null)}>
                             <DialogContent className='p-6 max-w-2xl'>
                                 <DialogHeader>
-                                    <DialogTitle>{selectedApplicant.name}</DialogTitle>
-                                    <DialogDescription>{selectedApplicant.email}</DialogDescription>
+                                    <DialogTitle>
+                                        {selectedApplications.firstName} {selectedApplications.lastName}
+                                    </DialogTitle>
+                                    <DialogDescription>{selectedApplications.email}</DialogDescription>
                                 </DialogHeader>
                                 <div className='grid gap-4'>
                                     <div className='flex items-center justify-between'>
                                         <div>
                                             <h5 className='text-xs font-medium'>Phone</h5>
-                                            <p className='text-sm'>{selectedApplicant.phone}</p>
+                                            <p className='text-sm'>{selectedApplications.phone}</p>
                                         </div>
                                         <div>
                                             <h5 className='text-xs font-medium'>Country</h5>
-                                            <p className='text-sm'>{selectedApplicant.country}</p>
+                                            <p className='text-sm'>{selectedApplications.currentLocation}</p>
                                         </div>
                                     </div>
                                     <div>
                                         <h5 className='text-xs font-medium'>Resume</h5>
-                                        <a
-                                            href={selectedApplicant.resumeLink}
-                                            target='_blank'
-                                            rel='noopener noreferrer'
-                                            className='text-sm text-blue-600'
-                                        >
-                                            View Resume
-                                        </a>
+                                        <Button onClick={() => fetchResume(selectedApplications.resume)}>Download Resume</Button>
+                                    </div>
+                                    <div>
+                                        <h5 className='text-xs font-medium'>Education</h5>
+                                        {selectedApplications.education.map((edu: any, idx: number) => (
+                                            <p className='text-sm' key={idx}>
+                                                {edu.degreeType} in {edu.degree} from {edu.college}, SGPA{' '}
+                                                <Badge variant='secondary'>{edu.sgpa}</Badge>
+                                            </p>
+                                        ))}
                                     </div>
                                     <div>
                                         <h5 className='text-xs font-medium'>Experience</h5>
-                                        <p className='text-sm'>{selectedApplicant.experience}</p>
-                                    </div>
-                                    <div>
-                                        <h5 className='text-xs font-medium'>Current Job</h5>
-                                        <p className='text-sm'>{selectedApplicant.currentJob}</p>
+                                        {selectedApplications.experience.map((exp: any, idx: number) => (
+                                            <p className='text-sm' key={idx}>
+                                                {exp.profile} at {exp.company} ({exp.startDate} - {exp.isCurrent ? 'Present' : exp.endDate})
+                                            </p>
+                                        ))}
                                     </div>
                                     <div>
                                         <h5 className='text-xs font-medium'>Skills</h5>
-                                        <p className='text-sm'>{selectedApplicant.skills.join(', ')}</p>
+                                        {selectedApplications.skills.map((skill: string, idx: number) => (
+                                            <Badge key={idx} variant='secondary' className='text-sm mr-1'>
+                                                {skill}
+                                            </Badge>
+                                        ))}
                                     </div>
                                     <div>
                                         <h5 className='text-xs font-medium'>Cover Letter</h5>
-                                        <p className='text-sm'>{selectedApplicant.coverLetter}</p>
+                                        <p className='text-sm'>{selectedApplications.coverLetter}</p>
                                     </div>
                                 </div>
                                 <DialogClose asChild>

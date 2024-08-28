@@ -1,6 +1,6 @@
 export const LoadingApplyFormSkeleton = () => (
     <>
-        <div className='col-span-1 w-full'>
+        <div className='col-span-1 rounded-lg w-full'>
             <div className='border'>
                 <div className='flex flex-col space-y-1.5 p-6'>
                     <h3 className='leading-none tracking-tight'>
@@ -176,5 +176,3 @@ const Skeleton = ({ className }: { className: string }) => (
 );
 
 const SVGSkeleton = ({ className }: { className: string }) => <svg className={className + ' animate-pulse rounded bg-gray-300'} />;
-
-export { Skeleton, SVGSkeleton };

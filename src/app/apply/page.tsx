@@ -20,8 +20,9 @@ import { toast } from '@/components/ui/use-toast';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Job } from '@/model/job';
-import { LoadingApplyFormSkeleton } from '@/components/ui/apply';
+import { LoadingApplyFormSkeleton } from '@/elements/apply-skeleton';
 import JobComponent from '@/elements/job';
+import { uploadResume } from '@/appwrite/server/storage';
 
 export default function Component() {
     const searchParams = useSearchParams();
@@ -162,11 +163,9 @@ export default function Component() {
             return;
         }
         const file = files[0];
-        const body = new FormData();
-        body.append('file', file);
         try {
-            const res = (await ky.post('/api/upload', { body: body }).json()) as any;
-            setFormData({ ...formData, resume: res.id });
+            const id = await uploadResume(file);
+            setFormData({ ...formData, resume: id });
         } catch (error) {
             console.log('Error uploading file', error);
         }
@@ -541,7 +540,7 @@ const EducationForm = ({
                 </SelectContent>
             </Select>
             <div>
-                <Label htmlFor='marks'>Marks/SGPA</Label>
+                <Label htmlFor='marks'>Marks /SGPA</Label>
                 <div className='flex gap-2'>
                     <Slider
                         defaultValue={[education.sgpa]}
