@@ -3,6 +3,7 @@ import { DB_NAME, APPLICATION_COLLECTION } from '../../name';
 import { database } from '../config';
 import { Application, ApplicationStatus, Gender, JobSource } from '@/model/application';
 import { Query } from 'appwrite';
+import { UserApplicationsRequest } from '@/model/request';
 
 function createApplicationCollection() {
     database
@@ -33,7 +34,7 @@ function createApplicationCollection() {
                 ),
                 database.createStringAttribute(DB_NAME, APPLICATION_COLLECTION, 'resume', 50, true),
                 database.createStringAttribute(DB_NAME, APPLICATION_COLLECTION, 'socialLinks', 200, true),
-                database.createStringAttribute(DB_NAME, APPLICATION_COLLECTION, 'coverLetter', 200, true),
+                database.createStringAttribute(DB_NAME, APPLICATION_COLLECTION, 'coverLetter', 300, true),
                 database.createEnumAttribute(
                     DB_NAME,
                     APPLICATION_COLLECTION,
@@ -110,4 +111,33 @@ async function fetchApplicationsByJobId(jobId: string) {
     }
 }
 
-export { createApplicationCollection, createApplicationDocument, fetchApplicationsByJobId, fetchApplicationById };
+async function updateApplicationStatus(jobId: string, applicationId: string, status: ApplicationStatus) {
+    try {
+        return await database.updateDocument(DB_NAME, APPLICATION_COLLECTION, applicationId, {
+            status: status,
+        });
+    } catch (error) {
+        console.log('Error updating application status', error);
+        throw error;
+    }
+}
+
+async function fetchApplicationsByUserId(userId: string) {
+    try {
+        const queries = [Query.equal('createdBy', userId)];
+        const records = await database.listDocuments(DB_NAME, APPLICATION_COLLECTION, queries);
+        return records.documents;
+    } catch (error) {
+        console.log('Error fetching applications by user id', error);
+        throw error;
+    }
+}
+
+export {
+    createApplicationCollection,
+    createApplicationDocument,
+    fetchApplicationsByJobId,
+    fetchApplicationById,
+    updateApplicationStatus,
+    fetchApplicationsByUserId,
+};

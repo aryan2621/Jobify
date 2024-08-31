@@ -1,3 +1,4 @@
+import { Application, ApplicationStatus, DegreeType, Education, Experience, Gender, JobSource } from '@/model/application';
 export const jobs: {
     title: string;
     company: string;
@@ -289,6 +290,82 @@ export const jobs: {
                 skills: ['SQL', 'Python', 'Power BI', 'Tableau'],
             },
         ],
+    },
+];
+
+// Dummy data
+export const dummyApplications: Application[] = [
+    {
+        id: '1',
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'john.doe@example.com',
+        phone: '+1234567890',
+        currentLocation: 'New York, USA',
+        gender: Gender.Male,
+        education: [
+            new Education('MIT', 'Computer Science', DegreeType.BACHELOR, 3.8),
+            new Education('Stanford', 'Data Science', DegreeType.MASTER, 3.9),
+        ],
+        experience: [
+            new Experience('Software Engineer', 'Tech Corp', 'Tech Corp', false, '2018-06-01', '2022-05-31', 4),
+            new Experience('Senior Developer', 'Innovate Inc', 'Innovate Inc', true, '2022-06-01', '', 2),
+        ],
+        skills: ['JavaScript', 'React', 'Node.js', 'Python', 'Machine Learning'],
+        source: JobSource.LINKEDIN,
+        resume: 'resume_link_1.pdf',
+        socialLinks: ['https://linkedin.com/in/johndoe', 'https://github.com/johndoe'],
+        coverLetter: 'I am excited to apply for this position...',
+        status: ApplicationStatus.APPLIED,
+        jobId: 'JOB001',
+        createdAt: '2023-08-15T10:00:00Z',
+        createdBy: 'SYSTEM',
+    },
+    {
+        id: '2',
+        firstName: 'Jane',
+        lastName: 'Smith',
+        email: 'jane.smith@example.com',
+        phone: '+1987654321',
+        currentLocation: 'San Francisco, USA',
+        gender: Gender.Female,
+        education: [
+            new Education('Harvard', 'Business Administration', DegreeType.BACHELOR, 3.7),
+            new Education('Wharton', 'MBA', DegreeType.MASTER, 3.9),
+        ],
+        experience: [
+            new Experience('Marketing Associate', 'Global Marketing', 'Global Marketing', false, '2019-07-01', '2022-06-30', 3),
+            new Experience('Marketing Manager', 'Brand Leaders', 'Brand Leaders', true, '2022-07-01', '', 1),
+        ],
+        skills: ['Digital Marketing', 'SEO', 'Content Strategy', 'Data Analysis'],
+        source: JobSource.REFERRAL,
+        resume: 'resume_link_2.pdf',
+        socialLinks: ['https://linkedin.com/in/janesmith'],
+        coverLetter: 'With my experience in digital marketing...',
+        status: ApplicationStatus.SELECTED,
+        jobId: 'JOB002',
+        createdAt: '2023-08-16T14:30:00Z',
+        createdBy: 'SYSTEM',
+    },
+    {
+        id: '3',
+        firstName: 'Alex',
+        lastName: 'Johnson',
+        email: 'alex.johnson@example.com',
+        phone: '+1122334455',
+        currentLocation: 'Chicago, USA',
+        gender: Gender.Other,
+        education: [new Education('University of Chicago', 'Data Science', DegreeType.BACHELOR, 3.6)],
+        experience: [new Experience('Data Analyst', 'Data Insights Co', 'Data Insights Co', false, '2020-01-01', '2023-04-30', 3)],
+        skills: ['SQL', 'Python', 'Tableau', 'Machine Learning'],
+        source: JobSource.JOB_PORTAL,
+        resume: 'resume_link_3.pdf',
+        socialLinks: ['https://linkedin.com/in/alexjohnson', 'https://github.com/alexj'],
+        coverLetter: 'I am passionate about leveraging data to drive business decisions...',
+        status: ApplicationStatus.REJECTED,
+        jobId: 'JOB003',
+        createdAt: '2023-08-17T09:15:00Z',
+        createdBy: 'SYSTEM',
     },
 ];
 
@@ -1264,3 +1341,27 @@ export const countries = [
 ];
 
 export const APPLICANTS_DEFAULT_PAGE_SIZE = 5;
+export const REJECTION_EMAIL_CONTENT = `
+Dear {firstName} {lastName},
+
+Thank you for applying for {jobTitle} role at {company}. After careful review, we won’t be moving forward with you. We appreciate your time & encourage you to apply for future. Best wishes in your job search.
+
+Sincerely,
+{company} Recruitment Team
+`;
+export const INTERVIEW_EMAIL_CONTENT = `
+    Dear {firstName} {lastName},
+
+Congratulations! You've been selected to advance in recruitment process for {jobTitle} position at {company}. We'll contact you soon to schedule next steps. Thank you for your interest, and we look forward to speak with you.
+
+Best, {company} Recruitment Team
+    `;
+export const SELECTION_EMAIL_CONTENT = `
+    Dear {firstName} {lastName},
+
+Congrats! You’ve been selected to move forward for the {jobTitle} role at {company}. Your experience impressed us. We’ll contact you soon. Look out for an email with details. Thanks for your interest!
+
+Best,
+{company} Recruitment Team
+    `;
+export const EMAIL_SUBJECT = 'Application Status Update';

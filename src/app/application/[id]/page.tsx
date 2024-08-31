@@ -5,8 +5,6 @@ import NavbarLayout from '@/layouts/navbar';
 import React, { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { EditorElement } from '@/elements/editor';
-import { EditorState } from 'draft-js';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { countries } from '@/utils';
 import { Switch } from '@/components/ui/switch';
@@ -18,33 +16,44 @@ import { v4 as uuidv4 } from 'uuid';
 import ky from 'ky';
 import { toast } from '@/components/ui/use-toast';
 import { ReloadIcon } from '@radix-ui/react-icons';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Job } from '@/model/job';
 import { LoadingApplyFormSkeleton } from '@/elements/apply-skeleton';
 import JobComponent from '@/elements/job';
 import { uploadResume } from '@/appwrite/server/storage';
+import { Textarea } from '@/components/ui/textarea';
 
-export default function Component() {
-    const searchParams = useSearchParams();
+export default function Component({ params }: { params: { id: string } }) {
+    const { id } = params;
     const router = useRouter();
     const [job, setJob] = useState<Job | null>(null);
-    const id = searchParams?.has('id') ? searchParams.get('id') : null;
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
-    if (!id) {
-        return (
-            <NavbarLayout>
-                <div className='flex items-center justify-center h-[calc(100vh-4rem)]'>
-                    <div className='flex flex-col items-center space-y-4'>
-                        <p className='text-lg font-semibold'>Invalid Application ID</p>
-                        <Button className='text-white px-4 py-2 rounded' onClick={() => router.push('/posts')}>
-                            Go back to the posts page
-                        </Button>
-                    </div>
-                </div>
-            </NavbarLayout>
-        );
-    }
+    const [submitted, setSubmitted] = useState(false);
+    const [formData, setFormData] = useState<Application>(
+        new Application(
+            uuidv4(),
+            '',
+            '',
+            '',
+            '',
+            '',
+            Gender.Male,
+            [new Education('', '', DegreeType.BACHELOR, 0)],
+            [new Experience('', '', '', false, '', '', 0)],
+            [],
+            JobSource.ANGEL_LIST,
+            '',
+            [''],
+            '',
+            ApplicationStatus.APPLIED,
+            '',
+            new Date().toISOString(),
+            ''
+        )
+    );
+    const [page, setPage] = useState(1);
+    const [selectedCountry, setSelectedCountry] = useState('+91');
 
     useEffect(() => {
         const fetchJob = async () => {
@@ -61,6 +70,21 @@ export default function Component() {
         setLoading(true);
         fetchJob();
     }, [id]);
+
+    if (!id) {
+        return (
+            <NavbarLayout>
+                <div className='flex items-center justify-center h-[calc(100vh-4rem)]'>
+                    <div className='flex flex-col items-center space-y-4'>
+                        <p className='text-lg font-semibold'>Invalid Application ID</p>
+                        <Button className='text-white px-4 py-2 rounded' onClick={() => router.push('/posts')}>
+                            Go back to the posts page
+                        </Button>
+                    </div>
+                </div>
+            </NavbarLayout>
+        );
+    }
 
     const validateApplication = (data: Application) => {
         if (!data.firstName) {
@@ -105,7 +129,7 @@ export default function Component() {
         try {
             validateApplication(formData);
             setSubmitting(true);
-            await ky.post('/api/apply', {
+            await ky.post('/api/application', {
                 json: {
                     ...formData,
                     education: JSON.stringify(formData.education),
@@ -118,7 +142,7 @@ export default function Component() {
                 title: 'Application Submitted',
                 description: 'Your application has been submitted successfully',
             });
-            router.push('/applications');
+            setSubmitted(true);
         } catch (error: any) {
             toast({
                 title: 'Error while submitting application',
@@ -128,32 +152,6 @@ export default function Component() {
             setSubmitting(false);
         }
     };
-
-    const [formData, setFormData] = useState<Application>(
-        new Application(
-            uuidv4(),
-            '',
-            '',
-            '',
-            '',
-            '',
-            Gender.Male,
-            [new Education('', '', DegreeType.BACHELOR, 0)],
-            [new Experience('', '', '', false, '', '', 0)],
-            [],
-            JobSource.ANGEL_LIST,
-            '',
-            [''],
-            '',
-            ApplicationStatus.APPLIED,
-            '',
-            new Date().toISOString(),
-            ''
-        )
-    );
-    const [page, setPage] = useState(1);
-    const [coverLetter, setCoverLetter] = useState(EditorState.createEmpty());
-    const [selectedCountry, setSelectedCountry] = useState('+91');
 
     const nextPage = () => setPage((prev) => prev + 1);
     const prevPage = () => setPage((prev) => prev - 1);
@@ -187,7 +185,7 @@ export default function Component() {
                             <div className='col-span-2 w-full'>
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle>Job Application Form</CardTitle>
+                                        <CardTitle>Application Form</CardTitle>
                                         <CardDescription>Fill out the form to apply for a job. Page {page} of 5</CardDescription>
                                     </CardHeader>
                                     <CardContent>
@@ -244,21 +242,17 @@ export default function Component() {
                                                     <div>
                                                         <Label htmlFor='phone'>Phone Number</Label>
                                                         <div className='flex gap-2'>
-                                                            <Select value={selectedCountry} onValueChange={(value) => setSelectedCountry(value)}>
-                                                                <SelectTrigger className='w-[100px]'>
-                                                                    <SelectValue placeholder='Country' />
-                                                                </SelectTrigger>
-                                                                <SelectContent>
-                                                                    {countries.map((country) => (
-                                                                        <SelectItem
-                                                                            key={`${country.code}-${country.dial_code}`}
-                                                                            value={country.dial_code}
-                                                                        >
-                                                                            {country.flag} {country.dial_code}
-                                                                        </SelectItem>
-                                                                    ))}
-                                                                </SelectContent>
-                                                            </Select>
+                                                            <select
+                                                                value={selectedCountry}
+                                                                onChange={(e) => setSelectedCountry(e.target.value)}
+                                                                className='w-[100px] p-2 border border-gray-300 rounded'
+                                                            >
+                                                                {countries.map((country, index) => (
+                                                                    <option key={index} value={country.dial_code}>
+                                                                        {country.flag} {country.dial_code}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
 
                                                             <Input
                                                                 id='phone'
@@ -426,15 +420,14 @@ export default function Component() {
                                             {page === 5 && (
                                                 <div>
                                                     <Label htmlFor='cover-letter'>Cover Letter</Label>
-                                                    <EditorElement
-                                                        content={coverLetter}
-                                                        onValueChange={(content) => {
-                                                            setCoverLetter(content);
+                                                    <Textarea
+                                                        value={formData.coverLetter}
+                                                        onChange={(e) =>
                                                             setFormData({
                                                                 ...formData,
-                                                                coverLetter: content.getCurrentContent().getPlainText(),
-                                                            });
-                                                        }}
+                                                                coverLetter: e.target.value,
+                                                            })
+                                                        }
                                                         placeholder='Write a cover letter'
                                                     />
                                                 </div>
@@ -450,14 +443,14 @@ export default function Component() {
                                                     </Button>
                                                 )}
                                                 {page === 5 && (
-                                                    <Button disabled={submitting} type='submit'>
+                                                    <Button disabled={submitting || submitted} type='submit'>
                                                         {submitting ? (
                                                             <>
                                                                 <ReloadIcon className='mr-2 h-4 w-4 animate-spin' />
                                                                 {'Submitting...'}
                                                             </>
                                                         ) : (
-                                                            <>Submit</>
+                                                            <>{submitted ? 'Submitted' : 'Submit'}</>
                                                         )}
                                                     </Button>
                                                 )}

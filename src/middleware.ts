@@ -19,14 +19,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: [
-        '/analytics',
-        '/login',
-        '/signup',
-        '/posts',
-        '/post',
-        '/applications',
-        '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
-        '/',
-    ],
+    matcher: ['/analytics', '/login', '/signup', '/posts', '/post', '/applications', '/'],
 };

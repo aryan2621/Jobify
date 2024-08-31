@@ -49,10 +49,10 @@ export default function Component() {
         if (user.password !== user.confirmPassword) {
             throw new Error('Password and Confirm Password do not match.');
         }
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,10}$/;
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{10,15}$/;
         if (!passwordRegex.test(user.password)) {
             throw new Error(
-                'Password must be 8-10 characters long, with at least one lowercase letter, one uppercase letter, one digit, and one special character.'
+                'Password must be 10-15 characters long, with at least one lowercase letter, one uppercase letter, one digit, and one special character.'
             );
         }
 

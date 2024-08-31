@@ -2,8 +2,8 @@
 
 import { Tabs, TabsList, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import NavbarLayout from '@/layouts/navbar';
-import { ApplicationAnalyticsComponent } from '@/pages/analytics/application';
-import { JobAnalyticsComponent } from '@/pages/analytics/job';
+import ApplicationAnalyticsComponent from '@/pages/analytics/application';
+import JobAnalyticsComponent from '@/pages/analytics/job';
 
 export default function Component() {
     return (

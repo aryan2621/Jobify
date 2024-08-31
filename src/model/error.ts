@@ -1,3 +1,12 @@
+export const isRecognisedError = (error: any) => {
+    return (
+        error instanceof DuplicateError ||
+        error instanceof NotFoundError ||
+        error instanceof UnauthorizedError ||
+        error instanceof ForbiddenError ||
+        error instanceof BadRequestError
+    );
+};
 export class DuplicateError extends Error {
     statusCode = 409;
     constructor(message: string) {

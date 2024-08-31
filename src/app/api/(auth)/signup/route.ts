@@ -2,6 +2,7 @@ import { createUserDocument } from '@/appwrite/server/collections/user-collectio
 import { User } from '@/model/user';
 import { NextRequest, NextResponse } from 'next/server';
 import bcryptjs from 'bcryptjs';
+import { isRecognisedError } from '@/model/error';
 
 export async function POST(req: NextRequest) {
     try {
@@ -25,6 +26,9 @@ export async function POST(req: NextRequest) {
         await createUserDocument(user);
         return NextResponse.json({ message: 'User created' }, { status: 201 });
     } catch (error) {
+        if (isRecognisedError(error)) {
+            return NextResponse.json({ message: error.message }, { status: error.statusCode });
+        }
         return NextResponse.json({ message: 'Error while creating user' }, { status: 500 });
     }
 }

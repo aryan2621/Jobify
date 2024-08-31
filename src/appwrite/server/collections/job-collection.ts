@@ -16,7 +16,7 @@ function createJobCollection() {
             return Promise.all([
                 database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'id', 50, true),
                 database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'profile', 50, true),
-                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'description', 50, false),
+                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'description', 200, false),
                 database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'company', 20, true),
                 database.createEnumAttribute(
                     DB_NAME,
@@ -35,9 +35,9 @@ function createJobCollection() {
 
                 database.createDatetimeAttribute(DB_NAME, JOB_COLLECTION, 'lastDateToApply', true),
                 database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'location', 50, true),
-                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'skills', 200, false, undefined, true),
-                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'rejectionContent', 50, true),
-                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'selectionContent', 50, true),
+                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'skills', 200, true),
+                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'rejectionContent', 300, true),
+                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'selectionContent', 300, true),
                 database.createDatetimeAttribute(DB_NAME, JOB_COLLECTION, 'createdAt', true),
                 database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'createdBy', 50, true),
                 database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'applications', 200, false, undefined, true),
@@ -92,7 +92,8 @@ async function fetchJobById(id: string) {
 }
 async function fetchAllJobs() {
     try {
-        return await database.listDocuments(DB_NAME, JOB_COLLECTION);
+        const posts = await database.listDocuments(DB_NAME, JOB_COLLECTION);
+        return posts.documents;
     } catch (error) {
         console.log('Error fetching all jobs', error);
         throw error;

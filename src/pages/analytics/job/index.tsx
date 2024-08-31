@@ -31,7 +31,7 @@ const chartConfig: { [key: string]: { label: string; color: string } } = {
     },
 };
 
-function JobAnalyticsComponent() {
+export default function JobAnalyticsComponent() {
     const totalVisitors = combinedData.reduce((acc, curr) => acc + curr.desktop + curr.mobile + curr.tablet, 0);
     const [timeRange, setTimeRange] = useState('7d');
 
@@ -96,14 +96,8 @@ function JobAnalyticsComponent() {
                                         outerRadius={90}
                                     >
                                         <Label
-                                            content={({
-                                                viewBox,
-                                            }: {
-                                                viewBox: {
-                                                    cx: number;
-                                                    cy: number;
-                                                };
-                                            }) => {
+                                            content={(props: any) => {
+                                                const { viewBox } = props;
                                                 if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
                                                     return (
                                                         <text x={viewBox.cx} y={viewBox.cy} textAnchor='middle' dominantBaseline='middle'>
@@ -201,5 +195,3 @@ function JobAnalyticsComponent() {
         </Card>
     );
 }
-
-export { JobAnalyticsComponent };

@@ -1,6 +1,6 @@
-const LoadingSkeleton = () => {
+export default function LoadingPostSkeleton() {
     return (
-        <div className='border rounded-lg overflow-hidden'>
+        <div className='border rounded-xl'>
             <div className='space-y-1.5 p-6 flex flex-row justify-between'>
                 <div>
                     <h3 className='leading-none tracking-tight'>
@@ -40,12 +40,10 @@ const LoadingSkeleton = () => {
             </div>
         </div>
     );
-};
+}
 
 const Skeleton = ({ className }: { className: string }) => (
     <div aria-live='polite' aria-busy='true' className={className}>
         <span className='inline-flex w-full animate-pulse select-none rounded-md bg-gray-300 leading-none'>‌</span>
     </div>
 );
-
-export { LoadingSkeleton };

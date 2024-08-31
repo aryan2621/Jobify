@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AreaChart, Area, BarChart, Bar, PieChart, Pie, XAxis, CartesianGrid, Label } from 'recharts';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { TrendingUp } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Application } from '@/model/application';
+import ky from 'ky';
 
 const combinedData = [
     { date: '2024-07-15', desktop: 450, mobile: 300, tablet: 200 },
@@ -18,27 +20,75 @@ const combinedData = [
 
 const chartConfig: { [key: string]: { label: string; color: string } } = {
     desktop: {
-        label: 'Desktop',
+        label: 'Accepted',
         color: 'hsl(var(--chart-1))',
     },
     mobile: {
-        label: 'Mobile',
+        label: 'Rejected',
         color: 'hsl(var(--chart-3))',
     },
     tablet: {
-        label: 'Tablet',
+        label: 'Pending',
         color: 'hsl(var(--chart-5))',
     },
 };
 
-function ApplicationAnalyticsComponent() {
-    const totalVisitors = combinedData.reduce((acc, curr) => acc + curr.desktop + curr.mobile + curr.tablet, 0);
+interface BarChartValue {
+    accepted: number;
+    rejected: number;
+    pending: number;
+}
+
+interface BarChartData {
+    date: string;
+}
+
+export default function ApplicationAnalyticsComponent() {
+    const [applications, setApplications] = useState<Application[]>([]);
+    const [total, setTotal] = useState(0);
+    const [fetching, setFetching] = useState(false);
     const [timeRange, setTimeRange] = useState('7d');
 
     const formatDate = (value: string | number | Date, format: 'short' | 'long') => {
         const options = format === 'short' ? { weekday: 'short' as const } : { month: 'short' as const, day: 'numeric' as const };
         return new Date(value).toLocaleDateString('en-US', options);
     };
+
+    const fetchApplications = async () => {
+        const res = await ky.get('/api/user-applications').json();
+        setApplications(
+            ((res as any[]) ?? []).map(
+                (app) =>
+                    new Application(
+                        app.id,
+                        app.firstName,
+                        app.lastName,
+                        app.email,
+                        app.phone,
+                        app.currentLocation,
+                        app.gender,
+                        JSON.parse(app.education),
+                        JSON.parse(app.experience),
+                        JSON.parse(app.skills),
+                        app.source,
+                        app.resume,
+                        JSON.parse(app.socialLinks),
+                        app.coverLetter,
+                        app.status,
+                        app.jobId,
+                        app.createdAt,
+                        app.createdBy
+                    )
+            )
+        );
+        setFetching(false);
+        setTotal(applications.length);
+    };
+
+    useEffect(() => {
+        setFetching(true);
+        fetchApplications();
+    }, []);
 
     return (
         <Card className='space-y-6'>
@@ -58,7 +108,7 @@ function ApplicationAnalyticsComponent() {
                                         tickLine={false}
                                         tickMargin={10}
                                         axisLine={false}
-                                        tickFormatter={(value: string | number | Date) => formatDate(value, 'short')}
+                                        // tickFormatter={(value: string | number | Date) => formatDate(value, 'short')}
                                     />
                                     <Bar dataKey='desktop' stackId='a' fill={chartConfig.desktop.color} radius={[0, 0, 4, 4]} />
                                     <Bar dataKey='mobile' stackId='a' fill={chartConfig.mobile.color} radius={[0, 0, 0, 0]} />
@@ -96,19 +146,13 @@ function ApplicationAnalyticsComponent() {
                                         outerRadius={90}
                                     >
                                         <Label
-                                            content={({
-                                                viewBox,
-                                            }: {
-                                                viewBox: {
-                                                    cx: number;
-                                                    cy: number;
-                                                };
-                                            }) => {
+                                            content={(props: any) => {
+                                                const { viewBox } = props;
                                                 if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
                                                     return (
                                                         <text x={viewBox.cx} y={viewBox.cy} textAnchor='middle' dominantBaseline='middle'>
                                                             <tspan x={viewBox.cx} y={viewBox.cy} className='fill-foreground text-3xl font-bold'>
-                                                                {totalVisitors}
+                                                                {total}
                                                             </tspan>
                                                             <tspan x={viewBox.cx} y={viewBox.cy + 24} className='fill-muted-foreground'>
                                                                 Total
@@ -134,22 +178,6 @@ function ApplicationAnalyticsComponent() {
                             <CardTitle>Device Usage Over Time</CardTitle>
                             <CardDescription>Trends in desktop, mobile, and tablet usage</CardDescription>
                         </div>
-                        <Select value={timeRange} onValueChange={setTimeRange}>
-                            <SelectTrigger className='w-[160px] rounded-lg sm:ml-auto' aria-label='Select a value'>
-                                <SelectValue placeholder='Last 7 days' />
-                            </SelectTrigger>
-                            <SelectContent className='rounded-xl'>
-                                <SelectItem value='7d' className='rounded-lg'>
-                                    Last 7 days
-                                </SelectItem>
-                                <SelectItem value='30d' className='rounded-lg'>
-                                    Last 30 days
-                                </SelectItem>
-                                <SelectItem value='90d' className='rounded-lg'>
-                                    Last 3 months
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
                     </CardHeader>
                     <CardContent className='px-2 pt-4 sm:px-6 sm:pt-6'>
                         <ChartContainer config={chartConfig} className='aspect-auto h-[250px] w-full'>
@@ -201,5 +229,3 @@ function ApplicationAnalyticsComponent() {
         </Card>
     );
 }
-
-export { ApplicationAnalyticsComponent };

@@ -1,6 +1,6 @@
 export const LoadingApplicationSkeleton = () => (
-    <div className='space-y-4 rounded-lg'>
-        <div className='border p-4'>
+    <div className='border rounded-md'>
+        <div className=' p-4'>
             <div className='flex items-center justify-between'>
                 <div>
                     <h4>
@@ -21,5 +21,3 @@ const Skeleton = ({ className }: { className: string }) => (
         <br />
     </div>
 );
-
-const SVGSkeleton = ({ className }: { className: string }) => <svg className={className + ' animate-pulse rounded bg-gray-300'} />;

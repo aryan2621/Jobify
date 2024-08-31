@@ -1,16 +1,16 @@
-'use client';
-
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Job } from '@/model/job';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { APPLICANTS_DEFAULT_PAGE_SIZE } from '@/utils';
-import { Application } from '@/model/application';
+import { Application, ApplicationStatus } from '@/model/application';
 import ky from 'ky';
 import { LoadingApplicationSkeleton } from '@/elements/application-skeleton';
 import { getResume } from '@/appwrite/server/storage';
 import { Badge } from './badge';
+import { toast } from './use-toast';
+import { Check, X } from 'lucide-react';
 
 interface ApplicationsProps {
     job: Job;
@@ -19,7 +19,7 @@ interface ApplicationsProps {
 export default function Component({ job }: ApplicationsProps) {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedApplications, setSelectedApplications] = useState<Application | null>(null);
-    const [fetchingApplications, setfetchingApplications] = useState(false);
+    const [fetchingApplications, setFetchingApplications] = useState(false);
     const [applications, setApplications] = useState<any[]>(job.applications ?? []);
     const [fetchingResume, setFetchingResume] = useState(false);
 
@@ -52,8 +52,8 @@ export default function Component({ job }: ApplicationsProps) {
 
     const fetchApplications = async () => {
         try {
-            setfetchingApplications(true);
-            const response = await ky.get(`/api/applications?jobId=${job.id}`).json();
+            setFetchingApplications(true);
+            const response = await ky.get(`/api/job-applications?jobId=${job.id}`).json();
             setApplications(
                 (response as any[]).map(
                     (application) =>
@@ -72,7 +72,7 @@ export default function Component({ job }: ApplicationsProps) {
                             application.resume,
                             JSON.parse(application.socialLinks),
                             application.coverLetter,
-                            application.status,
+                            application.status as ApplicationStatus,
                             application.jobId,
                             application.createdAt,
                             application.createdBy
@@ -82,7 +82,25 @@ export default function Component({ job }: ApplicationsProps) {
         } catch (error) {
             console.log('Error fetching applicants', error);
         } finally {
-            setfetchingApplications(false);
+            setFetchingApplications(false);
+        }
+    };
+    const updateApplicationStatus = async (jobId: string, applicationId: string, status: ApplicationStatus) => {
+        try {
+            setApplications(applications.map((app) => (app.id === applicationId ? { ...app, status } : app)));
+            setSelectedApplications((prev) => (prev ? { ...prev, status } : null));
+            await ky.put('/api/application', {
+                json: { jobId, applicationId, status },
+            });
+            toast({
+                title: 'Application status updated successfully',
+                description: `Application status updated to ${status}. An email has been sent to the applicant.`,
+            });
+        } catch (error) {
+            toast({
+                title: 'Error updating application status',
+                description: 'Error updating application status. Please try again later.',
+            });
         }
     };
 
@@ -108,6 +126,7 @@ export default function Component({ job }: ApplicationsProps) {
                                                 </h4>
                                                 <p className='text-sm text-muted-foreground'>{applicant.email}</p>
                                             </div>
+                                            <Badge>{applicant.status}</Badge>
                                         </div>
                                     </div>
                                 ))}
@@ -167,15 +186,17 @@ export default function Component({ job }: ApplicationsProps) {
                                     </div>
                                     <div>
                                         <h5 className='text-xs font-medium'>Resume</h5>
-                                        <Button onClick={() => fetchResume(selectedApplications.resume)}>Download Resume</Button>
+                                        <Button onClick={() => fetchResume(selectedApplications.resume)}>
+                                            {fetchingResume ? 'Downloading...' : 'Download Resume'}
+                                        </Button>
                                     </div>
                                     <div>
                                         <h5 className='text-xs font-medium'>Education</h5>
                                         {selectedApplications.education.map((edu: any, idx: number) => (
-                                            <p className='text-sm' key={idx}>
+                                            <div className='text-sm' key={idx}>
                                                 {edu.degreeType} in {edu.degree} from {edu.college}, SGPA{' '}
                                                 <Badge variant='secondary'>{edu.sgpa}</Badge>
-                                            </p>
+                                            </div>
                                         ))}
                                     </div>
                                     <div>
@@ -197,6 +218,23 @@ export default function Component({ job }: ApplicationsProps) {
                                     <div>
                                         <h5 className='text-xs font-medium'>Cover Letter</h5>
                                         <p className='text-sm'>{selectedApplications.coverLetter}</p>
+                                    </div>
+                                    <div>
+                                        <h5 className='text-xs font-medium'>Update Status</h5>
+                                        <div className='flex space-x-2 mt-2'>
+                                            <Button
+                                                onClick={() => updateApplicationStatus(job.id, selectedApplications.id, ApplicationStatus.SELECTED)}
+                                                disabled={selectedApplications.status === ApplicationStatus.SELECTED}
+                                            >
+                                                <Check className='mr-2 h-4 w-4' /> Approve
+                                            </Button>
+                                            <Button
+                                                onClick={() => updateApplicationStatus(job.id, selectedApplications.id, ApplicationStatus.REJECTED)}
+                                                disabled={selectedApplications.status === ApplicationStatus.REJECTED}
+                                            >
+                                                <X className='mr-2 h-4 w-4' /> Reject
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                                 <DialogClose asChild>

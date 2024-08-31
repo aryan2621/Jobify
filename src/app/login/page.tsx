@@ -27,10 +27,10 @@ export default function Component() {
         if (!req.password) {
             throw new Error('Password cannot be empty.');
         }
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,10}$/;
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{10,15}$/;
         if (!passwordRegex.test(req.password)) {
             throw new Error(
-                'Password must be 8-10 characters long, with at least one lowercase letter, one uppercase letter, one digit, and one special character.'
+                'Password must be 10-15 characters long, with at least one lowercase letter, one uppercase letter, one digit, and one special character.'
             );
         }
     };

@@ -8,7 +8,7 @@ export default function Component() {
     const currentYear = new Date().getFullYear();
     return (
         <div className='flex flex-col min-h-[100dvh]'>
-            <header className='px-4 lg:px-6 h-14 flex items-center'>
+            <header className='px-4 lg:px-6 h-14 flex items-center border-b'>
                 <Link href='/' className='flex items-center justify-center' prefetch={false}>
                     <BriefcaseIcon className='h-6 w-6' />
                     <span className='sr-only'>Job Board</span>
@@ -26,7 +26,7 @@ export default function Component() {
                 </nav>
             </header>
             <main className='flex-1'>
-                <section className='w-full py-12 md:py-24 lg:py-32 bg-black'>
+                <section className='w-full py-12 md:py-24 lg:py-32'>
                     <div className='container px-4 md:px-6'>
                         <div className='grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]'>
                             <div className='flex flex-col justify-center space-y-4'>
@@ -43,7 +43,6 @@ export default function Component() {
                                         href='/posts'
                                         className='inline-flex h-10 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50'
                                         prefetch={false}
-                                        target='_blank'
                                     >
                                         Apply for Jobs
                                     </Link>
@@ -51,7 +50,6 @@ export default function Component() {
                                         href='/post'
                                         className='inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-8 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50'
                                         prefetch={false}
-                                        target='_blank'
                                     >
                                         Post a Job
                                     </Link>
@@ -71,7 +69,7 @@ export default function Component() {
                     <div className='container px-4 md:px-6'>
                         <div className='flex flex-col items-center justify-center space-y-4 text-center'>
                             <div className='space-y-2'>
-                                <div className='inline-block rounded-lg bg-black text-white px-3 py-1 text-sm'>Featured Jobs</div>
+                                <div className='inline-block rounded-lg text-white px-3 py-1 text-sm'>Featured Jobs</div>
                                 <h2 className='text-3xl font-bold tracking-tighter sm:text-5xl'>Explore Top Job Opportunities</h2>
                                 <p className='max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed'>
                                     Browse through our curated list of the best job openings in your industry.
@@ -145,7 +143,7 @@ export default function Component() {
                         </div>
                     </div>
                 </section>
-                <section className='w-full py-12 md:py-24 lg:py-32 bg-black'>
+                <section className='w-full py-12 md:py-24 lg:py-32'>
                     <div className='container px-4 md:px-6'>
                         <div className='flex flex-col items-center justify-center space-y-4 text-center'>
                             <div className='space-y-1'>
@@ -184,11 +182,11 @@ export default function Component() {
                         </div>
                     </div>
                 </section>
-                <section className='w-full py-12 md:py-24 lg:py-32 border-t'>
+                <section className='w-full py-12 md:py-24 lg:py-32'>
                     <div className='container px-4 md:px-6'>
                         <div className='flex flex-col items-center justify-center space-y-4 text-center'>
                             <div className='space-y-2'>
-                                <div className='inline-block rounded-lg bg-black px-3 py-1 text-sm text-white'>Trusted by Thousands</div>
+                                <div className='inline-block rounded-lg px-3 py-1 text-sm text-white'>Trusted by Thousands</div>
                                 <h2 className='text-3xl font-bold tracking-tighter sm:text-5xl'>Join the Best Companies</h2>
                                 <p className='max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed'>
                                     Our job board is trusted by leading companies across industries. Post your job and connect with top talent today.
@@ -215,7 +213,7 @@ export default function Component() {
                         </div>
                     </div>
                 </section>
-                <section className='w-full py-12 md:py-24 lg:py-32 bg-black'>
+                <section className='w-full py-12 md:py-24 lg:py-32'>
                     <div className='container px-4 md:px-6'>
                         <div className='flex flex-col items-center justify-center space-y-4 text-center mb-12'>
                             <div className='space-y-2'>

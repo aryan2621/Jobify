@@ -3,7 +3,7 @@ import { database } from '../config';
 import { DB_NAME, USER_COLLECTION } from '@/appwrite/name';
 import { User } from '@/model/user';
 import { Query } from 'appwrite';
-import { DuplicateError, InternalServerError } from '@/model/error';
+import { DuplicateError } from '@/model/error';
 
 function createUserCollection() {
     database
@@ -49,27 +49,21 @@ async function createUserDocument(user: User) {
         let user1, user2, user3;
         try {
             [user1, user2, user3] = await Promise.all([
-                fetchUserByEmail(user.email)
-                    .then((res) => {
-                        if (res.documents.length > 0) {
-                            throw new DuplicateError('Email already exists');
-                        }
-                    })
-                    .catch((error) => {}),
-                fetchUserByUsername(user.username)
-                    .then((res) => {
-                        if (res.documents.length > 0) {
-                            throw new DuplicateError('Username already exists');
-                        }
-                    })
-                    .catch((error) => {}),
-                fetchUserByUserId(user.id)
-                    .then((res) => {
-                        if (res) {
-                            throw new DuplicateError('User already exists');
-                        }
-                    })
-                    .catch((error) => {}),
+                fetchUserByEmail(user.email).then((res) => {
+                    if (res.documents.length > 0) {
+                        throw new DuplicateError('Email already exists');
+                    }
+                }),
+                fetchUserByUsername(user.username).then((res) => {
+                    if (res.documents.length > 0) {
+                        throw new DuplicateError('Username already exists');
+                    }
+                }),
+                fetchUserByUserId(user.id).then((res) => {
+                    if (res) {
+                        throw new DuplicateError('User already exists');
+                    }
+                }),
             ]);
         } catch (error) {
             if (error instanceof DuplicateError) {

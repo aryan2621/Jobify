@@ -6,38 +6,17 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { CalendarIcon, FileIcon, TrophyIcon } from '@/elements/icon';
 import { FormEvent, useState } from 'react';
-import { EditorElement } from '@/elements/editor';
-import { EditorState, ContentState, convertFromHTML } from 'draft-js';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import NavbarLayout from '@/layouts/navbar';
-import { predefinedSkills } from '@/utils';
+import { SELECTION_EMAIL_CONTENT, REJECTION_EMAIL_CONTENT, predefinedSkills } from '@/utils';
 import { Job, JobType, WorkplaceTypes } from '@/model/job';
 import ky from 'ky';
 import { toast } from '@/components/ui/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import { ReloadIcon } from '@radix-ui/react-icons';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function Component() {
-    const [jobDescription, setJobDescription] = useState(EditorState.createEmpty());
-    const [rejectionContent, setRejectionContent] = useState(
-        EditorState.createWithContent(
-            ContentState.createFromBlockArray(
-                convertFromHTML(
-                    '<p> Thank you for applying.We have gone through your application and regret to inform you that we are not proceeding with your application at this time. All the best for your future endeavors. </p>'
-                ).contentBlocks
-            )
-        )
-    );
-    const [selectionContent, setSelectionContent] = useState(
-        EditorState.createWithContent(
-            ContentState.createFromBlockArray(
-                convertFromHTML(
-                    '<p> Congratulations! We are pleased to inform you that you have been selected for the further process. We are excited to have you on board and look forward to working with you. </p>'
-                ).contentBlocks
-            )
-        )
-    );
-
     const isDateAlreadyPassed = (date: string) => {
         return new Date(date) < new Date();
     };
@@ -69,6 +48,7 @@ export default function Component() {
         }
     };
     const [loading, setLoading] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
     const [formData, setFormData] = useState<Job>(
         new Job(
             uuidv4(),
@@ -80,8 +60,8 @@ export default function Component() {
             '',
             '',
             [],
-            rejectionContent.getCurrentContent().getPlainText(),
-            selectionContent.getCurrentContent().getPlainText(),
+            REJECTION_EMAIL_CONTENT,
+            SELECTION_EMAIL_CONTENT,
             new Date().toISOString(),
             '',
             []
@@ -136,8 +116,9 @@ export default function Component() {
             });
             toast({
                 title: 'Success',
-                description: `Job posted successfully, visit Posts Tab to view all the job`,
+                description: `Job posted successfully, redirecting to Posts page`,
             });
+            setSubmitted(true);
         } catch (error: any) {
             toast({
                 title: 'Error while posting job',
@@ -153,7 +134,7 @@ export default function Component() {
                 <div className='col-span-2 space-y-6'>
                     <Card className='max-w-3xl mx-auto'>
                         <CardHeader>
-                            <CardTitle>Job Application Form</CardTitle>
+                            <CardTitle>Job Form</CardTitle>
                             <CardDescription>Fill out the form to post for a job.</CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -193,16 +174,17 @@ export default function Component() {
 
                                         <div className='grid gap-2'>
                                             <Label htmlFor='job-description'>Job Description</Label>
-                                            <EditorElement
-                                                content={jobDescription}
-                                                onValueChange={(content) => {
-                                                    setJobDescription(content);
+                                            <Textarea
+                                                id='job-description'
+                                                placeholder='Enter job description here'
+                                                value={formData.description}
+                                                onChange={(e) =>
                                                     setFormData({
                                                         ...formData,
-                                                        description: content.getCurrentContent().getPlainText(),
-                                                    });
-                                                }}
-                                                placeholder='Enter job description here'
+                                                        description: e.target.value,
+                                                    })
+                                                }
+                                                rows={8}
                                             />
                                         </div>
 
@@ -381,31 +363,33 @@ export default function Component() {
                                     <>
                                         <div className='grid gap-2'>
                                             <Label htmlFor='job-description'>Rejection Content</Label>
-                                            <EditorElement
-                                                content={rejectionContent}
-                                                onValueChange={(content) => {
-                                                    setRejectionContent(content);
+                                            <Textarea
+                                                id='rejection-content'
+                                                placeholder='Enter rejection content here'
+                                                value={formData.rejectionContent}
+                                                onChange={(e) =>
                                                     setFormData({
                                                         ...formData,
-                                                        rejectionContent: content.getCurrentContent().getPlainText(),
-                                                    });
-                                                }}
-                                                placeholder='Enter rejection content here'
+                                                        rejectionContent: e.target.value,
+                                                    })
+                                                }
+                                                rows={8}
                                             />
                                         </div>
 
                                         <div className='grid gap-2'>
                                             <Label htmlFor='job-description'>Selection Content</Label>
-                                            <EditorElement
-                                                content={selectionContent}
-                                                onValueChange={(content) => {
-                                                    setSelectionContent(content);
+                                            <Textarea
+                                                id='selection-content'
+                                                placeholder='Enter selection content here'
+                                                value={formData.selectionContent}
+                                                onChange={(e) =>
                                                     setFormData({
                                                         ...formData,
-                                                        selectionContent: content.getCurrentContent().getPlainText(),
-                                                    });
-                                                }}
-                                                placeholder='Enter selection content here'
+                                                        selectionContent: e.target.value,
+                                                    })
+                                                }
+                                                rows={8}
                                             />
                                         </div>
 
@@ -418,7 +402,7 @@ export default function Component() {
                                                         {'Submitting...'}
                                                     </>
                                                 ) : (
-                                                    <>Submit Job</>
+                                                    <>{submitted ? 'Submitted' : 'Submit Job'}</>
                                                 )}
                                             </Button>
                                         </div>
