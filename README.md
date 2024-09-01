@@ -14,6 +14,13 @@ pnpm dev
 bun dev
 ```
 
+<img width="1440" alt="Screenshot 2024-09-01 at 8 36 02 PM" src="https://github.com/user-attachments/assets/6cdd29be-f53e-4e60-b5eb-215e66f5f081">
+<img width="1440" alt="Screenshot 2024-09-01 at 8 35 42 PM" src="https://github.com/user-attachments/assets/a8a5ee03-150e-47d1-a4fe-537f80a1f0be">
+<img width="1440" alt="Screenshot 2024-09-01 at 8 35 29 PM" src="https://github.com/user-attachments/assets/ebe098a1-34f8-444a-8bd5-e1a9e0c1295f">
+<img width="1440" alt="Screenshot 2024-09-01 at 8 35 17 PM" src="https://github.com/user-attachments/assets/73d9e846-e9d8-4f77-a767-a14886b71b99">
+<img width="1440" alt="Screenshot 2024-09-01 at 8 36 21 PM" src="https://github.com/user-attachments/assets/bad81f91-8a05-49b7-8c38-15e96f481ff1">
+
+
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
