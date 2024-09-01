@@ -59,7 +59,7 @@ export default function Component() {
 
     return (
         <div className='grid grid-cols-1 md:grid-cols-2 items-center justify-center min-h-screen bg-background'>
-            <div className='h-full flex justify-center items-center hidden md:flex bg-black'>
+            <div className='h-full flex justify-center items-center hidden md:flex'>
                 <Image src='/login.jpeg' alt='Signup Image' width={500} height={400} className='object-cover rounded-lg shadow-xl' />
             </div>
             <Card className='w-full max-w-md p-6 space-y-6 mx-auto mt-8 mb-8'>
