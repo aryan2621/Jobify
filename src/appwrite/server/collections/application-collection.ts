@@ -122,7 +122,7 @@ async function updateApplicationStatus(jobId: string, applicationId: string, sta
     }
 }
 
-async function fetchApplicationsByUserId(userId: string) {
+async function fetchApplicationsByUserId(userId: string, request?: UserApplicationsRequest) {
     try {
         const queries = [Query.equal('createdBy', userId)];
         const records = await database.listDocuments(DB_NAME, APPLICATION_COLLECTION, queries);

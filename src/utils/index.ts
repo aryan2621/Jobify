@@ -293,7 +293,6 @@ export const jobs: {
     },
 ];
 
-// Dummy data
 export const dummyApplications: Application[] = [
     {
         id: '1',

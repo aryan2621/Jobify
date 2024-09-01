@@ -9,11 +9,11 @@ export class LoginUserRequest {
 export class UserApplicationsRequest {
     pageSize: number;
     lastRecordId: string;
-    foward: boolean;
+    forward: boolean;
 
-    constructor(pageSize: number, lastRecordId: string, foward: boolean) {
+    constructor(pageSize: number, lastRecordId: string, forward: boolean) {
         this.pageSize = pageSize;
         this.lastRecordId = lastRecordId;
-        this.foward = foward;
+        this.forward = forward;
     }
 }

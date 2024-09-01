@@ -5,49 +5,29 @@ import { AreaChart, Area, BarChart, Bar, PieChart, Pie, XAxis, CartesianGrid, La
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { TrendingUp } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Application } from '@/model/application';
+import { Application, ApplicationStatus } from '@/model/application';
 import ky from 'ky';
-
-const combinedData = [
-    { date: '2024-07-15', desktop: 450, mobile: 300, tablet: 200 },
-    { date: '2024-07-16', desktop: 380, mobile: 420, tablet: 300 },
-    { date: '2024-07-17', desktop: 520, mobile: 120, tablet: 400 },
-    { date: '2024-07-18', desktop: 140, mobile: 550, tablet: 500 },
-    { date: '2024-07-19', desktop: 600, mobile: 350, tablet: 200 },
-    { date: '2024-07-20', desktop: 480, mobile: 400, tablet: 300 },
-];
+import { LoadingAnalyticsSkeleton } from '@/elements/analytics-skeleton';
 
 const chartConfig: { [key: string]: { label: string; color: string } } = {
-    desktop: {
+    accepted: {
         label: 'Accepted',
         color: 'hsl(var(--chart-1))',
     },
-    mobile: {
+    rejected: {
         label: 'Rejected',
         color: 'hsl(var(--chart-3))',
     },
-    tablet: {
+    pending: {
         label: 'Pending',
         color: 'hsl(var(--chart-5))',
     },
 };
 
-interface BarChartValue {
-    accepted: number;
-    rejected: number;
-    pending: number;
-}
-
-interface BarChartData {
-    date: string;
-}
-
 export default function ApplicationAnalyticsComponent() {
     const [applications, setApplications] = useState<Application[]>([]);
     const [total, setTotal] = useState(0);
     const [fetching, setFetching] = useState(false);
-    const [timeRange, setTimeRange] = useState('7d');
 
     const formatDate = (value: string | number | Date, format: 'short' | 'long') => {
         const options = format === 'short' ? { weekday: 'short' as const } : { month: 'short' as const, day: 'numeric' as const };
@@ -56,33 +36,32 @@ export default function ApplicationAnalyticsComponent() {
 
     const fetchApplications = async () => {
         const res = await ky.get('/api/user-applications').json();
-        setApplications(
-            ((res as any[]) ?? []).map(
-                (app) =>
-                    new Application(
-                        app.id,
-                        app.firstName,
-                        app.lastName,
-                        app.email,
-                        app.phone,
-                        app.currentLocation,
-                        app.gender,
-                        JSON.parse(app.education),
-                        JSON.parse(app.experience),
-                        JSON.parse(app.skills),
-                        app.source,
-                        app.resume,
-                        JSON.parse(app.socialLinks),
-                        app.coverLetter,
-                        app.status,
-                        app.jobId,
-                        app.createdAt,
-                        app.createdBy
-                    )
-            )
+        const apps = ((res as any[]) ?? []).map(
+            (app) =>
+                new Application(
+                    app.id,
+                    app.firstName,
+                    app.lastName,
+                    app.email,
+                    app.phone,
+                    app.currentLocation,
+                    app.gender,
+                    JSON.parse(app.education),
+                    JSON.parse(app.experience),
+                    JSON.parse(app.skills),
+                    app.source,
+                    app.resume,
+                    JSON.parse(app.socialLinks),
+                    app.coverLetter,
+                    app.status,
+                    app.jobId,
+                    app.createdAt,
+                    app.createdBy
+                )
         );
+        setApplications(apps);
+        setTotal(apps.length);
         setFetching(false);
-        setTotal(applications.length);
     };
 
     useEffect(() => {
@@ -90,11 +69,50 @@ export default function ApplicationAnalyticsComponent() {
         fetchApplications();
     }, []);
 
+    const aggregateData = (apps: Application[]) => {
+        const summary = {
+            accepted: 0,
+            rejected: 0,
+            pending: 0,
+        };
+        const dailyData: Record<string, { accepted: number; rejected: number; pending: number }> = {};
+
+        apps.forEach((app) => {
+            const date = formatDate(app.createdAt, 'long');
+            if (!dailyData[date]) {
+                dailyData[date] = { accepted: 0, rejected: 0, pending: 0 };
+            }
+            switch (app.status) {
+                case ApplicationStatus.SELECTED:
+                    dailyData[date].accepted++;
+                    summary.accepted++;
+                    break;
+                case ApplicationStatus.REJECTED:
+                    dailyData[date].rejected++;
+                    summary.rejected++;
+                    break;
+                case ApplicationStatus.APPLIED:
+                    dailyData[date].pending++;
+                    summary.pending++;
+                    break;
+            }
+        });
+
+        return { summary, dailyData: Object.entries(dailyData).map(([date, values]) => ({ date, ...values })) };
+    };
+
+    if (fetching) {
+        return <LoadingAnalyticsSkeleton />;
+    }
+
+    const { summary, dailyData } = aggregateData(applications);
+    console.log('summary', summary, 'dailyData', dailyData);
+
     return (
         <Card className='space-y-6'>
             <CardHeader>
-                <CardTitle>Device Usage Analytics</CardTitle>
-                <CardDescription>Comprehensive view of desktop, mobile, and tablet data</CardDescription>
+                <CardTitle>Application Analytics</CardTitle>
+                <CardDescription>Comprehensive view of application statuses</CardDescription>
             </CardHeader>
 
             <div className='flex flex-col space-y-0'>
@@ -102,17 +120,11 @@ export default function ApplicationAnalyticsComponent() {
                     <div className='flex-1 min-w-[300px]'>
                         <CardContent>
                             <ChartContainer config={chartConfig}>
-                                <BarChart data={combinedData}>
-                                    <XAxis
-                                        dataKey='date'
-                                        tickLine={false}
-                                        tickMargin={10}
-                                        axisLine={false}
-                                        // tickFormatter={(value: string | number | Date) => formatDate(value, 'short')}
-                                    />
-                                    <Bar dataKey='desktop' stackId='a' fill={chartConfig.desktop.color} radius={[0, 0, 4, 4]} />
-                                    <Bar dataKey='mobile' stackId='a' fill={chartConfig.mobile.color} radius={[0, 0, 0, 0]} />
-                                    <Bar dataKey='tablet' stackId='a' fill={chartConfig.tablet.color} radius={[4, 4, 0, 0]} />
+                                <BarChart data={dailyData}>
+                                    <XAxis dataKey='date' tickLine={false} tickMargin={10} axisLine={false} />
+                                    <Bar dataKey='accepted' stackId='a' fill={chartConfig.accepted.color} radius={[0, 0, 4, 4]} />
+                                    <Bar dataKey='rejected' stackId='a' fill={chartConfig.rejected.color} radius={[0, 0, 0, 0]} />
+                                    <Bar dataKey='pending' stackId='a' fill={chartConfig.pending.color} radius={[4, 4, 0, 0]} />
                                     <ChartTooltip content={<ChartTooltipContent />} cursor={false} />
                                 </BarChart>
                             </ChartContainer>
@@ -124,21 +136,9 @@ export default function ApplicationAnalyticsComponent() {
                                 <PieChart>
                                     <Pie
                                         data={[
-                                            {
-                                                name: 'Desktop',
-                                                value: combinedData.reduce((acc, curr) => acc + curr.desktop, 0),
-                                                fill: 'hsl(var(--chart-1))',
-                                            },
-                                            {
-                                                name: 'Mobile',
-                                                value: combinedData.reduce((acc, curr) => acc + curr.mobile, 0),
-                                                fill: 'hsl(var(--chart-3))',
-                                            },
-                                            {
-                                                name: 'Tablet',
-                                                value: combinedData.reduce((acc, curr) => acc + curr.tablet, 0),
-                                                fill: 'hsl(var(--chart-5))',
-                                            },
+                                            { name: 'Accepted', value: summary.accepted, fill: chartConfig.accepted.color },
+                                            { name: 'Rejected', value: summary.rejected, fill: chartConfig.rejected.color },
+                                            { name: 'Pending', value: summary.pending, fill: chartConfig.pending.color },
                                         ]}
                                         dataKey='value'
                                         nameKey='name'
@@ -175,13 +175,13 @@ export default function ApplicationAnalyticsComponent() {
                 <div className='flex flex-col space-y-4'>
                     <CardHeader className='flex items-center gap-2 space-y-0 py-5 sm:flex-row'>
                         <div className='grid flex-1 gap-1 text-center sm:text-left'>
-                            <CardTitle>Device Usage Over Time</CardTitle>
-                            <CardDescription>Trends in desktop, mobile, and tablet usage</CardDescription>
+                            <CardTitle>Application Trends Over Time</CardTitle>
+                            <CardDescription>Trends in accepted, rejected, and pending applications</CardDescription>
                         </div>
                     </CardHeader>
                     <CardContent className='px-2 pt-4 sm:px-6 sm:pt-6'>
                         <ChartContainer config={chartConfig} className='aspect-auto h-[250px] w-full'>
-                            <AreaChart data={combinedData}>
+                            <AreaChart data={dailyData}>
                                 <defs>
                                     {Object.entries(chartConfig).map(([key, value]) => (
                                         <linearGradient key={key} id={`fill${key}`} x1='0' y1='0' x2='0' y2='1'>

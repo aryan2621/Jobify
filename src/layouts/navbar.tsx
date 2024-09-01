@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { BarChartIcon, CircleHelpIcon, ClipboardIcon, FileIcon, InfoIcon, MenuIcon, ProfileIcon } from '@/elements/icon';
-import { BookCopyIcon, BookPlus, HouseIcon, ScrollTextIcon, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { BookCopyIcon, HouseIcon, ScrollTextIcon, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import Link from 'next/link';
 
 interface NavbarLayoutProps {
@@ -45,16 +45,18 @@ const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
                         </SheetTrigger>
                         <SheetContent side='left' className='sm:max-w-xs'>
                             <nav className='grid gap-6 text-lg font-medium'>
-                                <NavItem href='#' icon={<FileIcon className='h-5 w-5' />} label='Job Form' isCollapsed={false} />
+                                <NavItem href='/' icon={<HouseIcon className='h-5 w-5' />} label='Home' isCollapsed={false} />
+                                <NavItem href='/posts' icon={<BookCopyIcon className='h-5 w-5' />} label='Posts' isCollapsed={false} />
                                 <NavItem
-                                    href='/admin-jobs-posted'
-                                    icon={<ClipboardIcon className='h-5 w-5' />}
-                                    label='Jobs Posted'
+                                    href='/applications'
+                                    icon={<ScrollTextIcon className='h-5 w-5' />}
+                                    label='Applications'
                                     isCollapsed={false}
                                 />
-                                <NavItem href='#' icon={<InfoIcon className='h-5 w-5' />} label='Analytics' isCollapsed={false} />
+                                <NavItem href='/post' icon={<FileIcon className='h-5 w-5' />} label='Post' isCollapsed={false} />
+                                <NavItem href='/analytics' icon={<BarChartIcon className='h-5 w-5' />} label='Analytics' isCollapsed={false} />
                                 <NavItem href='/contact' icon={<CircleHelpIcon className='h-5 w-5' />} label='Help and Support' isCollapsed={false} />
-                                <NavItem href='#' icon={<ProfileIcon className='h-5 w-5' />} label='Profile' isCollapsed={false} />
+                                <NavItem href='/user' icon={<ProfileIcon className='h-5 w-5' />} label='Profile' isCollapsed={false} />
                             </nav>
                         </SheetContent>
                     </Sheet>
