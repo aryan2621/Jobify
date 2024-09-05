@@ -7,13 +7,11 @@ export class LoginUserRequest {
     }
 }
 export class UserApplicationsRequest {
-    pageSize: number;
-    lastRecordId: string;
-    forward: boolean;
+    lastId: string | null;
+    limit: number | null;
 
-    constructor(pageSize: number, lastRecordId: string, forward: boolean) {
-        this.pageSize = pageSize;
-        this.lastRecordId = lastRecordId;
-        this.forward = forward;
+    constructor(lastId: string | null, limit: number | null) {
+        this.lastId = lastId;
+        this.limit = limit;
     }
 }

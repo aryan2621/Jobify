@@ -1,7 +1,7 @@
 import { IndexType, Permission, Role } from 'node-appwrite';
 import { database } from '../config';
 import { DB_NAME, USER_COLLECTION } from '@/appwrite/name';
-import { User } from '@/model/user';
+import { User, UserRoles } from '@/model/user';
 import { Query } from 'appwrite';
 import { DuplicateError } from '@/model/error';
 
@@ -24,6 +24,7 @@ function createUserCollection() {
                 database.createDatetimeAttribute(DB_NAME, USER_COLLECTION, 'createdAt', true),
                 database.createStringAttribute(DB_NAME, USER_COLLECTION, 'jobs', 200, false, undefined, true),
                 database.createStringAttribute(DB_NAME, USER_COLLECTION, 'applications', 200, false, undefined, true),
+                database.createEnumAttribute(DB_NAME, USER_COLLECTION, 'roles', [UserRoles.ADMIN, UserRoles.USER], true),
                 database.createBooleanAttribute(DB_NAME, USER_COLLECTION, 'tnC', true),
             ]);
         })
@@ -59,11 +60,18 @@ async function createUserDocument(user: User) {
                         throw new DuplicateError('Username already exists');
                     }
                 }),
-                fetchUserByUserId(user.id).then((res) => {
-                    if (res) {
-                        throw new DuplicateError('User already exists');
-                    }
-                }),
+                fetchUserByUserId(user.id)
+                    .then((res) => {
+                        if (res) {
+                            throw new DuplicateError('User already exists');
+                        }
+                    })
+                    .catch((err) => {
+                        if (err.code === 404) {
+                        } else {
+                            throw err;
+                        }
+                    }),
             ]);
         } catch (error) {
             if (error instanceof DuplicateError) {
@@ -83,6 +91,7 @@ async function createUserDocument(user: User) {
             createdAt: user.createdAt,
             jobs: user.jobs ?? [],
             applications: user.applications ?? [],
+            roles: user.roles ?? [UserRoles.USER],
             tnC: user.tnC,
         });
     } catch (error) {
@@ -100,6 +109,10 @@ async function fetchUserByUsername(username: string) {
 }
 async function fetchUserByUserId(userId: string) {
     return await database.getDocument(DB_NAME, USER_COLLECTION, userId);
+}
+
+async function updateUser(userId: string, user: Partial<User>) {
+    return await database.updateDocument(DB_NAME, USER_COLLECTION, userId, user);
 }
 
 async function setApplicationToUser(userId: string, applicationId: string) {
@@ -128,4 +141,13 @@ async function setJobToUser(userId: string, jobId: string) {
     }
 }
 
-export { createUserCollection, createUserDocument, fetchUserByEmail, fetchUserByUsername, fetchUserByUserId, setApplicationToUser, setJobToUser };
+export {
+    createUserCollection,
+    createUserDocument,
+    fetchUserByEmail,
+    fetchUserByUsername,
+    fetchUserByUserId,
+    setApplicationToUser,
+    setJobToUser,
+    updateUser,
+};

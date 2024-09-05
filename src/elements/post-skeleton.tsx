@@ -1,6 +1,6 @@
 export default function LoadingPostSkeleton() {
     return (
-        <div className='border rounded-xl'>
+        <div className='border rounded-xl mb-2 mt-2'>
             <div className='space-y-1.5 p-6 flex flex-row justify-between'>
                 <div>
                     <h3 className='leading-none tracking-tight'>

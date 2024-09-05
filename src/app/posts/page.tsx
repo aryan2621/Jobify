@@ -1,160 +1,231 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import NavbarLayout from '@/layouts/navbar';
 import { Job } from '@/model/job';
 import ky from 'ky';
-import Application from '@/components/ui/application';
 import LoadingPostSkeleton from '@/elements/post-skeleton';
 import Link from 'next/link';
-import { SendIcon } from 'lucide-react';
+import { Building2, CalendarCheck, Clock, MapPin, Send, SendIcon } from 'lucide-react';
 import { User } from '@/model/user';
 import FiltersPage from '@/elements/filters';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
-export default function Component() {
-    const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [user, setUser] = useState<User | null>(null);
+const useDebounce = (cb: () => void, delay: number) => {
+    const handlerRef = useRef<number | null>(null);
 
-    const handleJobSelection = (job: Job) => {
-        if (selectedJob !== job) {
-            setSelectedJob(job);
-        } else {
-            setSelectedJob(null);
-        }
-    };
+    const debouncedFunction = useCallback(() => {
+        if (handlerRef.current) clearTimeout(handlerRef.current);
 
-    const [jobs, setJobs] = useState<Job[]>([]);
-    useEffect(() => {
-        const fetchJobs = async () => {
-            const res = (await ky.get('/api/posts').json()) as Job[];
-            setJobs(
-                (res ?? []).map(
-                    (job: Job) =>
-                        new Job(
-                            job.id,
-                            job.profile,
-                            job.description,
-                            job.company,
-                            job.type,
-                            job.workplaceType,
-                            job.lastDateToApply,
-                            job.location,
-                            job.skills,
-                            job.rejectionContent,
-                            job.selectionContent,
-                            job.createdAt,
-                            job.createdBy,
-                            job.applications
-                        )
-                )
-            );
-            setLoading(false);
-        };
-        fetchJobs();
-    }, []);
+        handlerRef.current = window.setTimeout(() => {
+            cb();
+            handlerRef.current = null;
+        }, delay);
+    }, [cb, delay]);
 
-    useEffect(() => {
-        const fetchUser = async () => {
-            const res = (await ky.get('/api/me').json()) as User;
-            setUser(res);
-        };
-        fetchUser();
-    }, []);
+    return debouncedFunction;
+};
+const JobDetail = ({ job }: { job: Job | null }) => {
+    if (!job) {
+        return (
+            <Card className='h-full flex items-center justify-center'>
+                <CardContent>
+                    <p className='text-center text-muted-foreground'>Select a job to see details</p>
+                </CardContent>
+            </Card>
+        );
+    }
 
     const formatDate = (date: string) => {
         const d = new Date(date);
-        return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+        return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     };
+
+    return (
+        <Card className='h-full overflow-auto'>
+            <CardHeader>
+                <CardTitle className='text-2xl font-bold'>{job.profile}</CardTitle>
+                <div className='flex items-center space-x-2 text-muted-foreground'>
+                    <Building2 className='h-4 w-4' />
+                    <span>{job.company ?? 'NA'}</span>
+                    <Separator orientation='vertical' className='h-4' />
+                    <MapPin className='h-4 w-4' />
+                    <span>{job.location}</span>
+                </div>
+            </CardHeader>
+            <CardContent className='space-y-6'>
+                <div>
+                    <h3 className='text-lg font-semibold mb-2'>Job Description</h3>
+                    <p className='text-sm text-muted-foreground'>{job.description}</p>
+                </div>
+                <div>
+                    <h3 className='text-lg font-semibold mb-2'>Skills Required</h3>
+                    <div className='flex flex-wrap gap-2'>
+                        {job.skills.map((skill, idx) => (
+                            <Badge key={idx} variant='secondary' className='text-sm'>
+                                {skill}
+                            </Badge>
+                        ))}
+                    </div>
+                </div>
+                <div className='flex flex-col space-y-2 text-sm text-muted-foreground'>
+                    <div className='flex items-center'>
+                        <Clock className='h-4 w-4 mr-2' />
+                        <span>Apply by: {formatDate(job.lastDateToApply)}</span>
+                    </div>
+                    <div className='flex items-center'>
+                        <CalendarCheck className='h-4 w-4 mr-2' />
+                        <span>Posted on: {formatDate(job.createdAt)}</span>
+                    </div>
+                </div>
+            </CardContent>
+            <CardFooter>
+                <Button asChild className='w-full'>
+                    <Link href={`/application/${job.id}`}>
+                        <Send className='h-5 w-5 mr-2' />
+                        Apply Now
+                    </Link>
+                </Button>
+            </CardFooter>
+        </Card>
+    );
+};
+export default function Component() {
+    const limit = 10;
+    const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState<User | null>(null);
+    const [lastId, setLastId] = useState<string | null>(null);
+    const [hasMore, setHasMore] = useState(true);
+    const observerRef = useRef<HTMLDivElement | null>(null);
+    const loadingRef = useRef(false);
+
+    const handleJobSelection = (job: Job) => {
+        setSelectedJob(job);
+    };
+
+    const [jobs, setJobs] = useState<Job[]>([]);
+
+    const fetchJobs = useCallback(async () => {
+        if (loadingRef.current || !hasMore) return;
+
+        setLoading(true);
+        loadingRef.current = true;
+
+        try {
+            const url = '/api/posts?limit=' + limit + (lastId ? '&lastId=' + lastId : '');
+            const res = (await ky.get(url).json()) as Job[];
+            const fetchedJobs = (res ?? []).map(
+                (job: Job) =>
+                    new Job(
+                        job.id,
+                        job.profile,
+                        job.description,
+                        job.company,
+                        job.type,
+                        job.workplaceType,
+                        job.lastDateToApply,
+                        job.location,
+                        job.skills,
+                        job.rejectionContent,
+                        job.selectionContent,
+                        job.createdAt,
+                        job.createdBy,
+                        job.applications
+                    )
+            );
+
+            setJobs((prevJobs) => [...prevJobs, ...fetchedJobs]);
+            setLastId(fetchedJobs.length ? fetchedJobs[fetchedJobs.length - 1].id : null);
+            setHasMore(fetchedJobs.length === limit);
+
+            if (selectedJob === null && fetchedJobs.length > 0) {
+                setSelectedJob(fetchedJobs[0]);
+            }
+        } finally {
+            setLoading(false);
+            loadingRef.current = false;
+        }
+    }, [lastId, hasMore, selectedJob]);
+
+    const debouncedFetchJobs = useDebounce(fetchJobs, 300);
+
+    useEffect(() => {
+        debouncedFetchJobs();
+    }, [debouncedFetchJobs]);
+
+    const fetchUser = useCallback(async () => {
+        const res = (await ky.get('/api/me').json()) as User;
+        setUser(res);
+    }, []);
+
+    useEffect(() => {
+        fetchUser();
+    }, [fetchUser]);
+
+    useEffect(() => {
+        if (!observerRef.current) return;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore) {
+                    debouncedFetchJobs();
+                }
+            },
+            { threshold: 1.0 }
+        );
+        observer.observe(observerRef.current);
+        return () => observer.disconnect();
+    }, [debouncedFetchJobs, hasMore]);
 
     return (
         <NavbarLayout>
             <FiltersPage />
-            {loading ? (
-                <div className='grid grid-cols-1 gap-6 md:grid-cols-3 mt-5'>
-                    <div className='col-span-2 space-y-6'>
-                        {[...Array(3)].map((_, index) => (
-                            <LoadingPostSkeleton key={index} />
-                        ))}
-                    </div>
-                    <div className='hidden md:block'></div>
+            <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mt-5'>
+                <div className='col-span-1 md:col-span-1'>
+                    {loading && jobs.length === 0 ? (
+                        [...Array(3)].map((_, index) => <LoadingPostSkeleton key={index} />)
+                    ) : jobs.length === 0 ? (
+                        <div className='flex flex-col items-center justify-center'>
+                            <h2 className='text-lg font-semibold text-muted-foreground'>No Jobs Found</h2>
+                            <p className='text-sm text-muted-foreground'>
+                                There are no job listings available at the moment. Please check back later.
+                            </p>
+                        </div>
+                    ) : (
+                        jobs.map((job: Job, index: number) => (
+                            <Card
+                                key={index}
+                                onClick={() => handleJobSelection(job)}
+                                className={`cursor-pointer mb-2 mt-2 transition-shadow ${selectedJob?.id === job.id ? 'border-2 border-blue-300' : ''}`}
+                            >
+                                <CardHeader>
+                                    <CardTitle>{job.profile}</CardTitle>
+                                    <CardDescription>
+                                        {job.company ?? 'NA'} - {job.location}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className='flex space-x-2 mb-2'>
+                                        <Badge variant='outline'>{job.type}</Badge>
+                                        <Badge variant='outline'>{job.workplaceType}</Badge>
+                                    </div>
+                                    <p className='text-sm'>{job.description}</p>
+                                </CardContent>
+                            </Card>
+                        ))
+                    )}
+                    <div ref={observerRef} className='h-10'></div>
                 </div>
-            ) : jobs.length === 0 ? (
-                <div className='col-span-full text-center'>
-                    <h2 className='text-lg font-semibold text-muted-foreground'>No Jobs Found</h2>
-                    <p className='text-sm text-muted-foreground'>There are no job listings available at the moment. Please check back later.</p>
-                </div>
-            ) : (
-                <>
-                    <div className='grid grid-cols-1 gap-6 md:grid-cols-3 mt-5'>
-                        {jobs.length === 0 ? (
-                            <div className='col-span-full text-center'>
-                                <h2 className='text-lg font-semibold text-muted-foreground'>No Jobs Found</h2>
-                                <p className='text-sm text-muted-foreground'>
-                                    There are no job listings available at the moment. Please check back later.
-                                </p>
-                            </div>
-                        ) : (
-                            <div className='col-span-2 space-y-6'>
-                                {(jobs ?? []).map((job: Job, index: number) => (
-                                    <Card key={index} onClick={() => handleJobSelection(job)} className='cursor-pointer'>
-                                        <CardHeader className='flex flex-row justify-between'>
-                                            <div>
-                                                <CardTitle>{job.profile}</CardTitle>
-                                                <div className='flex items-center'>
-                                                    <CardDescription>
-                                                        {job.company ?? 'NA'} - {job.location}
-                                                    </CardDescription>
-                                                    <div className='flex items-center ml-4'>
-                                                        <h4 className='text-sm font-medium mr-2'>Applicants</h4>
-                                                        <span className='text-sm text-muted-foreground'>{job.applications.length}</span>
-                                                    </div>
-                                                </div>
-                                                <div className='flex space-x-4 mt-2'>
-                                                    <Badge variant='outline'>{job.type}</Badge>
-                                                    <Badge variant='outline'>{job.workplaceType}</Badge>
-                                                </div>
-                                            </div>
-                                            <div className='text-right'>
-                                                <h4 className='text-sm font-medium'>Last Date to Apply</h4>
-                                                <p className='text-xs text-muted-foreground'>{formatDate(job.lastDateToApply)}</p>
-                                                <p className='text-xs text-muted-foreground'>Posted on: {formatDate(job.createdAt)}</p>
-                                            </div>
-                                        </CardHeader>
-                                        {selectedJob === job && (
-                                            <CardContent className='flex items-start justify-between space-x-4'>
-                                                <div className='flex-1'>
-                                                    <h4 className='text-lg font-semibold mb-2'>About the Role</h4>
-                                                    <p className='text-sm text-muted-foreground'>{job.description}</p>
-                                                    <div className='flex flex-wrap gap-2 mt-2'>
-                                                        {job.skills.map((skill, idx) => (
-                                                            <Badge key={idx} variant='secondary' className='text-sm'>
-                                                                {skill}
-                                                            </Badge>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                                <div className='flex-shrink-0 flex items-end'>
-                                                    <Link
-                                                        href={`/application/${job.id}`}
-                                                        className='bg-black text-white px-4 py-2 rounded flex items-center space-x-2 hover:bg-gray-800 transition-colors'
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        <SendIcon className='h-5 w-5' />
-                                                    </Link>
-                                                </div>
-                                            </CardContent>
-                                        )}
-                                    </Card>
-                                ))}
-                            </div>
-                        )}
-                        {selectedJob && user && selectedJob.createdBy === user.id && <Application job={selectedJob} />}
+
+                {selectedJob && jobs.length > 0 && (
+                    <div className='col-span-1 md:col-span-2 border-l pl-6'>
+                        <JobDetail job={selectedJob} />
                     </div>
-                </>
-            )}
+                )}
+            </div>
         </NavbarLayout>
     );
 }

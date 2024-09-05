@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
             body.createdAt,
             body.jobs,
             body.applications,
+            body.roles,
             body.tnC
         );
         await createUserDocument(user);

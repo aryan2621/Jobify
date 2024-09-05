@@ -122,9 +122,15 @@ async function updateApplicationStatus(jobId: string, applicationId: string, sta
     }
 }
 
-async function fetchApplicationsByUserId(userId: string, request?: UserApplicationsRequest) {
+async function fetchApplicationsByUserId(userId: string, request: UserApplicationsRequest) {
     try {
         const queries = [Query.equal('createdBy', userId)];
+        if (request.lastId) {
+            queries.push(Query.cursorAfter(request.lastId));
+        }
+        if (request.limit) {
+            queries.push(Query.limit(request.limit));
+        }
         const records = await database.listDocuments(DB_NAME, APPLICATION_COLLECTION, queries);
         return records.documents;
     } catch (error) {

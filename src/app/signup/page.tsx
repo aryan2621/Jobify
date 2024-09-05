@@ -9,8 +9,9 @@ import Image from 'next/image';
 import { Switch } from '@/components/ui/switch';
 import { v4 as uuidv4 } from 'uuid';
 import { EyeIcon, EyeOffIcon } from '@/elements/icon';
-import { FormEvent, ChangeEvent, useState } from 'react';
-import { User } from '@/model/user';
+import { FormEvent, useState } from 'react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { User, UserRoles } from '@/model/user';
 import ky from 'ky';
 import { toast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
@@ -18,7 +19,9 @@ import { ReloadIcon } from '@radix-ui/react-icons';
 
 export default function Component() {
     const router = useRouter();
-    const [formData, setFormData] = useState<User>(new User(uuidv4(), '', '', '', '', '', '', new Date().toISOString(), [], [], false));
+    const [formData, setFormData] = useState<User>(
+        new User(uuidv4(), '', '', '', '', '', '', new Date().toISOString(), [], [], [UserRoles.USER], false)
+    );
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -59,6 +62,9 @@ export default function Component() {
         if (!user.tnC) {
             throw new Error('You must agree to the terms and conditions');
         }
+        if (user.roles.length === 0) {
+            throw new Error('You must select a role');
+        }
     };
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -75,6 +81,7 @@ export default function Component() {
             });
             router.push('/login');
         } catch (error: any) {
+            console.log;
             toast({
                 title: 'Error while signing up',
                 description: error.message,
@@ -223,6 +230,19 @@ export default function Component() {
                                 {showConfirmPassword ? <EyeOffIcon className='w-5 h-5' /> : <EyeIcon className='w-5 h-5' />}
                             </Button>
                         </div>
+                        <div className='flex items-center gap-4'>
+                            <RadioGroup
+                                value={formData.roles[0]}
+                                onValueChange={(value) => setFormData((prev) => ({ ...prev, roles: [value as UserRoles] }))}
+                            >
+                                <div className='flex items-center space-x-2'>
+                                    <RadioGroupItem value={UserRoles.USER} id={UserRoles.USER} />
+                                    <Label htmlFor={UserRoles.USER}>Applier</Label>
+                                    <RadioGroupItem value={UserRoles.ADMIN} id={UserRoles.ADMIN} />
+                                    <Label htmlFor={UserRoles.ADMIN}>Admin</Label>
+                                </div>
+                            </RadioGroup>
+                        </div>
 
                         <div className='flex items-center gap-2'>
                             <Switch
@@ -238,6 +258,7 @@ export default function Component() {
                             />
                             <Label htmlFor='terms'>I agree to the Terms and Conditions</Label>
                         </div>
+
                         <Button type='submit' className='w-full' disabled={loading}>
                             {loading ? (
                                 <>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-import { fetchUserByUserId, setApplicationToUser } from '@/appwrite/server/collections/user-collection';
+import { setApplicationToUser } from '@/appwrite/server/collections/user-collection';
 import { Application, ApplicationStatus } from '@/model/application';
 import { fetchJobById, setApplicationIdToJob } from '@/appwrite/server/collections/job-collection';
 import { createApplicationDocument, fetchApplicationById, updateApplicationStatus } from '@/appwrite/server/collections/application-collection';
@@ -16,10 +16,6 @@ export async function POST(req: NextRequest) {
         }
         const user = jwt.verify(token.value, process.env.NEXT_PUBLIC_JWT_SECRET!);
         const id = (user as any).id;
-        const dbUser = await fetchUserByUserId(id);
-        if (!dbUser) {
-            throw new UnauthorizedError('You are not authorized to perform this action');
-        }
         const body = (await req.json()) as Application;
         body.createdBy = id;
 
@@ -27,7 +23,12 @@ export async function POST(req: NextRequest) {
         if (!job) {
             throw new NotFoundError('Requested job does not exist');
         }
-
+        if (job.lastDateToApply < Date.now()) {
+            throw new UnauthorizedError('Application deadline has passed');
+        }
+        if (job.createdBy === id) {
+            throw new UnauthorizedError('You cannot apply to your own job');
+        }
         await Promise.all([setApplicationToUser(id, body.id), setApplicationIdToJob(body.jobId, body.id), createApplicationDocument(body)]);
         return NextResponse.json({ message: 'Application posted successfully' }, { status: 201 });
     } catch (error: any) {
@@ -47,10 +48,6 @@ export async function PUT(req: NextRequest) {
         }
         const user = jwt.verify(token.value, process.env.NEXT_PUBLIC_JWT_SECRET!);
         const id = (user as any).id;
-        const dbUser = await fetchUserByUserId(id);
-        if (!dbUser) {
-            throw new UnauthorizedError('You are not authorized to perform this action');
-        }
         const body = await req.json();
         const { jobId, applicationId, status } = body;
 

@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
-import { fetchUserByUserId } from '@/appwrite/server/collections/user-collection';
 import { fetchApplicationsByJobId } from '@/appwrite/server/collections/application-collection';
 import { BadRequestError, isRecognisedError, UnauthorizedError } from '@/model/error';
 import { fetchJobById } from '@/appwrite/server/collections/job-collection';
@@ -9,12 +7,6 @@ export async function GET(req: NextRequest) {
     try {
         const token = req.cookies.get('token');
         if (!token) {
-            throw new UnauthorizedError('You are not authorized to perform this action');
-        }
-        const user = jwt.verify(token.value, process.env.NEXT_PUBLIC_JWT_SECRET!);
-        const id = (user as any).id;
-        const dbUser = await fetchUserByUserId(id);
-        if (!dbUser) {
             throw new UnauthorizedError('You are not authorized to perform this action');
         }
         const jobId = req?.nextUrl?.searchParams?.get('jobId');

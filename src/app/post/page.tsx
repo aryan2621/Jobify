@@ -116,7 +116,7 @@ export default function Component() {
             });
             toast({
                 title: 'Success',
-                description: `Job posted successfully, redirecting to Posts page`,
+                description: `Job posted successfully`,
             });
             setSubmitted(true);
         } catch (error: any) {
@@ -395,7 +395,7 @@ export default function Component() {
 
                                         <div className='flex justify-between'>
                                             <Button onClick={prevPage}>Previous</Button>
-                                            <Button type='submit' disabled={loading}>
+                                            <Button type='submit' disabled={loading || submitted}>
                                                 {loading ? (
                                                     <>
                                                         <ReloadIcon className='mr-2 h-4 w-4 animate-spin' />

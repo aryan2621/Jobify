@@ -1,3 +1,7 @@
+export enum UserRoles {
+    ADMIN = 'admin',
+    USER = 'user',
+}
 export class User {
     id: string;
     firstName: string;
@@ -10,7 +14,7 @@ export class User {
     jobs: string[];
     applications: string[];
     tnC: boolean;
-
+    roles: UserRoles[] = [];
     constructor(
         id: string,
         firstName: string,
@@ -22,6 +26,7 @@ export class User {
         createdAt: string,
         jobs: string[],
         applications: string[],
+        roles: UserRoles[],
         tnC: boolean
     ) {
         this.id = id;
@@ -34,6 +39,41 @@ export class User {
         this.jobs = jobs;
         this.applications = applications;
         this.confirmPassword = confirmPassword;
+        this.roles = roles;
         this.tnC = tnC;
+    }
+}
+
+export class Profile {
+    firstName: string;
+    lastName: string;
+    password: string;
+    confirmPassword: string;
+    email: string;
+    username: string;
+    roles: UserRoles[] = [];
+    jobs: string[] = [];
+    applications: string[] = [];
+
+    constructor(
+        firstName: string,
+        lastName: string,
+        password: string,
+        confirmPassword: string,
+        email: string,
+        username: string,
+        roles: UserRoles[],
+        jobs: string[],
+        applications: string[]
+    ) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.password = password;
+        this.confirmPassword = confirmPassword;
+        this.email = email;
+        this.username = username;
+        this.roles = roles;
+        this.jobs = jobs;
+        this.applications = applications;
     }
 }

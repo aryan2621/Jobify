@@ -1,6 +1,4 @@
-import { fetchUserByUserId } from '@/appwrite/server/collections/user-collection';
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
 import { fetchAllJobs } from '@/appwrite/server/collections/job-collection';
 import { isRecognisedError, UnauthorizedError } from '@/model/error';
 
@@ -10,13 +8,15 @@ export async function GET(req: NextRequest) {
         if (!token) {
             throw new UnauthorizedError('You are not authorized to perform this action');
         }
-        const user = jwt.verify(token.value, process.env.NEXT_PUBLIC_JWT_SECRET!);
-        const id = (user as any).id;
-        const dbUser = await fetchUserByUserId(id);
-        if (!dbUser) {
-            throw new UnauthorizedError('You are not authorized to perform this action');
+        const lastId = req?.nextUrl?.searchParams?.get('lastId');
+        const limit = req?.nextUrl?.searchParams?.get('limit');
+        if (!limit) {
+            return NextResponse.json({ message: 'Limit cannot be empty' }, { status: 400 });
         }
-        const jobs = await fetchAllJobs();
+        if (isNaN(parseInt(limit))) {
+            return NextResponse.json({ message: 'Limit should be a number' }, { status: 400 });
+        }
+        const jobs = await fetchAllJobs(lastId, limit ? parseInt(limit) : null);
         return NextResponse.json(jobs, { status: 200 });
     } catch (error) {
         if (isRecognisedError(error)) {

@@ -90,9 +90,19 @@ async function fetchJobById(id: string) {
         throw error;
     }
 }
-async function fetchAllJobs() {
+async function fetchAllJobs(lastId: string | null, limit: number | null) {
     try {
-        const posts = await database.listDocuments(DB_NAME, JOB_COLLECTION);
+        const queries = [];
+        if (lastId) {
+            queries.push(Query.cursorAfter(lastId));
+        }
+        if (limit) {
+            queries.push(Query.limit(limit));
+        }
+        const posts =
+            queries.length > 0
+                ? await database.listDocuments(DB_NAME, JOB_COLLECTION, queries)
+                : await database.listDocuments(DB_NAME, JOB_COLLECTION);
         return posts.documents;
     } catch (error) {
         console.log('Error fetching all jobs', error);

@@ -1340,23 +1340,20 @@ export const countries = [
 ];
 
 export const APPLICANTS_DEFAULT_PAGE_SIZE = 5;
-export const REJECTION_EMAIL_CONTENT = `
-Dear {firstName} {lastName},
+export const REJECTION_EMAIL_CONTENT = `Dear {firstName} {lastName},
 
 Thank you for applying for {jobTitle} role at {company}. After careful review, we won’t be moving forward with you. We appreciate your time & encourage you to apply for future. Best wishes in your job search.
 
 Sincerely,
 {company} Recruitment Team
 `;
-export const INTERVIEW_EMAIL_CONTENT = `
-    Dear {firstName} {lastName},
+export const INTERVIEW_EMAIL_CONTENT = `Dear {firstName} {lastName},
 
 Congratulations! You've been selected to advance in recruitment process for {jobTitle} position at {company}. We'll contact you soon to schedule next steps. Thank you for your interest, and we look forward to speak with you.
 
 Best, {company} Recruitment Team
     `;
-export const SELECTION_EMAIL_CONTENT = `
-    Dear {firstName} {lastName},
+export const SELECTION_EMAIL_CONTENT = `Dear {firstName} {lastName},
 
 Congrats! You’ve been selected to move forward for the {jobTitle} role at {company}. Your experience impressed us. We’ll contact you soon. Look out for an email with details. Thanks for your interest!
 

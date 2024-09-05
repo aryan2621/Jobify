@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Job } from '@/model/job';
 import { createJobDocument, fetchJobById } from '@/appwrite/server/collections/job-collection';
 import jwt from 'jsonwebtoken';
-import { fetchUserByUserId, setJobToUser } from '@/appwrite/server/collections/user-collection';
+import { setJobToUser } from '@/appwrite/server/collections/user-collection';
 import { isRecognisedError, UnauthorizedError } from '@/model/error';
 
 export async function POST(req: NextRequest) {
@@ -13,10 +13,6 @@ export async function POST(req: NextRequest) {
         }
         const user = jwt.verify(token.value, process.env.NEXT_PUBLIC_JWT_SECRET!);
         const id = (user as any).id;
-        const dbUser = await fetchUserByUserId(id);
-        if (!dbUser) {
-            throw new UnauthorizedError('You are not authorized to perform this action');
-        }
         const body = (await req.json()) as Job;
         const job = new Job(
             body.id,
@@ -48,12 +44,6 @@ export async function GET(req: NextRequest) {
     try {
         const token = req.cookies.get('token');
         if (!token) {
-            throw new UnauthorizedError('You are not authorized to perform this action');
-        }
-        const user = jwt.verify(token.value, process.env.NEXT_PUBLIC_JWT_SECRET!);
-        const userId = (user as any).id;
-        const dbUser = await fetchUserByUserId(userId);
-        if (!dbUser) {
             throw new UnauthorizedError('You are not authorized to perform this action');
         }
         const id = req?.nextUrl?.searchParams?.get('id');

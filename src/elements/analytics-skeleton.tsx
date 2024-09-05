@@ -48,9 +48,9 @@ export const LoadingAnalyticsSkeleton = () => (
                             <h3 className='leading-none tracking-tight'>
                                 <Skeleton className='w-[224px] max-w-full' />
                             </h3>
-                            <p>
+                            <div>
                                 <Skeleton className='w-[432px] max-w-full' />
-                            </p>
+                            </div>
                         </div>
                     </div>
                     <div className='p-6 px-2 pt-4 sm:px-6 sm:pt-6'>
