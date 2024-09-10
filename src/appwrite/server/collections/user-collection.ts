@@ -101,18 +101,38 @@ async function createUserDocument(user: User) {
 }
 
 async function fetchUserByEmail(email: string) {
-    return await database.listDocuments(DB_NAME, USER_COLLECTION, [Query.equal('email', email)]);
+    try {
+        return await database.listDocuments(DB_NAME, USER_COLLECTION, [Query.equal('email', email)]);
+    } catch (error) {
+        console.log('Error fetching user by email', error);
+        throw error;
+    }
 }
 
 async function fetchUserByUsername(username: string) {
-    return await database.listDocuments(DB_NAME, USER_COLLECTION, [Query.equal('username', username)]);
+    try {
+        return await database.listDocuments(DB_NAME, USER_COLLECTION, [Query.equal('username', username)]);
+    } catch (error) {
+        console.log('Error fetching user by username', error);
+        throw error;
+    }
 }
 async function fetchUserByUserId(userId: string) {
-    return await database.getDocument(DB_NAME, USER_COLLECTION, userId);
+    try {
+        return await database.getDocument(DB_NAME, USER_COLLECTION, userId);
+    } catch (error) {
+        console.log('Error fetching user by userId', error);
+        throw error;
+    }
 }
 
 async function updateUser(userId: string, user: Partial<User>) {
-    return await database.updateDocument(DB_NAME, USER_COLLECTION, userId, user);
+    try {
+        return await database.updateDocument(DB_NAME, USER_COLLECTION, userId, user);
+    } catch (error) {
+        console.log('Error updating user', error);
+        throw error;
+    }
 }
 
 async function setApplicationToUser(userId: string, applicationId: string) {

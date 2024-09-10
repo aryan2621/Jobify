@@ -14,9 +14,9 @@ export async function middleware(request: NextRequest) {
     if (token) {
         try {
             const secret = new TextEncoder().encode(process.env.NEXT_PUBLIC_JWT_SECRET);
-            const { payload } = await jwtVerify(token.value, secret);
+            await jwtVerify(token.value, secret);
         } catch (error) {
-            console.error('Invalid token:', error);
+            console.log('Invalid token:', error);
             const response = NextResponse.redirect(new URL('/login', request.url));
             response.cookies.delete('token');
             return response;

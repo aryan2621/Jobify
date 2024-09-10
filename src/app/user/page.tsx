@@ -14,12 +14,16 @@ import { Checkbox } from '@/components/ui/checkbox';
 import NavbarLayout from '@/layouts/navbar';
 import { LoadingProfileSkeleton } from '@/elements/profile-skeleton';
 import { useRouter } from 'next/navigation';
+import { userStore } from '@/store';
 
 export default function Component() {
     const [profile, setProfile] = useState<Profile>(new Profile('', '', '', '', '', '', [], [], []));
     const [submitting, setSubmitting] = useState(false);
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+    const logout = userStore((state) => state.logout);
+    const updateUser = userStore((state) => state.updateUser);
+
     useEffect(() => {
         const fetchUser = async () => {
             const res = (await ky.get('/api/me').json()) as User;
@@ -48,7 +52,7 @@ export default function Component() {
     const updateProfileField = async (field: Partial<Profile>) => {
         try {
             setProfile((prev) => ({ ...prev, ...field }));
-            await ky.put('/api/me', { json: field }).json();
+            await updateUser(field);
             toast({
                 title: 'Profile Updated',
                 description: 'Your profile has been updated successfully',
@@ -106,6 +110,9 @@ export default function Component() {
             if (profile.roles.length === 0) {
                 throw new Error('Please select at least one role');
             }
+            if (profile.roles.length === 2) {
+                throw new Error('Cannot have both roles');
+            }
             await updateProfileField({ roles: profile.roles });
         } catch (error: any) {
             toast({
@@ -116,10 +123,9 @@ export default function Component() {
             setSubmitting(false);
         }
     };
-
-    const logout = async () => {
+    const handleLogout = async () => {
         try {
-            await ky.get('/api/logout').json();
+            await logout();
             router.push('/login');
             toast({
                 title: 'Logged Out',
@@ -212,7 +218,7 @@ export default function Component() {
                                                             variant='destructive'
                                                             onClick={async (e) => {
                                                                 e.preventDefault();
-                                                                await logout();
+                                                                await handleLogout();
                                                             }}
                                                         >
                                                             Logout
@@ -249,7 +255,7 @@ export default function Component() {
                                                             variant='destructive'
                                                             onClick={async (e) => {
                                                                 e.preventDefault();
-                                                                await logout();
+                                                                await handleLogout();
                                                             }}
                                                         >
                                                             Logout
@@ -298,7 +304,7 @@ export default function Component() {
                                                             variant='destructive'
                                                             onClick={async (e) => {
                                                                 e.preventDefault();
-                                                                await logout();
+                                                                await handleLogout();
                                                             }}
                                                         >
                                                             Logout

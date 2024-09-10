@@ -20,6 +20,7 @@ export async function GET(req: NextRequest) {
         const applications = await fetchApplicationsByJobId(jobId);
         return NextResponse.json(applications, { status: 200 });
     } catch (error: any) {
+        console.log('Error while fetching job applications', error);
         if (isRecognisedError(error)) {
             return NextResponse.json({ message: error.message }, { status: error.statusCode });
         }

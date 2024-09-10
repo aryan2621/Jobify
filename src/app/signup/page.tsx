@@ -16,6 +16,7 @@ import ky from 'ky';
 import { toast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
 import { ReloadIcon } from '@radix-ui/react-icons';
+import { userStore } from '@/store';
 
 export default function Component() {
     const router = useRouter();
@@ -25,6 +26,7 @@ export default function Component() {
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const signUp = userStore((state) => state.signup);
 
     const validateUser = (user: User) => {
         if (!user.firstName) {
@@ -72,9 +74,7 @@ export default function Component() {
         setLoading(true);
         try {
             validateUser(formData);
-            await ky.post('/api/signup', {
-                json: formData,
-            });
+            await signUp(formData);
             toast({
                 title: 'Account Created',
                 description: 'Your account has been created successfully',
@@ -110,10 +110,22 @@ export default function Component() {
                                     name='firstName'
                                     value={formData.firstName}
                                     onChange={(e) => {
-                                        setFormData((prev) => ({
-                                            ...prev,
-                                            firstName: e.target.value,
-                                        }));
+                                        const { name, value } = e.currentTarget;
+                                        const newUser = new User(
+                                            formData.id,
+                                            value,
+                                            formData.lastName,
+                                            formData.username,
+                                            formData.email,
+                                            formData.password,
+                                            formData.confirmPassword,
+                                            formData.createdAt,
+                                            formData.jobs,
+                                            formData.applications,
+                                            formData.roles,
+                                            formData.tnC
+                                        );
+                                        setFormData(newUser);
                                     }}
                                     id='firstName'
                                     placeholder='Enter your first name'
@@ -126,10 +138,22 @@ export default function Component() {
                                     name='lastName'
                                     value={formData.lastName}
                                     onChange={(e) => {
-                                        setFormData((prev) => ({
-                                            ...prev,
-                                            lastName: e.target.value,
-                                        }));
+                                        const { name, value } = e.currentTarget;
+                                        const newUser = new User(
+                                            formData.id,
+                                            formData.firstName,
+                                            value,
+                                            formData.username,
+                                            formData.email,
+                                            formData.password,
+                                            formData.confirmPassword,
+                                            formData.createdAt,
+                                            formData.jobs,
+                                            formData.applications,
+                                            formData.roles,
+                                            formData.tnC
+                                        );
+                                        setFormData(newUser);
                                     }}
                                     id='lastName'
                                     placeholder='Enter your last name'
@@ -143,10 +167,22 @@ export default function Component() {
                                 name='username'
                                 value={formData.username}
                                 onChange={(e) => {
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        username: e.target.value,
-                                    }));
+                                    const { name, value } = e.currentTarget;
+                                    const newUser = new User(
+                                        formData.id,
+                                        formData.firstName,
+                                        formData.lastName,
+                                        value,
+                                        formData.email,
+                                        formData.password,
+                                        formData.confirmPassword,
+                                        formData.createdAt,
+                                        formData.jobs,
+                                        formData.applications,
+                                        formData.roles,
+                                        formData.tnC
+                                    );
+                                    setFormData(newUser);
                                 }}
                                 id='username'
                                 placeholder='Choose a username'
@@ -159,10 +195,22 @@ export default function Component() {
                                 name='email'
                                 value={formData.email}
                                 onChange={(e) => {
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        email: e.target.value,
-                                    }));
+                                    const { name, value } = e.currentTarget;
+                                    const newUser = new User(
+                                        formData.id,
+                                        formData.firstName,
+                                        formData.lastName,
+                                        formData.username,
+                                        value,
+                                        formData.password,
+                                        formData.confirmPassword,
+                                        formData.createdAt,
+                                        formData.jobs,
+                                        formData.applications,
+                                        formData.roles,
+                                        formData.tnC
+                                    );
+                                    setFormData(newUser);
                                 }}
                                 id='email'
                                 type='email'
@@ -176,10 +224,22 @@ export default function Component() {
                                 name='password'
                                 value={formData.password}
                                 onChange={(e) => {
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        password: e.target.value,
-                                    }));
+                                    const { name, value } = e.currentTarget;
+                                    const newUser = new User(
+                                        formData.id,
+                                        formData.firstName,
+                                        formData.lastName,
+                                        formData.username,
+                                        formData.email,
+                                        value,
+                                        formData.confirmPassword,
+                                        formData.createdAt,
+                                        formData.jobs,
+                                        formData.applications,
+                                        formData.roles,
+                                        formData.tnC
+                                    );
+                                    setFormData(newUser);
                                 }}
                                 autoComplete='off'
                                 id='password'
@@ -206,10 +266,22 @@ export default function Component() {
                                 name='confirmPassword'
                                 value={formData.confirmPassword}
                                 onChange={(e) => {
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        confirmPassword: e.target.value,
-                                    }));
+                                    const { name, value } = e.currentTarget;
+                                    const newUser = new User(
+                                        formData.id,
+                                        formData.firstName,
+                                        formData.lastName,
+                                        formData.username,
+                                        formData.email,
+                                        formData.password,
+                                        value,
+                                        formData.createdAt,
+                                        formData.jobs,
+                                        formData.applications,
+                                        formData.roles,
+                                        formData.tnC
+                                    );
+                                    setFormData(newUser);
                                 }}
                                 autoComplete='off'
                                 id='confirmPassword'
@@ -233,7 +305,23 @@ export default function Component() {
                         <div className='flex items-center gap-4'>
                             <RadioGroup
                                 value={formData.roles[0]}
-                                onValueChange={(value) => setFormData((prev) => ({ ...prev, roles: [value as UserRoles] }))}
+                                onValueChange={(value) => {
+                                    const newUser = new User(
+                                        formData.id,
+                                        formData.firstName,
+                                        formData.lastName,
+                                        formData.username,
+                                        formData.email,
+                                        formData.password,
+                                        formData.confirmPassword,
+                                        formData.createdAt,
+                                        formData.jobs,
+                                        formData.applications,
+                                        [value as UserRoles],
+                                        formData.tnC
+                                    );
+                                    setFormData(newUser);
+                                }}
                             >
                                 <div className='flex items-center space-x-2'>
                                     <RadioGroupItem value={UserRoles.USER} id={UserRoles.USER} />
@@ -246,13 +334,24 @@ export default function Component() {
 
                         <div className='flex items-center gap-2'>
                             <Switch
+                                onCheckedChange={(checked) => {
+                                    const newUser = new User(
+                                        formData.id,
+                                        formData.firstName,
+                                        formData.lastName,
+                                        formData.username,
+                                        formData.email,
+                                        formData.password,
+                                        formData.confirmPassword,
+                                        formData.createdAt,
+                                        formData.jobs,
+                                        formData.applications,
+                                        formData.roles,
+                                        checked
+                                    );
+                                    setFormData(newUser);
+                                }}
                                 checked={formData.tnC}
-                                onCheckedChange={(checked: boolean) =>
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        tnC: checked,
-                                    }))
-                                }
                                 id='terms'
                                 required
                             />

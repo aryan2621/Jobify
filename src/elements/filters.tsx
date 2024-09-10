@@ -196,9 +196,7 @@ export default function FiltersPage() {
         setFilterGroups((groups) => groups.map((group) => (group.id === groupId ? { ...group, operator } : group)));
     };
 
-    const applyFilters = () => {
-        console.log('Applying filters:', filterGroups);
-    };
+    const applyFilters = () => {};
 
     return (
         <Card className='w-full mx-auto'>

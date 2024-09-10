@@ -74,7 +74,7 @@ async function createJobDocument(job: Job) {
             selectionContent: job.selectionContent,
             createdAt: job.createdAt,
             createdBy: job.createdBy,
-            applications: job.applications,
+            applications: job.applications ?? [],
         });
     } catch (error) {
         console.log('Error creating job document', error);
@@ -90,7 +90,7 @@ async function fetchJobById(id: string) {
         throw error;
     }
 }
-async function fetchAllJobs(lastId: string | null, limit: number | null) {
+async function fetchAllJobs(lastId?: string | null, limit?: number | null) {
     try {
         const queries = [];
         if (lastId) {

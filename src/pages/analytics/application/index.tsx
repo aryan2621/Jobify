@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { AreaChart, Area, BarChart, Bar, PieChart, Pie, XAxis, CartesianGrid, Label } from 'recharts';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { TrendingUp } from 'lucide-react';
 import { Application, ApplicationStatus } from '@/model/application';
 import ky from 'ky';
 import { LoadingAnalyticsSkeleton } from '@/elements/analytics-skeleton';
@@ -35,7 +34,7 @@ export default function ApplicationAnalyticsComponent() {
     };
 
     const fetchApplications = async () => {
-        const res = await ky.get('/api/user-applications').json();
+        const res = await ky.get('/api/applications-analytics').json();
         const apps = ((res as any[]) ?? []).map(
             (app) =>
                 new Application(
@@ -98,15 +97,33 @@ export default function ApplicationAnalyticsComponent() {
             }
         });
 
-        return { summary, dailyData: Object.entries(dailyData).map(([date, values]) => ({ date, ...values })) };
+        const aggregatedData = Object.entries(dailyData).map(([date, values]) => ({ date, ...values }));
+
+        const presentCategories = ['pending', 'rejected', 'accepted'].filter((category) =>
+            aggregatedData.some((day) => Number(day[category as keyof typeof day]) > 0)
+        );
+
+        return { summary, dailyData: aggregatedData, presentCategories };
     };
 
     if (fetching) {
         return <LoadingAnalyticsSkeleton />;
     }
+    const { summary, dailyData, presentCategories } = aggregateData(applications);
 
-    const { summary, dailyData } = aggregateData(applications);
-
+    const getBarRadius = (category: string): [number, number, number, number] => {
+        const index = presentCategories.indexOf(category);
+        if (presentCategories.length === 1) {
+            return [4, 4, 4, 4];
+        }
+        if (index === 0) {
+            return [4, 4, 0, 0];
+        }
+        if (index === presentCategories.length - 1) {
+            return [0, 0, 4, 4];
+        }
+        return [0, 0, 0, 0];
+    };
     return (
         <Card className='space-y-6'>
             {applications.length === 0 ? (
@@ -130,9 +147,15 @@ export default function ApplicationAnalyticsComponent() {
                                     <ChartContainer config={chartConfig}>
                                         <BarChart data={dailyData}>
                                             <XAxis dataKey='date' tickLine={false} tickMargin={10} axisLine={false} />
-                                            <Bar dataKey='accepted' stackId='a' fill={chartConfig.accepted.color} radius={[0, 0, 4, 4]} />
-                                            <Bar dataKey='rejected' stackId='a' fill={chartConfig.rejected.color} radius={[0, 0, 0, 0]} />
-                                            <Bar dataKey='pending' stackId='a' fill={chartConfig.pending.color} radius={[4, 4, 0, 0]} />
+                                            {presentCategories.map((category, index) => (
+                                                <Bar
+                                                    key={category}
+                                                    dataKey={category}
+                                                    stackId='a'
+                                                    fill={chartConfig[category as keyof typeof chartConfig].color}
+                                                    radius={getBarRadius(category)}
+                                                />
+                                            ))}
                                             <ChartTooltip content={<ChartTooltipContent />} cursor={false} />
                                         </BarChart>
                                     </ChartContainer>
@@ -233,13 +256,6 @@ export default function ApplicationAnalyticsComponent() {
                             </CardContent>
                         </div>
                     </div>
-
-                    <CardFooter className='flex-col gap-2 text-sm'>
-                        <div className='flex items-center gap-2 font-medium leading-none'>
-                            Trending up by 5.2% this week
-                            <TrendingUp className='h-4 w-4' />
-                        </div>
-                    </CardFooter>
                 </>
             )}
         </Card>

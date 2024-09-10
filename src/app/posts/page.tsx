@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import NavbarLayout from '@/layouts/navbar';
@@ -13,6 +13,7 @@ import { User } from '@/model/user';
 import FiltersPage from '@/elements/filters';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { userStore } from '@/store';
 
 const useDebounce = (cb: () => void, delay: number) => {
     const handlerRef = useRef<number | null>(null);
@@ -43,6 +44,28 @@ const JobDetail = ({ job }: { job: Job | null }) => {
         const d = new Date(date);
         return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     };
+    const user = userStore(
+        (state) =>
+            new User(
+                state.user?.id ?? '',
+                state.user?.firstName ?? '',
+                state.user?.lastName ?? '',
+                state.user?.username ?? '',
+                state.user?.email ?? '',
+                state.user?.password ?? '',
+                state.user?.confirmPassword ?? '',
+                state.user?.createdAt ?? '',
+                state.user?.jobs ?? [],
+                state.user?.applications ?? [],
+                state.user?.roles ?? [],
+                state.user?.tnC ?? false
+            )
+    );
+
+    const showJobs = user?.isSuperUser || user?.canAcessJobs;
+    const showApplications = user?.isSuperUser || user?.canAccessApplications;
+    const isAlreadyApplied = user?.applications.some((app) => job.applications.includes(app));
+    const isOwner = job.createdBy === user.id;
 
     return (
         <Card className='h-full overflow-auto'>
@@ -83,12 +106,48 @@ const JobDetail = ({ job }: { job: Job | null }) => {
                 </div>
             </CardContent>
             <CardFooter>
-                <Button asChild className='w-full'>
-                    <Link href={`/application/${job.id}`}>
-                        <Send className='h-5 w-5 mr-2' />
-                        Apply Now
-                    </Link>
-                </Button>
+                {showApplications ? (
+                    <>
+                        <Button asChild className='w-full' disabled={isAlreadyApplied || isOwner}>
+                            {isAlreadyApplied ? (
+                                <span className='flex items-center justify-center'>
+                                    <SendIcon className='h-5 w-5 mr-2' />
+                                    Already Applied
+                                </span>
+                            ) : isOwner ? (
+                                <span className='flex items-center justify-center'>
+                                    <SendIcon className='h-5 w-5 mr-2' />
+                                    You cannot apply to your own job
+                                </span>
+                            ) : (
+                                <Link href={`/application/${job.id}`}>
+                                    <SendIcon className='h-5 w-5 mr-2' />
+                                    Apply Now
+                                </Link>
+                            )}
+                        </Button>
+                    </>
+                ) : (
+                    <>
+                        <Button asChild className='w-full' disabled={!isOwner}>
+                            {isOwner ? (
+                                <Link
+                                    href={{
+                                        pathname: `/posts/applications/${job.id}`,
+                                    }}
+                                >
+                                    <SendIcon className='h-5 w-5 mr-2' />
+                                    Go to Applications
+                                </Link>
+                            ) : (
+                                <span className='flex items-center justify-center'>
+                                    <SendIcon className='h-5 w-5 mr-2' />
+                                    You cannot access applications
+                                </span>
+                            )}
+                        </Button>
+                    </>
+                )}
             </CardFooter>
         </Card>
     );
@@ -97,7 +156,6 @@ export default function Component() {
     const limit = 10;
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [loading, setLoading] = useState(true);
-    const [user, setUser] = useState<User | null>(null);
     const [lastId, setLastId] = useState<string | null>(null);
     const [hasMore, setHasMore] = useState(true);
     const observerRef = useRef<HTMLDivElement | null>(null);
@@ -156,15 +214,6 @@ export default function Component() {
     useEffect(() => {
         debouncedFetchJobs();
     }, [debouncedFetchJobs]);
-
-    const fetchUser = useCallback(async () => {
-        const res = (await ky.get('/api/me').json()) as User;
-        setUser(res);
-    }, []);
-
-    useEffect(() => {
-        fetchUser();
-    }, [fetchUser]);
 
     useEffect(() => {
         if (!observerRef.current) return;

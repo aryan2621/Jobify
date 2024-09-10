@@ -13,6 +13,20 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { getResume } from '@/appwrite/server/storage';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
+import { toast } from '@/components/ui/use-toast';
 
 interface ApplicationCardProps {
     application: Application;
@@ -57,6 +71,32 @@ const ApplicationCard = ({ application, isSelected, onClick }: ApplicationCardPr
 
 const ApplicationDetail = ({ application }: { application: Application | null }) => {
     const [fetchingResume, setFetchingResume] = useState(false);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+    const handleStatusChange = async (newStatus: ApplicationStatus) => {
+        await onStatusChange(newStatus);
+        setIsDialogOpen(false);
+    };
+    const onStatusChange = async (newStatus: ApplicationStatus) => {
+        if (application) {
+            application.status = newStatus;
+            try {
+                await ky.put('/api/application', {
+                    json: { jobId: application.jobId, applicationId: application.id, status: newStatus },
+                });
+                toast({
+                    title: 'Application status updated successfully',
+                    description: `Application status updated to ${newStatus}. An email has been sent to the applicant.`,
+                });
+            } catch (error) {
+                toast({
+                    title: 'Error updating application status',
+                    description: 'Error updating application status. Please try again later.',
+                });
+            }
+        }
+    };
+    const isStatusChangeable = application?.status === ApplicationStatus.APPLIED;
 
     if (!application) {
         return (
@@ -162,7 +202,7 @@ const ApplicationDetail = ({ application }: { application: Application | null })
                         }}
                         className='text-blue-500 hover:underline'
                     >
-                        View Resume
+                        {fetchingResume ? 'Fetching Resume...' : 'View Resume'}
                     </a>
                 </DetailSection>
 
@@ -175,17 +215,24 @@ const ApplicationDetail = ({ application }: { application: Application | null })
                         <h3 className='font-semibold flex items-center mb-2'>
                             <UserIcon className='w-5 h-5 mr-2' /> Application Status
                         </h3>
-                        <Badge
-                            variant={
-                                application.status === ApplicationStatus.SELECTED
-                                    ? 'outline'
-                                    : application.status === ApplicationStatus.REJECTED
-                                      ? 'destructive'
-                                      : 'default'
-                            }
-                        >
-                            {application.status}
-                        </Badge>
+                        <div className='flex items-center space-x-2'>
+                            <Button variant='outline' size='sm' disabled={!isStatusChangeable} onClick={() => setIsDialogOpen(true)}>
+                                {application.status}
+                            </Button>
+                            <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Change Application Status</AlertDialogTitle>
+                                        <AlertDialogDescription>Select a new status for this application.</AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleStatusChange(ApplicationStatus.SELECTED)}>Accept</AlertDialogAction>
+                                        <AlertDialogAction onClick={() => handleStatusChange(ApplicationStatus.REJECTED)}>Reject</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
                     </div>
                     <div>
                         <h3 className='font-semibold flex items-center mb-2'>
@@ -214,7 +261,9 @@ const useDebounce = (cb: () => void, delay: number) => {
     return debouncedFunction;
 };
 
-export default function Component() {
+export default function Component({ params }: { params: { id: string } }) {
+    const { id } = params;
+    const router = useRouter();
     const limit = 10;
     const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
     const [loading, setLoading] = useState(true);
@@ -222,7 +271,6 @@ export default function Component() {
     const [hasMore, setHasMore] = useState(true);
     const observerRef = useRef<HTMLDivElement | null>(null);
     const loadingRef = useRef(false);
-
     const [applications, setApplications] = useState<Application[]>([]);
 
     const fetchApplications = useCallback(async () => {
@@ -231,7 +279,7 @@ export default function Component() {
         setLoading(true);
         loadingRef.current = true;
         try {
-            const url = '/api/user-applications?limit=' + limit + (lastId ? '&lastId=' + lastId : '');
+            const url = `/api/job-applications?jobId=${id}` + `&limit=${limit}` + (lastId ? '&lastId=' + lastId : '');
             const res = (await ky.get(url).json()) as any[];
             const fetchedApplications = (res ?? []).map(
                 (application: any) =>
@@ -268,14 +316,14 @@ export default function Component() {
             loadingRef.current = false;
         }
     }, []);
-
     const debouncedFetchApplications = useDebounce(fetchApplications, 300);
-
     useEffect(() => {
+        if (!id) return;
         debouncedFetchApplications();
     }, [debouncedFetchApplications]);
 
     useEffect(() => {
+        if (!id) return;
         if (!observerRef.current) return;
         const observer = new IntersectionObserver(
             (entries) => {
@@ -288,6 +336,21 @@ export default function Component() {
         observer.observe(observerRef.current);
         return () => observer.disconnect();
     }, [debouncedFetchApplications, hasMore]);
+
+    if (!id) {
+        return (
+            <NavbarLayout>
+                <div className='flex items-center justify-center h-[calc(100vh-4rem)]'>
+                    <div className='flex flex-col items-center space-y-4'>
+                        <p className='text-lg font-semibold'>Invalid Application ID</p>
+                        <Button className='text-white px-4 py-2 rounded' onClick={() => router.push('/posts')}>
+                            Go back to the posts page
+                        </Button>
+                    </div>
+                </div>
+            </NavbarLayout>
+        );
+    }
 
     return (
         <NavbarLayout>

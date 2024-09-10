@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
         }
         return NextResponse.json(dbUser, { status: 200 });
     } catch (error) {
+        console.log('Error while fetching user', error);
         if (isRecognisedError(error)) {
             return NextResponse.json({ message: error.message }, { status: error.statusCode });
         }
@@ -68,6 +69,7 @@ export async function PUT(req: NextRequest) {
         await updateUser(id, obj);
         return NextResponse.json({ message: 'User updated successfully' }, { status: 200 });
     } catch (error) {
+        console.log('Error while updating user', error);
         if (isRecognisedError(error)) {
             return NextResponse.json({ message: error.message }, { status: error.statusCode });
         }

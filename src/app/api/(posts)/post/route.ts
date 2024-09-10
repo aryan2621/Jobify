@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
         await Promise.all([createJobDocument(job), setJobToUser(id, job.id)]);
         return NextResponse.json({ message: 'Job created' }, { status: 201 });
     } catch (error) {
+        console.log('Error while creating job', error);
         if (isRecognisedError(error)) {
             return NextResponse.json({ message: error.message }, { status: error.statusCode });
         }
@@ -53,6 +54,7 @@ export async function GET(req: NextRequest) {
         const job = await fetchJobById(id);
         return NextResponse.json(job, { status: 200 });
     } catch (error) {
+        console.log('Error while fetching job', error);
         return NextResponse.json({ message: 'Error while fetching job' }, { status: 500 });
     }
 }

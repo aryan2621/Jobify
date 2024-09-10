@@ -1,11 +1,36 @@
 'use client';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { BriefcaseIcon } from '@/elements/icon';
+import { BarChartIcon, BriefcaseIcon, CircleHelpIcon } from '@/elements/icon';
 import Image from 'next/image';
+import { userStore } from '@/store';
+import { User } from '@/model/user';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useRouter } from 'next/navigation';
+import { toast } from '@/components/ui/use-toast';
+import { BookCopyIcon, LogOut } from 'lucide-react';
 
 export default function Component() {
     const currentYear = new Date().getFullYear();
+    const user = userStore(
+        (state) =>
+            new User(
+                state.user?.id ?? '',
+                state.user?.firstName ?? '',
+                state.user?.lastName ?? '',
+                state.user?.username ?? '',
+                state.user?.email ?? '',
+                state.user?.password ?? '',
+                state.user?.confirmPassword ?? '',
+                state.user?.createdAt ?? '',
+                state.user?.jobs ?? [],
+                state.user?.applications ?? [],
+                state.user?.roles ?? [],
+                state.user?.tnC ?? false
+            )
+    );
     return (
         <div className='flex flex-col min-h-[100dvh]'>
             <header className='px-4 lg:px-6 h-14 flex items-center border-b'>
@@ -17,49 +42,50 @@ export default function Component() {
                     <Link href='/posts' className='text-sm font-medium hover:underline underline-offset-4' prefetch={false}>
                         Find Jobs
                     </Link>
-                    <Link href='/post' className='text-sm font-medium hover:underline underline-offset-4' prefetch={false}>
-                        Post a Job
-                    </Link>
                     <Link href='/contact' className='text-sm font-medium hover:underline underline-offset-4' prefetch={false}>
                         Contact
                     </Link>
+                    {user ? (
+                        <ProfileMenu user={user} />
+                    ) : (
+                        <Link href='/login' className='text-sm font-medium hover:underline underline-offset-4' prefetch={false}>
+                            Login
+                        </Link>
+                    )}
                 </nav>
             </header>
             <main className='flex-1'>
-                <section className='w-full py-12 md:py-24 lg:py-32'>
-                    <div className='container px-4 md:px-6'>
-                        <div className='grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]'>
-                            <div className='flex flex-col justify-center space-y-4'>
+                <section className='w-full py-8 sm:py-12 md:py-16 lg:py-20 xl:py-24'>
+                    <div className='container px-4 sm:px-6 mx-auto'>
+                        <div className='flex flex-col lg:flex-row items-center gap-8 lg:gap-12'>
+                            <div className='flex flex-col justify-center space-y-4 lg:w-1/2'>
                                 <div className='space-y-2'>
-                                    <h1 className='text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none'>Find Your Dream Job</h1>
-                                    <p className='max-w-[600px] text-muted-foreground md:text-xl'>
+                                    <h1 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tighter'>
+                                        Find Your Dream Job
+                                    </h1>
+                                    <p className='text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground max-w-[600px]'>
                                         Discover the best job opportunities in your field and take the next step in your career.
                                     </p>
                                 </div>
-                                <div className='flex flex-col gap-2 min-[400px]:flex-row'>
+                                <div className='flex flex-col sm:flex-row gap-4'>
                                     <Link
                                         href='/posts'
-                                        className='inline-flex h-10 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50'
+                                        className='inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 sm:px-6 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50'
                                         prefetch={false}
                                     >
                                         Apply for Jobs
                                     </Link>
-                                    <Link
-                                        href='/post'
-                                        className='inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-8 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50'
-                                        prefetch={false}
-                                    >
-                                        Post a Job
-                                    </Link>
                                 </div>
                             </div>
-                            <Image
-                                src='/hero.jpeg'
-                                alt='Hero'
-                                width={300}
-                                height={400}
-                                className='mx-auto w-full max-w-[300px] h-auto rounded-xl object-cover object-bottom shadow-lg lg:order-last lg:max-w-full lg:aspect-square'
-                            />
+                            <div className='lg:w-1/2 mt-8 lg:mt-0'>
+                                <Image
+                                    src='/hero.jpeg'
+                                    alt='Hero'
+                                    width={600}
+                                    height={600}
+                                    className='w-full max-w-[300px] sm:max-w-[400px] md:max-w-[500px] lg:max-w-full h-auto rounded-xl object-cover object-bottom shadow-lg mx-auto'
+                                />
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -262,7 +288,7 @@ export default function Component() {
                                             <div className='text-blue-400'>{testimonial.position}</div>
                                         </div>
                                     </div>
-                                    <p className='text-gray-300 mb-4'>"{testimonial.comment}"</p>
+                                    <p className='text-gray-300 mb-4'>&quot;{testimonial.comment}&quot;</p>
                                 </div>
                             ))}
                         </div>
@@ -283,3 +309,78 @@ export default function Component() {
         </div>
     );
 }
+
+interface ProfileMenuProps {
+    user: User;
+}
+
+const ProfileMenu: React.FC<ProfileMenuProps> = ({ user }) => {
+    const router = useRouter();
+    const logout = userStore((state) => state.logout);
+    const handleLogout = async () => {
+        try {
+            await logout();
+            router.push('/login');
+            toast({
+                title: 'Logged Out',
+                description: 'You have been logged out successfully',
+            });
+        } catch (error: any) {
+            toast({
+                title: 'Error',
+                description: error.message ?? 'Error while logging out',
+            });
+        }
+    };
+
+    const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`;
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant='ghost' className='relative h-8 w-8 rounded-full'>
+                    <Avatar className='h-8 w-8'>
+                        <AvatarImage src='/avatars/01.png' alt={user.firstName} />
+                        <AvatarFallback>{initials}</AvatarFallback>
+                    </Avatar>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className='w-56' align='end' forceMount>
+                <DropdownMenuItem className='flex flex-col items-start'>
+                    <div className='font-medium'>{`${user.firstName} ${user.lastName}`}</div>
+                    <div className='text-xs text-muted-foreground'>{user.email}</div>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                    <Link href='/contact' className='flex w-full items-center'>
+                        <CircleHelpIcon className='mr-2 h-4 w-4' />
+                        <span>Help and Support</span>
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                    <Link href='/posts' className='flex w-full items-center'>
+                        <BookCopyIcon className='mr-2 h-4 w-4' />
+                        <span>Posts</span>
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                    <Link href='/analytics' className='flex w-full items-center'>
+                        <BarChartIcon className='mr-2 h-4 w-4' />
+                        <span>Analytics</span>
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                    <button
+                        className='flex w-full items-center'
+                        onClick={async (e) => {
+                            e.preventDefault();
+                            await handleLogout();
+                        }}
+                    >
+                        <LogOut className='mr-2 h-4 w-4' />
+                        <span>Log out</span>
+                    </button>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+};

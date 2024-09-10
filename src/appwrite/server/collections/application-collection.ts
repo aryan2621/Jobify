@@ -101,9 +101,16 @@ async function fetchApplicationById(id: string) {
     }
 }
 
-async function fetchApplicationsByJobId(jobId: string) {
+async function fetchApplicationsByJobId(jobId: string, request?: UserApplicationsRequest) {
     try {
-        const records = await database.listDocuments(DB_NAME, APPLICATION_COLLECTION, [Query.equal('jobId', jobId)]);
+        const queries = [Query.equal('jobId', jobId)];
+        if (request?.lastId) {
+            queries.push(Query.cursorAfter(request.lastId));
+        }
+        if (request?.limit) {
+            queries.push(Query.limit(request.limit));
+        }
+        const records = await database.listDocuments(DB_NAME, APPLICATION_COLLECTION, queries);
         return records.documents;
     } catch (error) {
         console.log('Error fetching application by job id', error);
@@ -122,13 +129,13 @@ async function updateApplicationStatus(jobId: string, applicationId: string, sta
     }
 }
 
-async function fetchApplicationsByUserId(userId: string, request: UserApplicationsRequest) {
+async function fetchApplicationsByUserId(userId: string, request?: UserApplicationsRequest) {
     try {
         const queries = [Query.equal('createdBy', userId)];
-        if (request.lastId) {
+        if (request?.lastId) {
             queries.push(Query.cursorAfter(request.lastId));
         }
-        if (request.limit) {
+        if (request?.limit) {
             queries.push(Query.limit(request.limit));
         }
         const records = await database.listDocuments(DB_NAME, APPLICATION_COLLECTION, queries);

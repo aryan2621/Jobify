@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { BarChartIcon, CircleHelpIcon, ClipboardIcon, FileIcon, InfoIcon, MenuIcon, ProfileIcon } from '@/elements/icon';
+import { BarChartIcon, CircleHelpIcon, FileIcon, MenuIcon, ProfileIcon } from '@/elements/icon';
 import { BookCopyIcon, HouseIcon, ScrollTextIcon, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import Link from 'next/link';
+import { userStore } from '@/store';
+import { User } from '@/model/user';
 
 interface NavbarLayoutProps {
     children: React.ReactNode;
@@ -13,10 +15,28 @@ interface NavbarLayoutProps {
 
 const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const toggleSidebar = () => setIsCollapsed(!isCollapsed);
 
-    const toggleSidebar = () => {
-        setIsCollapsed(!isCollapsed);
-    };
+    const user = userStore(
+        (state) =>
+            new User(
+                state.user?.id ?? '',
+                state.user?.firstName ?? '',
+                state.user?.lastName ?? '',
+                state.user?.username ?? '',
+                state.user?.email ?? '',
+                state.user?.password ?? '',
+                state.user?.confirmPassword ?? '',
+                state.user?.createdAt ?? '',
+                state.user?.jobs ?? [],
+                state.user?.applications ?? [],
+                state.user?.roles ?? [],
+                state.user?.tnC ?? false
+            )
+    );
+
+    const showPost = user?.isSuperUser || !user?.canAccessApplications;
+    const showApplications = user?.isSuperUser || !user?.canAcessJobs;
 
     return (
         <div className='flex min-h-screen w-full'>
@@ -24,15 +44,33 @@ const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
                 <Button variant='ghost' size='icon' className='self-end m-2' onClick={toggleSidebar}>
                     {isCollapsed ? <PanelLeftOpen className='h-5 w-5' /> : <PanelLeftClose className='h-5 w-5' />}
                 </Button>
-                <nav className='flex flex-col gap-2 p-2'>
-                    <NavItem href='/' icon={<HouseIcon className='h-5 w-5' />} label='Home' isCollapsed={isCollapsed} />
-                    <NavItem href='/posts' icon={<BookCopyIcon className='h-5 w-5' />} label='Posts' isCollapsed={isCollapsed} />
-                    <NavItem href='/applications' icon={<ScrollTextIcon className='h-5 w-5' />} label='Applications' isCollapsed={isCollapsed} />
-                    <NavItem href='/post' icon={<FileIcon className='h-5 w-5' />} label='Post' isCollapsed={isCollapsed} />
-                    <NavItem href='/analytics' icon={<BarChartIcon className='h-5 w-5' />} label='Analytics' isCollapsed={isCollapsed} />
-                    <NavItem href='/contact' icon={<CircleHelpIcon className='h-5 w-5' />} label='Help and Support' isCollapsed={isCollapsed} />
-                    <NavItem href='/user' icon={<ProfileIcon className='h-5 w-5' />} label='Profile' isCollapsed={isCollapsed} />
-                </nav>
+                {user ? (
+                    <>
+                        <nav className='flex flex-col gap-2 p-2'>
+                            <NavItem href='/' icon={<HouseIcon className='h-5 w-5' />} label='Home' isCollapsed={isCollapsed} />
+                            <NavItem href='/posts' icon={<BookCopyIcon className='h-5 w-5' />} label='Posts' isCollapsed={isCollapsed} />
+                            {showApplications && (
+                                <NavItem
+                                    href='/applications'
+                                    icon={<ScrollTextIcon className='h-5 w-5' />}
+                                    label='Applications'
+                                    isCollapsed={isCollapsed}
+                                />
+                            )}
+                            {showPost && <NavItem href='/post' icon={<FileIcon className='h-5 w-5' />} label='Post' isCollapsed={isCollapsed} />}
+                            <NavItem href='/analytics' icon={<BarChartIcon className='h-5 w-5' />} label='Analytics' isCollapsed={isCollapsed} />
+                            <NavItem
+                                href='/contact'
+                                icon={<CircleHelpIcon className='h-5 w-5' />}
+                                label='Help and Support'
+                                isCollapsed={isCollapsed}
+                            />
+                            <NavItem href='/user' icon={<ProfileIcon className='h-5 w-5' />} label='Profile' isCollapsed={isCollapsed} />
+                        </nav>
+                    </>
+                ) : (
+                    <> </>
+                )}
             </aside>
             <div className='flex flex-1 flex-col'>
                 <header className='sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6'>
@@ -44,20 +82,40 @@ const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
                             </Button>
                         </SheetTrigger>
                         <SheetContent side='left' className='sm:max-w-xs'>
-                            <nav className='grid gap-6 text-lg font-medium'>
-                                <NavItem href='/' icon={<HouseIcon className='h-5 w-5' />} label='Home' isCollapsed={false} />
-                                <NavItem href='/posts' icon={<BookCopyIcon className='h-5 w-5' />} label='Posts' isCollapsed={false} />
-                                <NavItem
-                                    href='/applications'
-                                    icon={<ScrollTextIcon className='h-5 w-5' />}
-                                    label='Applications'
-                                    isCollapsed={false}
-                                />
-                                <NavItem href='/post' icon={<FileIcon className='h-5 w-5' />} label='Post' isCollapsed={false} />
-                                <NavItem href='/analytics' icon={<BarChartIcon className='h-5 w-5' />} label='Analytics' isCollapsed={false} />
-                                <NavItem href='/contact' icon={<CircleHelpIcon className='h-5 w-5' />} label='Help and Support' isCollapsed={false} />
-                                <NavItem href='/user' icon={<ProfileIcon className='h-5 w-5' />} label='Profile' isCollapsed={false} />
-                            </nav>
+                            {user ? (
+                                <>
+                                    <nav className='grid gap-6 text-lg font-medium'>
+                                        <NavItem href='/' icon={<HouseIcon className='h-5 w-5' />} label='Home' isCollapsed={false} />
+                                        <NavItem href='/posts' icon={<BookCopyIcon className='h-5 w-5' />} label='Posts' isCollapsed={false} />
+                                        {showApplications && (
+                                            <NavItem
+                                                href='/applications'
+                                                icon={<ScrollTextIcon className='h-5 w-5' />}
+                                                label='Applications'
+                                                isCollapsed={false}
+                                            />
+                                        )}
+                                        {showPost && (
+                                            <NavItem href='/post' icon={<FileIcon className='h-5 w-5' />} label='Post' isCollapsed={false} />
+                                        )}
+                                        <NavItem
+                                            href='/analytics'
+                                            icon={<BarChartIcon className='h-5 w-5' />}
+                                            label='Analytics'
+                                            isCollapsed={false}
+                                        />
+                                        <NavItem
+                                            href='/contact'
+                                            icon={<CircleHelpIcon className='h-5 w-5' />}
+                                            label='Help and Support'
+                                            isCollapsed={false}
+                                        />
+                                        <NavItem href='/user' icon={<ProfileIcon className='h-5 w-5' />} label='Profile' isCollapsed={false} />
+                                    </nav>
+                                </>
+                            ) : (
+                                <> </>
+                            )}
                         </SheetContent>
                     </Sheet>
                 </header>

@@ -10,6 +10,7 @@ export async function GET(req: NextRequest) {
         response.cookies.delete('token');
         return response;
     } catch (error) {
+        console.log('Error while logging out', error);
         return new NextResponse('Something went wrong', { status: 500 });
     }
 }

@@ -7,19 +7,21 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import Image from 'next/image';
 import { EyeIcon, EyeOffIcon } from '@/elements/icon';
-import { Switch } from '@/components/ui/switch';
 import { FormEvent, useState } from 'react';
 import { LoginUserRequest } from '@/model/request';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { toast } from '@/components/ui/use-toast';
 import ky from 'ky';
 import { useRouter } from 'next/navigation';
+import { userStore } from '@/store';
 
 export default function Component() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [req, setReq] = useState<LoginUserRequest>(new LoginUserRequest('', ''));
     const router = useRouter();
+    const login = userStore((state) => state.login);
+
     const validateReq = (req: LoginUserRequest) => {
         if (!req.username) {
             throw new Error('Username cannot be empty.');
@@ -39,9 +41,7 @@ export default function Component() {
         setLoading(true);
         try {
             validateReq(req);
-            await ky.post('/api/login', {
-                json: req,
-            });
+            await login(req);
             toast({
                 title: 'Sign in successfully',
                 description: 'You have successfully signed in',
@@ -115,7 +115,7 @@ export default function Component() {
                     </form>
                     <div className='text-center'>
                         <p className='mt-4'>
-                            Don't have an account?
+                            Don&apos;t have an account?
                             <Link href='/signup' className='hover:underline'>
                                 {' '}
                                 Sign Up

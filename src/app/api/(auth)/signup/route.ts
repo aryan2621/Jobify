@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
         await createUserDocument(user);
         return NextResponse.json({ message: 'User created' }, { status: 201 });
     } catch (error) {
+        console.log('Error while creating user', error);
         if (isRecognisedError(error)) {
             return NextResponse.json({ message: error.message }, { status: error.statusCode });
         }

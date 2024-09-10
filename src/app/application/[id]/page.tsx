@@ -56,6 +56,7 @@ export default function Component({ params }: { params: { id: string } }) {
     const [selectedCountry, setSelectedCountry] = useState('+91');
 
     useEffect(() => {
+        if (!id) return;
         const fetchJob = async () => {
             try {
                 const res = (await ky.get(`/api/post?id=${id}`).json()) as Job;

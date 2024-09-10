@@ -13,6 +13,9 @@ export async function POST(request: NextRequest) {
         if (users.documents.length === 0) {
             throw new UnauthorizedError('User not found');
         }
+        if (users.documents.length > 1) {
+            throw new UnauthorizedError('Multiple users found');
+        }
         const user = users.documents[0];
         const isPasswordValid = bcryptjs.compareSync(password, user.password);
         if (!isPasswordValid) {
@@ -21,7 +24,7 @@ export async function POST(request: NextRequest) {
         const token = jwt.sign({ id: user.id, roles: user.roles }, process.env.NEXT_PUBLIC_JWT_SECRET!, {
             expiresIn: '1d',
         });
-        const response = NextResponse.json({ token }, { status: 200 });
+        const response = NextResponse.json(user, { status: 200 });
         response.cookies.set('token', token, {
             httpOnly: true,
             maxAge: 86400,
@@ -29,6 +32,7 @@ export async function POST(request: NextRequest) {
         });
         return response;
     } catch (error) {
+        console.log('Error while signing in', error);
         if (isRecognisedError(error)) {
             return NextResponse.json({ message: error.message }, { status: error.statusCode });
         }

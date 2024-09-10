@@ -42,6 +42,20 @@ export class User {
         this.roles = roles;
         this.tnC = tnC;
     }
+
+    get canAccessApplications() {
+        const isSuperUser = this.roles.includes(UserRoles.ADMIN) && this.roles.includes(UserRoles.USER);
+        const isUser = this.roles.includes(UserRoles.USER);
+        return isSuperUser || isUser;
+    }
+    get canAcessJobs() {
+        const isSuperUser = this.roles.includes(UserRoles.ADMIN) && this.roles.includes(UserRoles.USER);
+        const isAdmin = this.roles.includes(UserRoles.ADMIN);
+        return isSuperUser || isAdmin;
+    }
+    get isSuperUser() {
+        return this.roles.includes(UserRoles.ADMIN) && this.roles.includes(UserRoles.USER);
+    }
 }
 
 export class Profile {

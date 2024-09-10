@@ -29,9 +29,13 @@ export async function POST(req: NextRequest) {
         if (job.createdBy === id) {
             throw new UnauthorizedError('You cannot apply to your own job');
         }
+        if (job.applications.includes(id)) {
+            throw new UnauthorizedError('You have already applied to this job');
+        }
         await Promise.all([setApplicationToUser(id, body.id), setApplicationIdToJob(body.jobId, body.id), createApplicationDocument(body)]);
         return NextResponse.json({ message: 'Application posted successfully' }, { status: 201 });
     } catch (error: any) {
+        console.log('Error while posting application', error);
         if (isRecognisedError(error)) {
             return NextResponse.json({ message: error.message }, { status: error.statusCode });
         } else {
@@ -85,6 +89,7 @@ export async function PUT(req: NextRequest) {
         await Promise.all([transporter.sendMail(mailOptions), updateApplicationStatus(jobId, applicationId, status)]);
         return NextResponse.json({ message: 'Application updated successfully' }, { status: 200 });
     } catch (error: any) {
+        console.log('Error while updating application', error);
         if (isRecognisedError(error)) {
             return NextResponse.json({ message: error.message }, { status: error.statusCode });
         } else {
