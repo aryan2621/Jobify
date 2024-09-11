@@ -1,43 +1,122 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-## Getting Started
+# Jobify
 
-First, run the development server:
+A one and only solution for hiring people.
+
+## Screenshots
+
+<img width="1440" alt="Screenshot 2024-09-12 at 1 36 02 AM" src="https://github.com/user-attachments/assets/5ab9b899-e4fc-44e6-bcf9-b195fd4d0dfc">
+<img width="1440" alt="Screenshot 2024-09-12 at 1 35 54 AM" src="https://github.com/user-attachments/assets/e5b3bc3c-a904-4ef1-bbdd-00d44aa640ee">
+<img width="1440" alt="Screenshot 2024-09-12 at 1 35 45 AM" src="https://github.com/user-attachments/assets/e2f5a892-93c7-4426-a87e-b7e44220be95">
+<img width="1440" alt="Screenshot 2024-09-12 at 1 35 34 AM" src="https://github.com/user-attachments/assets/5422427d-f876-4f46-a68c-a368f8361acc">
+<img width="1440" alt="Screenshot 2024-09-12 at 1 40 58 AM" src="https://github.com/user-attachments/assets/3d398b47-5860-4b81-bf3c-24f480561ffe">
+<img width="1440" alt="Screenshot 2024-09-12 at 1 37 22 AM" src="https://github.com/user-attachments/assets/cb8643e1-d2ab-4ecd-ae45-fbfb95675981">
+<img width="1440" alt="Screenshot 2024-09-12 at 1 37 15 AM" src="https://github.com/user-attachments/assets/0e9e2d30-daa5-462b-a24f-912f03620ec6">
+<img width="1440" alt="Screenshot 2024-09-12 at 1 37 03 AM" src="https://github.com/user-attachments/assets/a67a2880-67b0-4f89-8b98-99cabe3ced1b">
+
+## Tech Stack
+
+**Client:** Next, Firebase, Appwrite
+
+
+
+## Run Locally
+
+Clone the project
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+  git clone https://github.com/aryan2621/Jobify/
 ```
 
-<img width="1440" alt="Screenshot 2024-09-01 at 8 36 02 PM" src="https://github.com/user-attachments/assets/6cdd29be-f53e-4e60-b5eb-215e66f5f081">
-<img width="1440" alt="Screenshot 2024-09-01 at 8 35 42 PM" src="https://github.com/user-attachments/assets/a8a5ee03-150e-47d1-a4fe-537f80a1f0be">
-<img width="1440" alt="Screenshot 2024-09-01 at 8 35 29 PM" src="https://github.com/user-attachments/assets/ebe098a1-34f8-444a-8bd5-e1a9e0c1295f">
-<img width="1440" alt="Screenshot 2024-09-01 at 8 35 17 PM" src="https://github.com/user-attachments/assets/73d9e846-e9d8-4f77-a767-a14886b71b99">
-<img width="1440" alt="Screenshot 2024-09-01 at 8 36 21 PM" src="https://github.com/user-attachments/assets/bad81f91-8a05-49b7-8c38-15e96f481ff1">
+Go to the project directory
+
+```bash
+  cd Jobify
+```
+
+Install dependencies
+
+```bash
+  npm install
+```
+
+Start the server
+
+```bash
+  npm run dev
+```
 
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## API Reference
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+#### Login
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+```http
+  POST /login
+```
 
-## Learn More
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `email` | `string` | **Required**. Email Id |
+| `password` | `string` | **Required**. password |
 
-To learn more about Next.js, take a look at the following resources:
+#### Signup
 
--   [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
--   [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```http
+  POST /signup
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `email`      | `string` | **Required**. Email Id |
+| `password`      | `string` | **Required**. Password |
+| `first name`      | `string` | **Required**. First Name |
+| `last name`      | `string` | **Required**. Last Name |
 
-## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+```http
+  GET /posts
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `token`      | `string` | **Required**. In headers |
+
+```http
+  DELETE /post
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `postId`      | `string` | **Required**. Post Id |
+
+```http
+  POST /post
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `post Obj`      | `string` | **Required**. Post Object |
+
+```http
+  GET /user
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `token`      | `string` | **Required**. In headers |
+
+## Deployment
+
+To deploy this project run
+
+```bash
+  npm run build && npm run start
+```
+
+
+## Support
+
+For support, email risha2621@gmail.com or join me at Linkedin https://www.linkedin.com/in/rishabh-verma-5366901a1/
+
