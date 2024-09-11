@@ -117,10 +117,10 @@ export default function ApplicationAnalyticsComponent() {
             return [4, 4, 4, 4];
         }
         if (index === 0) {
-            return [4, 4, 0, 0];
+            return [0, 0, 4, 4];
         }
         if (index === presentCategories.length - 1) {
-            return [0, 0, 4, 4];
+            return [4, 4, 0, 0];
         }
         return [0, 0, 0, 0];
     };

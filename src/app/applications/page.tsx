@@ -162,7 +162,7 @@ const ApplicationDetail = ({ application }: { application: Application | null })
                         }}
                         className='text-blue-500 hover:underline'
                     >
-                        View Resume
+                        {fetchingResume ? 'Fetching Resume...' : 'Download Resume'}
                     </a>
                 </DetailSection>
 

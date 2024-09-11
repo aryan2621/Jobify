@@ -199,44 +199,46 @@ export default function FiltersPage() {
     const applyFilters = () => {};
 
     return (
-        <Card className='w-full mx-auto'>
-            <CardHeader>
-                <div className='flex justify-between items-center'>
-                    <CardTitle className='text-2xl font-bold'>Filters</CardTitle>
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant='ghost' size='icon'>
-                                    <HelpCircle className='h-5 w-5' />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Create filters to narrow down your search results.</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                </div>
-            </CardHeader>
-            <CardContent>
-                {filterGroups.map((group) => (
-                    <FilterGroup
-                        key={group.id}
-                        group={group}
-                        updateFilter={updateFilter}
-                        removeFilter={removeFilter}
-                        addFilter={addFilter}
-                        updateGroupOperator={updateGroupOperator}
-                    />
-                ))}
-                <div className='flex justify-between items-center mt-6'>
-                    <Badge variant='outline' className='text-sm'>
-                        {filterGroups.reduce((acc, group) => acc + group.filters.length, 0)} filters applied
-                    </Badge>
-                    <Button onClick={applyFilters} className='w-auto'>
-                        Apply Filters
-                    </Button>
-                </div>
-            </CardContent>
-        </Card>
+        // Handle this later
+        // <Card className='w-full mx-auto'>
+        //     <CardHeader>
+        //         <div className='flex justify-between items-center'>
+        //             <CardTitle className='text-2xl font-bold'>Filters</CardTitle>
+        //             <TooltipProvider>
+        //                 <Tooltip>
+        //                     <TooltipTrigger asChild>
+        //                         <Button variant='ghost' size='icon'>
+        //                             <HelpCircle className='h-5 w-5' />
+        //                         </Button>
+        //                     </TooltipTrigger>
+        //                     <TooltipContent>
+        //                         <p>Create filters to narrow down your search results.</p>
+        //                     </TooltipContent>
+        //                 </Tooltip>
+        //             </TooltipProvider>
+        //         </div>
+        //     </CardHeader>
+        //     <CardContent>
+        //         {filterGroups.map((group) => (
+        //             <FilterGroup
+        //                 key={group.id}
+        //                 group={group}
+        //                 updateFilter={updateFilter}
+        //                 removeFilter={removeFilter}
+        //                 addFilter={addFilter}
+        //                 updateGroupOperator={updateGroupOperator}
+        //             />
+        //         ))}
+        //         <div className='flex justify-between items-center mt-6'>
+        //             <Badge variant='outline' className='text-sm'>
+        //                 {filterGroups.reduce((acc, group) => acc + group.filters.length, 0)} filters applied
+        //             </Badge>
+        //             <Button onClick={applyFilters} className='w-auto'>
+        //                 Apply Filters
+        //             </Button>
+        //         </div>
+        //     </CardContent>
+        // </Card>
+        <></>
     );
 }

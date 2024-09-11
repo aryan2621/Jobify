@@ -185,7 +185,7 @@ export default function Component() {
                                             <TabsList>
                                                 <TabsTrigger value='name'>Name</TabsTrigger>
                                                 <TabsTrigger value='password'>Password</TabsTrigger>
-                                                <TabsTrigger value='roles'>Roles</TabsTrigger>
+                                                {/* <TabsTrigger value='roles'>Roles</TabsTrigger> */}
                                             </TabsList>
 
                                             <TabsContent value='name'>
@@ -264,7 +264,8 @@ export default function Component() {
                                                 </form>
                                             </TabsContent>
 
-                                            <TabsContent value='roles'>
+                                            {/* Handle in phase 2 */}
+                                            {/* <TabsContent value='roles'>
                                                 <form onSubmit={handleUpdateRoles} className='space-y-4 mt-5'>
                                                     <div className='flex items-center space-x-4'>
                                                         <Checkbox
@@ -311,7 +312,7 @@ export default function Component() {
                                                         </Button>
                                                     </div>
                                                 </form>
-                                            </TabsContent>
+                                            </TabsContent> */}
                                         </Tabs>
                                     </div>
                                 </CardContent>
