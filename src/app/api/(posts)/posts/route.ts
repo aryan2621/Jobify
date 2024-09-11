@@ -3,8 +3,8 @@ import { fetchAllJobs } from '@/appwrite/server/collections/job-collection';
 import { isRecognisedError, UnauthorizedError } from '@/model/error';
 
 export async function GET(req: NextRequest) {
+    const token = req.cookies.get('token');
     try {
-        const token = req.cookies.get('token');
         if (!token) {
             throw new UnauthorizedError('You are not authorized to perform this action');
         }

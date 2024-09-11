@@ -6,8 +6,8 @@ import { setJobToUser } from '@/appwrite/server/collections/user-collection';
 import { isRecognisedError, UnauthorizedError } from '@/model/error';
 
 export async function POST(req: NextRequest) {
+    const token = req.cookies.get('token');
     try {
-        const token = req.cookies.get('token');
         if (!token) {
             throw new UnauthorizedError('You are not authorized to perform this action');
         }
@@ -42,8 +42,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
+    const token = req.cookies.get('token');
     try {
-        const token = req.cookies.get('token');
         if (!token) {
             throw new UnauthorizedError('You are not authorized to perform this action');
         }

@@ -6,8 +6,8 @@ import jwt from 'jsonwebtoken';
 import { UserRoles } from '@/model/user';
 
 export async function GET(req: NextRequest) {
+    const token = req.cookies.get('token');
     try {
-        const token = req.cookies.get('token');
         if (!token) {
             throw new Error('You are not authorized to perform this action');
         }
@@ -28,8 +28,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+    const token = req.cookies.get('token');
     try {
-        const token = req.cookies.get('token');
         if (!token) {
             throw new Error('You are not authorized to perform this action');
         }
