@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { BarChartIcon, CircleHelpIcon, FileIcon, MenuIcon, ProfileIcon } from '@/elements/icon';
-import { BookCopyIcon, HouseIcon, ScrollTextIcon, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { BookCopyIcon, HouseIcon, ScrollTextIcon, PanelLeftClose, PanelLeftOpen, Workflow } from 'lucide-react';
 import Link from 'next/link';
 import { userStore } from '@/store';
 import { User } from '@/model/user';
@@ -58,6 +58,9 @@ const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
                                 />
                             )}
                             {showPost && <NavItem href='/post' icon={<FileIcon className='h-5 w-5' />} label='Post' isCollapsed={isCollapsed} />}
+                            {showPost && (
+                                <NavItem href='/workflows' icon={<Workflow className='h-5 w-5' />} label='Workflows' isCollapsed={isCollapsed} />
+                            )}
                             <NavItem href='/analytics' icon={<BarChartIcon className='h-5 w-5' />} label='Analytics' isCollapsed={isCollapsed} />
                             <NavItem
                                 href='/contact'
@@ -97,6 +100,14 @@ const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
                                         )}
                                         {showPost && (
                                             <NavItem href='/post' icon={<FileIcon className='h-5 w-5' />} label='Post' isCollapsed={false} />
+                                        )}
+                                        {showPost && (
+                                            <NavItem
+                                                href='/workflows'
+                                                icon={<Workflow className='h-5 w-5' />}
+                                                label='Workflows'
+                                                isCollapsed={false}
+                                            />
                                         )}
                                         <NavItem
                                             href='/analytics'
