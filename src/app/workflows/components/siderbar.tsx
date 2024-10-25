@@ -26,7 +26,6 @@ export const Sidebar = ({ nodes, edges }: SideBarProps) => {
     const validateWorkflow = () => {
         const startNodes = nodes.filter((node) => node.type === NodeType.START);
         const endNodes = nodes.filter((node) => node.type === NodeType.END);
-
         if (startNodes.length !== 1 || endNodes.length !== 1) {
             toast({
                 title: 'Workflow Validation Failed',
@@ -64,6 +63,7 @@ export const Sidebar = ({ nodes, edges }: SideBarProps) => {
         }
         const invalidInDegreeNodes = nodes.filter((node) => {
             if (node.type === NodeType.START) return false;
+            if (node.type === NodeType.END) return false;
             return inDegree[node.id] !== 2;
         });
 
@@ -109,7 +109,7 @@ export const Sidebar = ({ nodes, edges }: SideBarProps) => {
             <Button className='w-full mb-2' variant={'outline'} onDragStart={(event) => onDragStart(event, TaskType.INTERVIEW)} draggable>
                 Interview Task
             </Button>
-            <Button className='w-full mt-10'  onClick={validateWorkflow}>
+            <Button className='w-full mt-10' onClick={validateWorkflow}>
                 Validate Workflow
             </Button>
         </aside>

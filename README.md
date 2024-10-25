@@ -1,4 +1,3 @@
-
 # Jobify
 
 A one and only solution for hiring people.
@@ -17,8 +16,6 @@ A one and only solution for hiring people.
 ## Tech Stack
 
 **Client:** Next, Firebase, Appwrite
-
-
 
 ## Run Locally
 
@@ -46,7 +43,6 @@ Start the server
   npm run dev
 ```
 
-
 ## API Reference
 
 #### Login
@@ -55,9 +51,9 @@ Start the server
   POST /login
 ```
 
-| Parameter | Type     | Description                |
-| :-------- | :------- | :------------------------- |
-| `email` | `string` | **Required**. Email Id |
+| Parameter  | Type     | Description            |
+| :--------- | :------- | :--------------------- |
+| `email`    | `string` | **Required**. Email Id |
 | `password` | `string` | **Required**. password |
 
 #### Signup
@@ -66,46 +62,44 @@ Start the server
   POST /signup
 ```
 
-| Parameter | Type     | Description                       |
-| :-------- | :------- | :-------------------------------- |
-| `email`      | `string` | **Required**. Email Id |
-| `password`      | `string` | **Required**. Password |
-| `first name`      | `string` | **Required**. First Name |
-| `last name`      | `string` | **Required**. Last Name |
-
-
+| Parameter    | Type     | Description              |
+| :----------- | :------- | :----------------------- |
+| `email`      | `string` | **Required**. Email Id   |
+| `password`   | `string` | **Required**. Password   |
+| `first name` | `string` | **Required**. First Name |
+| `last name`  | `string` | **Required**. Last Name  |
 
 ```http
   GET /posts
 ```
 
-| Parameter | Type     | Description                       |
-| :-------- | :------- | :-------------------------------- |
-| `token`      | `string` | **Required**. In headers |
+| Parameter | Type     | Description              |
+| :-------- | :------- | :----------------------- |
+| `token`   | `string` | **Required**. In headers |
 
 ```http
   DELETE /post
 ```
 
-| Parameter | Type     | Description                       |
-| :-------- | :------- | :-------------------------------- |
-| `postId`      | `string` | **Required**. Post Id |
+| Parameter | Type     | Description           |
+| :-------- | :------- | :-------------------- |
+| `postId`  | `string` | **Required**. Post Id |
 
 ```http
   POST /post
 ```
 
-| Parameter | Type     | Description                       |
-| :-------- | :------- | :-------------------------------- |
-| `post Obj`      | `string` | **Required**. Post Object |
+| Parameter  | Type     | Description               |
+| :--------- | :------- | :------------------------ |
+| `post Obj` | `string` | **Required**. Post Object |
 
 ```http
   GET /user
 ```
 
-| Parameter | Type     | Description                       |
-| :-------- | :------- | :-------------------------------- |
-| `token`      | `string` | **Required**. In headers |
+| Parameter | Type     | Description              |
+| :-------- | :------- | :----------------------- |
+| `token`   | `string` | **Required**. In headers |
 
 ## Deployment
 
@@ -115,8 +109,6 @@ To deploy this project run
   npm run build && npm run start
 ```
 
-
 ## Support
 
 For support, email risha2621@gmail.com or join me at Linkedin https://www.linkedin.com/in/rishabh-verma-5366901a1/
-

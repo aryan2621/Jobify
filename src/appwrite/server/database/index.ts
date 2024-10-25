@@ -14,7 +14,6 @@ export default async function getOrCreateDatabase() {
             return await database.get(DB_NAME);
         } catch (error) {
             console.log('Error creating database', error);
-            throw error;
         }
     }
 }

@@ -30,25 +30,25 @@ export default function Component() {
                             <AccordionItem value='item-2'>
                                 <AccordionTrigger>How can I post a job opening?</AccordionTrigger>
                                 <AccordionContent>
-                                    To post a job opening, log into your employer account and navigate to the &quot; Post a Job&quot; section. Fill in the job
-                                    details, including title, description, requirements, and application instructions. Review your posting and click
-                                    &quot;Submit&quot; to publish it.
+                                    To post a job opening, log into your employer account and navigate to the &quot; Post a Job&quot; section. Fill in
+                                    the job details, including title, description, requirements, and application instructions. Review your posting and
+                                    click &quot;Submit&quot; to publish it.
                                 </AccordionContent>
                             </AccordionItem>
                             <AccordionItem value='item-3'>
                                 <AccordionTrigger>How do I apply for a job?</AccordionTrigger>
                                 <AccordionContent>
-                                    To apply for a job, browse the job listings and click on the job you&apos;re interested in. Review the job details and
-                                    requirements, then click the &quot;Apply Now&quot; button. Follow the application instructions provided by the employer,
-                                    which may include submitting your resume, cover letter, or filling out an application form.
+                                    To apply for a job, browse the job listings and click on the job you&apos;re interested in. Review the job details
+                                    and requirements, then click the &quot;Apply Now&quot; button. Follow the application instructions provided by the
+                                    employer, which may include submitting your resume, cover letter, or filling out an application form.
                                 </AccordionContent>
                             </AccordionItem>
                             <AccordionItem value='item-4'>
                                 <AccordionTrigger>Can I edit my job application after submitting?</AccordionTrigger>
                                 <AccordionContent>
-                                    Once you&apos;ve submitted an application, you typically cannot edit it directly. However, you can contact the employer
-                                    or our support team to inquire about making changes or updates to your application. It&apos;s best to double-check all
-                                    information before submitting to ensure accuracy.
+                                    Once you&apos;ve submitted an application, you typically cannot edit it directly. However, you can contact the
+                                    employer or our support team to inquire about making changes or updates to your application. It&apos;s best to
+                                    double-check all information before submitting to ensure accuracy.
                                 </AccordionContent>
                             </AccordionItem>
                         </Accordion>

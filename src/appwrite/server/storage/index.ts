@@ -19,7 +19,6 @@ async function getOrCreateStorage() {
             );
         } catch (error) {
             console.log('Error creating storage collection', error);
-            throw error;
         }
     }
 }
