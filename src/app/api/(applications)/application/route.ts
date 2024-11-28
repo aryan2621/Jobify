@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
         if (!token) {
             throw new UnauthorizedError('You are not authorized to perform this action');
         }
-        const user = jwt.verify(token.value, process.env.NEXT_PUBLIC_JWT_SECRET!);
+        const user = jwt.verify(token.value, process.env.JWT_SECRET!);
         const id = (user as any).id;
         const body = (await req.json()) as Application;
         body.createdBy = id;
@@ -50,7 +50,7 @@ export async function PUT(req: NextRequest) {
         if (!token) {
             throw new UnauthorizedError('You are not authorized to perform this action');
         }
-        const user = jwt.verify(token.value, process.env.NEXT_PUBLIC_JWT_SECRET!);
+        const user = jwt.verify(token.value, process.env.JWT_SECRET!);
         const id = (user as any).id;
         const body = await req.json();
         const { jobId, applicationId, status } = body;

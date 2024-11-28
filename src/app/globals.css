@@ -73,3 +73,22 @@
 .react-flow__node-group {
     background: unset !important;
 }
+.my-masonry-grid {
+    display: flex;
+    margin-left: -30px;
+    width: auto;
+}
+
+.my-masonry-grid_column {
+    padding-left: 30px;
+    background-clip: padding-box;
+}
+
+.my-masonry-grid_column > div {
+    margin-bottom: 30px;
+}
+
+/* Optional: Add smooth transitions for hover effects */
+.my-masonry-grid_column > div > div {
+    transition: all 0.3s ease-in-out;
+}

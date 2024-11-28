@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
         if (!token) {
             throw new Error('You are not authorized to perform this action');
         }
-        const user = jwt.verify(token.value, process.env.NEXT_PUBLIC_JWT_SECRET!);
+        const user = jwt.verify(token.value, process.env.JWT_SECRET!);
         const id = (user as any).id;
         const dbUser = await fetchUserByUserId(id);
         if (!dbUser) {
@@ -33,7 +33,7 @@ export async function PUT(req: NextRequest) {
         if (!token) {
             throw new Error('You are not authorized to perform this action');
         }
-        const user = jwt.verify(token.value, process.env.NEXT_PUBLIC_JWT_SECRET!);
+        const user = jwt.verify(token.value, process.env.JWT_SECRET!);
         const id = (user as any).id;
         const dbUser = await fetchUserByUserId(id);
         if (!dbUser) {

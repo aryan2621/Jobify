@@ -22,7 +22,6 @@ interface FormField {
     onChange: (value: string) => void;
 }
 
-// Reusable Components
 const FormInput = ({ label, type = 'text', placeholder, value, onChange }: FormField) => (
     <div>
         <Label>{label}</Label>

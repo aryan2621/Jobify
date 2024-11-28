@@ -9,8 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FormEvent, useEffect, useState } from 'react';
 import ky from 'ky';
 import { toast } from '@/components/ui/use-toast';
-import { Profile, User, UserRoles } from '@/model/user';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Profile, User } from '@/model/user';
 import NavbarLayout from '@/layouts/navbar';
 import { LoadingProfileSkeleton } from '@/elements/profile-skeleton';
 import { useRouter } from 'next/navigation';
@@ -185,7 +184,6 @@ export default function Component() {
                                             <TabsList>
                                                 <TabsTrigger value='name'>Name</TabsTrigger>
                                                 <TabsTrigger value='password'>Password</TabsTrigger>
-                                                {/* <TabsTrigger value='roles'>Roles</TabsTrigger> */}
                                             </TabsList>
 
                                             <TabsContent value='name'>
@@ -263,56 +261,6 @@ export default function Component() {
                                                     </div>
                                                 </form>
                                             </TabsContent>
-
-                                            {/* Handle in phase 2 */}
-                                            {/* <TabsContent value='roles'>
-                                                <form onSubmit={handleUpdateRoles} className='space-y-4 mt-5'>
-                                                    <div className='flex items-center space-x-4'>
-                                                        <Checkbox
-                                                            id='admin-role'
-                                                            name='admin-role'
-                                                            checked={profile.roles.includes(UserRoles.ADMIN)}
-                                                            onCheckedChange={(checked) =>
-                                                                setProfile((prev) => ({
-                                                                    ...prev,
-                                                                    roles: checked
-                                                                        ? [...prev.roles, UserRoles.ADMIN]
-                                                                        : prev.roles.filter((role) => role !== UserRoles.ADMIN),
-                                                                }))
-                                                            }
-                                                        />
-                                                        <Label htmlFor='admin-role'>Admin Role</Label>
-                                                        <Checkbox
-                                                            id='user-role'
-                                                            name='user-role'
-                                                            checked={profile.roles.includes(UserRoles.USER)}
-                                                            onCheckedChange={(checked) =>
-                                                                setProfile((prev) => ({
-                                                                    ...prev,
-                                                                    roles: checked
-                                                                        ? [...prev.roles, UserRoles.USER]
-                                                                        : prev.roles.filter((role) => role !== UserRoles.USER),
-                                                                }))
-                                                            }
-                                                        />
-                                                        <Label htmlFor='user-role'>User Role</Label>
-                                                    </div>
-                                                    <div className='flex justify-between'>
-                                                        <Button type='submit' disabled={submitting}>
-                                                            {submitting ? 'Updating...' : 'Update Roles'}
-                                                        </Button>
-                                                        <Button
-                                                            variant='destructive'
-                                                            onClick={async (e) => {
-                                                                e.preventDefault();
-                                                                await handleLogout();
-                                                            }}
-                                                        >
-                                                            Logout
-                                                        </Button>
-                                                    </div>
-                                                </form>
-                                            </TabsContent> */}
                                         </Tabs>
                                     </div>
                                 </CardContent>

@@ -2,7 +2,6 @@
 
 A one and only solution for hiring people.
 
-
 ## Screenshots
 
 <img width="1440" alt="Screenshot 2024-09-12 at 1 36 02 AM" src="https://github.com/user-attachments/assets/5ab9b899-e4fc-44e6-bcf9-b195fd4d0dfc">
@@ -17,7 +16,6 @@ A one and only solution for hiring people.
 <img width="1437" alt="Screenshot 2024-10-23 at 1 27 04 AM (1)" src="https://github.com/user-attachments/assets/2b236c7e-4012-4e38-a847-93c577c568ba">
 
 ## Tech Stack
-
 
 **Client:** Next, Firebase, Appwrite
 

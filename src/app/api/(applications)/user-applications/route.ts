@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
         if (!token) {
             throw new UnauthorizedError('You are not authorized to perform this action');
         }
-        const user = jwt.verify(token.value, process.env.NEXT_PUBLIC_JWT_SECRET!);
+        const user = jwt.verify(token.value, process.env.JWT_SECRET!);
         const id = (user as any).id;
         const limit = req?.nextUrl?.searchParams?.get('limit');
         const lastId = req?.nextUrl?.searchParams?.get('lastId');

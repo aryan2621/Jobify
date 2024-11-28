@@ -163,9 +163,6 @@ export default function JobAnalyticsComponent() {
                                                 axisLine={false}
                                                 tickFormatter={(value: string) => formatDate(value, 'short')}
                                             />
-                                            {/* {Object.keys(chartConfig).map((key) => (
-                                                <Bar key={key} dataKey={key} stackId='a' fill={chartConfig[key].color} radius={getBarRadius(key)} />
-                                            ))} */}
                                             {presentCategories.map((category) => (
                                                 <Bar
                                                     key={category}

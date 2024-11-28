@@ -28,13 +28,6 @@ const initialNodes: WorkflowNode[] = [
         data: { label: 'Output Node' },
         position: { x: 250, y: 250 },
     },
-    {
-        id: nanoid(),
-        type: NodeType.TASK,
-        taskType: TaskType.INTERVIEW,
-        data: { label: 'Task Node' },
-        position: { x: 250, y: 125 },
-    },
 ];
 const initialEdges: Edge[] = [];
 

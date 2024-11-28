@@ -51,7 +51,6 @@ const AiDialog = ({
                     <DialogTitle>Ask from AI</DialogTitle>
                 </DialogHeader>
                 <div className='flex flex-col md:flex-row h-[80vh] gap-6 p-6'>
-                    {/* Left Column - Input Section */}
                     <div className='flex flex-col gap-4 md:w-1/2'>
                         <div className='flex flex-col gap-4 h-full'>
                             <Textarea
@@ -86,7 +85,6 @@ const AiDialog = ({
                         </div>
                     </div>
 
-                    {/* Right Column - Response Section */}
                     <div className='md:w-1/2 relative'>
                         <div className='h-full rounded-lg border bg-muted overflow-y-auto'>
                             {isFetchingAiResponse ? (

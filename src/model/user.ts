@@ -43,12 +43,12 @@ export class User {
         this.tnC = tnC;
     }
 
-    get canAccessApplications() {
+    get applier() {
         const isSuperUser = this.roles.includes(UserRoles.ADMIN) && this.roles.includes(UserRoles.USER);
         const isUser = this.roles.includes(UserRoles.USER);
         return isSuperUser || isUser;
     }
-    get canAcessJobs() {
+    get poster() {
         const isSuperUser = this.roles.includes(UserRoles.ADMIN) && this.roles.includes(UserRoles.USER);
         const isAdmin = this.roles.includes(UserRoles.ADMIN);
         return isSuperUser || isAdmin;

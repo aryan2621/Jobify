@@ -73,8 +73,8 @@ const JobDetail = ({ job }: { job: Job | null }) => {
         return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     };
 
-    const showJobs = user?.isSuperUser || user?.canAcessJobs;
-    const showApplications = user?.isSuperUser || user?.canAccessApplications;
+    const showJobs = user?.isSuperUser || user?.poster;
+    const showApplications = user?.isSuperUser || user?.applier;
     const isAlreadyApplied = user?.applications.some((app) => job.applications.includes(app));
     const isOwner = job.createdBy === user?.id;
 

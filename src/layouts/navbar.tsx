@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { BarChartIcon, CircleHelpIcon, FileIcon, MenuIcon, ProfileIcon } from '@/elements/icon';
-import { BookCopyIcon, HouseIcon, ScrollTextIcon, PanelLeftClose, PanelLeftOpen, Workflow } from 'lucide-react';
+import { BookCopyIcon, HouseIcon, ScrollTextIcon, PanelLeftClose, PanelLeftOpen, Workflow, HandCoins } from 'lucide-react';
 import Link from 'next/link';
 import { userStore } from '@/store';
 import { User } from '@/model/user';
@@ -35,8 +35,8 @@ const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
             )
     );
 
-    const showPost = user?.isSuperUser || !user?.canAccessApplications;
-    const showApplications = user?.isSuperUser || !user?.canAcessJobs;
+    const showPost = user?.isSuperUser || !user?.applier;
+    const showApplications = user?.isSuperUser || !user?.poster;
 
     return (
         <div className='flex min-h-screen w-full'>
@@ -62,6 +62,7 @@ const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
                                 <NavItem href='/workflows' icon={<Workflow className='h-5 w-5' />} label='Workflows' isCollapsed={isCollapsed} />
                             )}
                             <NavItem href='/analytics' icon={<BarChartIcon className='h-5 w-5' />} label='Analytics' isCollapsed={isCollapsed} />
+                            <NavItem href='/billing' icon={<HandCoins className='h-5 w-5' />} label='Billing' isCollapsed={isCollapsed} />
                             <NavItem
                                 href='/contact'
                                 icon={<CircleHelpIcon className='h-5 w-5' />}
@@ -115,6 +116,7 @@ const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
                                             label='Analytics'
                                             isCollapsed={false}
                                         />
+                                        <NavItem href='/billing' icon={<HandCoins className='h-5 w-5' />} label='Billing' isCollapsed={false} />
                                         <NavItem
                                             href='/contact'
                                             icon={<CircleHelpIcon className='h-5 w-5' />}

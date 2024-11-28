@@ -26,8 +26,8 @@ export default function Component() {
             )
     );
 
-    const showJobs = user?.isSuperUser || user?.canAcessJobs;
-    const showApplications = user?.isSuperUser || user?.canAccessApplications;
+    const showJobs = user?.isSuperUser || user?.poster;
+    const showApplications = user?.isSuperUser || user?.applier;
 
     return (
         <NavbarLayout>
