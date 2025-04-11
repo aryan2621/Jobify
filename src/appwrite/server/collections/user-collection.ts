@@ -1,7 +1,7 @@
 import { IndexType, Permission, Role } from 'node-appwrite';
 import { database } from '../config';
 import { DB_NAME, USER_COLLECTION } from '@/appwrite/name';
-import { User, UserRoles } from '@/model/user';
+import { User, UserRole } from '@/model/user';
 import { Query } from 'appwrite';
 import { DuplicateError } from '@/model/error';
 
@@ -24,8 +24,9 @@ function createUserCollection() {
                 database.createDatetimeAttribute(DB_NAME, USER_COLLECTION, 'createdAt', true),
                 database.createStringAttribute(DB_NAME, USER_COLLECTION, 'jobs', 200, false, undefined, true),
                 database.createStringAttribute(DB_NAME, USER_COLLECTION, 'applications', 200, false, undefined, true),
-                database.createEnumAttribute(DB_NAME, USER_COLLECTION, 'roles', [UserRoles.ADMIN, UserRoles.USER], true),
+                database.createStringAttribute(DB_NAME, USER_COLLECTION, 'role', 10, true),
                 database.createBooleanAttribute(DB_NAME, USER_COLLECTION, 'tnC', true),
+                database.createStringAttribute(DB_NAME, USER_COLLECTION, 'workflows', 200, false, undefined, true),
             ]);
         })
         .catch((error) => {
@@ -91,8 +92,9 @@ async function createUserDocument(user: User) {
             createdAt: user.createdAt,
             jobs: user.jobs ?? [],
             applications: user.applications ?? [],
-            roles: user.roles ?? [UserRoles.USER],
+            role: user.role ?? UserRole.USER,
             tnC: user.tnC,
+            workflows: user.workflows ?? [],
         });
     } catch (error) {
         console.log('Error creating user document', error);
@@ -105,6 +107,23 @@ async function fetchUserByEmail(email: string) {
         return await database.listDocuments(DB_NAME, USER_COLLECTION, [Query.equal('email', email)]);
     } catch (error) {
         console.log('Error fetching user by email', error);
+        throw error;
+    }
+}
+
+async function addWorkflowToUser(userId: string, workflowId: string) {
+    try {
+        const user = await fetchUserByUserId(userId);
+        let workflows = user.workflows;
+        if (!workflows) {
+            workflows = [];
+        }
+        workflows.push(workflowId);
+        return await database.updateDocument(DB_NAME, USER_COLLECTION, userId, {
+            workflows: Array.from(new Set(workflows)),
+        });
+    } catch (error) {
+        console.log('Error adding workflow to user', error);
         throw error;
     }
 }
@@ -131,6 +150,22 @@ async function updateUser(userId: string, user: Partial<User>) {
         return await database.updateDocument(DB_NAME, USER_COLLECTION, userId, user);
     } catch (error) {
         console.log('Error updating user', error);
+        throw error;
+    }
+}
+
+async function deleteWorkflowFromUser(userId: string, workflowId: string) {
+    try {
+        const user = await fetchUserByUserId(userId);
+        let workflows = user.workflows;
+        if (!workflows) {
+            workflows = [];
+        } else {
+            workflows = workflows.map((id: string) => id).filter((id: string) => id !== workflowId);
+        }
+        return await database.updateDocument(DB_NAME, USER_COLLECTION, userId, { workflows });
+    } catch (error) {
+        console.log('Error deleting workflow from user', error);
         throw error;
     }
 }
@@ -170,4 +205,6 @@ export {
     setApplicationToUser,
     setJobToUser,
     updateUser,
+    addWorkflowToUser,
+    deleteWorkflowFromUser,
 };

@@ -1,0 +1,221 @@
+.
+├── app
+│   ├── admin
+│   │   ├── applications
+│   │   │   └── [id]
+│   │   │       └── page.tsx
+│   │   ├── posts
+│   │   │   ├── [id]
+│   │   │   │   └── page.tsx
+│   │   │   ├── new
+│   │   │   │   └── page.tsx
+│   │   │   └── page.tsx
+│   │   ├── workflow
+│   │   │   ├── create-workflow
+│   │   │   │   └── page.tsx
+│   │   │   └── edit-workflow
+│   │   │       ├── [id]
+│   │   │       │   └── page.tsx
+│   │   │       └── page.tsx
+│   │   └── workflows
+│   │       └── page.tsx
+│   ├── analytics
+│   │   ├── components
+│   │   │   ├── application-analytics-component.tsx
+│   │   │   └── job-analytics-component.tsx
+│   │   └── page.tsx
+│   ├── api
+│   │   ├── (analytics)
+│   │   │   ├── applications-analytics
+│   │   │   │   └── route.ts
+│   │   │   └── posts-analytics
+│   │   │       └── route.ts
+│   │   ├── (applications)
+│   │   │   ├── application
+│   │   │   │   └── route.ts
+│   │   │   ├── job-applications
+│   │   │   │   └── route.ts
+│   │   │   └── user-applications
+│   │   │       └── route.ts
+│   │   ├── (auth)
+│   │   │   ├── login
+│   │   │   │   └── route.ts
+│   │   │   ├── logout
+│   │   │   │   └── route.ts
+│   │   │   └── signup
+│   │   │       └── route.ts
+│   │   ├── (billing)
+│   │   │   └── checkout-session
+│   │   │       └── route.ts
+│   │   ├── (posts)
+│   │   │   ├── post
+│   │   │   │   └── route.ts
+│   │   │   └── posts
+│   │   │       └── route.ts
+│   │   ├── (workflow)
+│   │   │   ├── create-workflow
+│   │   │   │   └── route.ts
+│   │   │   ├── delete-workflow
+│   │   │   │   └── route.ts
+│   │   │   ├── get-workflow
+│   │   │   │   └── route.ts
+│   │   │   └── get-workflows
+│   │   │       └── route.ts
+│   │   ├── ask-ai
+│   │   │   └── route.ts
+│   │   ├── me
+│   │   │   └── route.ts
+│   │   └── resume-score
+│   │       └── route.ts
+│   ├── billing
+│   │   └── page.tsx
+│   ├── contact
+│   │   └── page.tsx
+│   ├── favicon.ico
+│   ├── globals.css
+│   ├── layout.tsx
+│   ├── login
+│   │   └── page.tsx
+│   ├── oauth
+│   │   ├── layout.tsx
+│   │   └── page.tsx
+│   ├── page.tsx
+│   ├── profile
+│   │   ├── components
+│   │   │   ├── admin-dashboard.tsx
+│   │   │   ├── application-card.tsx
+│   │   │   ├── job-card.tsx
+│   │   │   ├── profile-personal-tab.tsx
+│   │   │   ├── profile-security-tab.tsx
+│   │   │   ├── summary.tsx
+│   │   │   └── user-dashboard.tsx
+│   │   └── page.tsx
+│   ├── signup
+│   │   └── page.tsx
+│   ├── theme.tsx
+│   └── user
+│       ├── applications
+│       │   ├── [id]
+│       │   │   └── page.tsx
+│       │   ├── new
+│       │   │   └── page.tsx
+│       │   └── page.tsx
+│       └── posts
+│           └── page.tsx
+├── appwrite
+│   ├── name.ts
+│   └── server
+│       ├── collections
+│       │   ├── application-collection.ts
+│       │   ├── job-collection.ts
+│       │   ├── user-collection.ts
+│       │   └── workflow-collection.ts
+│       ├── config.ts
+│       ├── database
+│       │   └── index.ts
+│       └── storage
+│           └── index.ts
+├── components
+│   ├── elements
+│   │   ├── ai-dialog.tsx
+│   │   ├── analytics-skeleton.tsx
+│   │   ├── application-skeleton.tsx
+│   │   ├── applications-skeleton.tsx
+│   │   ├── apply-skeleton.tsx
+│   │   ├── filter-bar.tsx
+│   │   ├── filters.tsx
+│   │   ├── icon.tsx
+│   │   ├── job-detail.tsx
+│   │   ├── job-skills-badge.tsx
+│   │   ├── job.tsx
+│   │   ├── oauth-button.tsx
+│   │   ├── post-skeleton.tsx
+│   │   └── profile-skeleton.tsx
+│   ├── loaders.tsx
+│   ├── skeleton-loaders.tsx
+│   ├── ui
+│   │   ├── accordion.tsx
+│   │   ├── alert-dialog.tsx
+│   │   ├── alert.tsx
+│   │   ├── avatar.tsx
+│   │   ├── badge.tsx
+│   │   ├── button.tsx
+│   │   ├── calendar.tsx
+│   │   ├── card.tsx
+│   │   ├── carousel.tsx
+│   │   ├── chart.tsx
+│   │   ├── checkbox.tsx
+│   │   ├── collapsible.tsx
+│   │   ├── command.tsx
+│   │   ├── dialog.tsx
+│   │   ├── dropdown-menu.tsx
+│   │   ├── input.tsx
+│   │   ├── label.tsx
+│   │   ├── pagination.tsx
+│   │   ├── popover.tsx
+│   │   ├── progress.tsx
+│   │   ├── radio-group.tsx
+│   │   ├── scroll-area.tsx
+│   │   ├── select.tsx
+│   │   ├── separator.tsx
+│   │   ├── sheet.tsx
+│   │   ├── skeleton.tsx
+│   │   ├── slider.tsx
+│   │   ├── sonner.tsx
+│   │   ├── switch.tsx
+│   │   ├── table.tsx
+│   │   ├── tabs.tsx
+│   │   ├── textarea.tsx
+│   │   ├── toast.tsx
+│   │   ├── toaster.tsx
+│   │   ├── tooltip.tsx
+│   │   └── use-toast.ts
+│   └── workflows
+│       ├── builder
+│       │   ├── assignment.tsx
+│       │   ├── condition.tsx
+│       │   ├── end.tsx
+│       │   ├── interview.tsx
+│       │   ├── notification.tsx
+│       │   ├── start.tsx
+│       │   └── wait.tsx
+│       └── components
+│           ├── customEdge.tsx
+│           ├── customNode.tsx
+│           ├── editor.tsx
+│           └── siderbar.tsx
+├── config
+│   └── oauth.ts
+├── context
+│   └── workflow.tsx
+├── hooks
+│   └── use-job-fetching.ts
+├── layouts
+│   └── navbar.tsx
+├── lib
+│   ├── job-utils
+│   │   ├── service.ts
+│   │   └── utils.ts
+│   ├── utils
+│   │   ├── joconnect-utils.ts
+│   │   ├── node-factory-utils.ts
+│   │   ├── oauth-utils.ts
+│   │   ├── validation-utils.ts
+│   │   └── workflow-utils.ts
+│   └── utils.ts
+├── middleware.ts
+├── model
+│   ├── application.ts
+│   ├── error.ts
+│   ├── job.ts
+│   ├── oauth.ts
+│   ├── request.ts
+│   ├── state.ts
+│   ├── subscription.ts
+│   ├── user.ts
+│   └── workflow.ts
+├── store
+│   └── index.ts
+└── structure.txt
+
+72 directories, 147 files

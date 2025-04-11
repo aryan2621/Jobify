@@ -1,4 +1,4 @@
-export enum UserRoles {
+export enum UserRole {
     ADMIN = 'admin',
     USER = 'user',
 }
@@ -14,7 +14,8 @@ export class User {
     jobs: string[];
     applications: string[];
     tnC: boolean;
-    roles: UserRoles[] = [];
+    role: UserRole;
+    workflows: string[];
     constructor(
         id: string,
         firstName: string,
@@ -26,8 +27,9 @@ export class User {
         createdAt: string,
         jobs: string[],
         applications: string[],
-        roles: UserRoles[],
-        tnC: boolean
+        role: UserRole,
+        tnC: boolean,
+        workflows: string[]
     ) {
         this.id = id;
         this.firstName = firstName;
@@ -39,22 +41,9 @@ export class User {
         this.jobs = jobs;
         this.applications = applications;
         this.confirmPassword = confirmPassword;
-        this.roles = roles;
+        this.role = role;
         this.tnC = tnC;
-    }
-
-    get applier() {
-        const isSuperUser = this.roles.includes(UserRoles.ADMIN) && this.roles.includes(UserRoles.USER);
-        const isUser = this.roles.includes(UserRoles.USER);
-        return isSuperUser || isUser;
-    }
-    get poster() {
-        const isSuperUser = this.roles.includes(UserRoles.ADMIN) && this.roles.includes(UserRoles.USER);
-        const isAdmin = this.roles.includes(UserRoles.ADMIN);
-        return isSuperUser || isAdmin;
-    }
-    get isSuperUser() {
-        return this.roles.includes(UserRoles.ADMIN) && this.roles.includes(UserRoles.USER);
+        this.workflows = workflows;
     }
 }
 
@@ -65,7 +54,7 @@ export class Profile {
     confirmPassword: string;
     email: string;
     username: string;
-    roles: UserRoles[] = [];
+    role: UserRole;
     jobs: string[] = [];
     applications: string[] = [];
 
@@ -76,7 +65,7 @@ export class Profile {
         confirmPassword: string,
         email: string,
         username: string,
-        roles: UserRoles[],
+        role: UserRole,
         jobs: string[],
         applications: string[]
     ) {
@@ -86,7 +75,7 @@ export class Profile {
         this.confirmPassword = confirmPassword;
         this.email = email;
         this.username = username;
-        this.roles = roles;
+        this.role = role;
         this.jobs = jobs;
         this.applications = applications;
     }

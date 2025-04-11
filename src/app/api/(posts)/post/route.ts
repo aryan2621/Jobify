@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
             body.rejectionContent,
             body.selectionContent,
             body.createdAt,
+            body.state,
             id,
             body.applications ?? []
         );

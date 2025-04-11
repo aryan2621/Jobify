@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
         if (!isPasswordValid) {
             throw new UnauthorizedError('Invalid password');
         }
-        const token = jwt.sign({ id: user.id, roles: user.roles }, process.env.JWT_SECRET!, {
+        const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET!, {
             expiresIn: '1d',
         });
         const response = NextResponse.json(user, { status: 200 });

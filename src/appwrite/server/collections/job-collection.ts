@@ -1,5 +1,5 @@
 import { IndexType, Permission, Role } from 'node-appwrite';
-import { Job, JobType, WorkplaceTypes } from '@/model/job';
+import { Job, JobState, JobType, WorkplaceTypes } from '@/model/job';
 import { database } from '../config';
 import { DB_NAME, JOB_COLLECTION } from '@/appwrite/name';
 import { Query } from 'appwrite';
@@ -18,6 +18,7 @@ function createJobCollection() {
                 database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'profile', 50, true),
                 database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'description', 200, false),
                 database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'company', 20, true),
+                database.createEnumAttribute(DB_NAME, JOB_COLLECTION, 'state', [JobState.DRAFT, JobState.PUBLISHED, JobState.CLOSED], true),
                 database.createEnumAttribute(
                     DB_NAME,
                     JOB_COLLECTION,
@@ -73,6 +74,7 @@ async function createJobDocument(job: Job) {
             rejectionContent: job.rejectionContent,
             selectionContent: job.selectionContent,
             createdAt: job.createdAt,
+            state: job.state,
             createdBy: job.createdBy,
             applications: job.applications ?? [],
         });

@@ -1,13 +1,14 @@
 import { getResumeFromBucket } from '@/appwrite/server/storage';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { GoogleAIFileManager } from '@google/generative-ai/server';
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-const fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY!);
+import { ChatOpenAI } from '@langchain/openai';
+import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
+const model = new ChatOpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    modelName: 'gpt-4o-mini',
+});
 
 const prompt = `
 Analyze the provided resume for ATS (Applicant Tracking System) compatibility and return the result as a JSON object with the following keys:
@@ -23,8 +24,6 @@ Focus your analysis on the following:
 - **Alignment**: Verify how well the content aligns with a standard ATS parsing system and a target job description.
 
 Return precise and actionable feedback in the "suggestions" array, e.g., "The 'Experience' section lacks role-specific keywords such as 'project management'—add relevant terms." or "Avoid using images or charts; replace them with plain text to improve ATS readability."
-
-
 `;
 
 export async function POST(request: NextRequest) {
@@ -37,27 +36,31 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Resume not found' }, { status: 404 });
         }
 
+        // Create temporary directory and file for the resume
         const tempDir = path.join(os.tmpdir(), 'resume-score');
         await removeTempFile(tempDir);
         await fs.mkdir(tempDir, { recursive: true });
         const tempFilePath = path.join(tempDir, `resume-${fileId}.pdf`);
         await fs.writeFile(tempFilePath, Buffer.from(resumeBuffer));
 
-        const uploadResponse = await fileManager.uploadFile(tempFilePath, {
-            mimeType: 'application/pdf',
-            displayName: 'Resume Analysis',
-        });
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-        const result = await model.generateContent([
+        const loader = new PDFLoader(tempFilePath);
+        const docs = await loader.load();
+
+        const resumeContent = docs.map((doc: any) => doc.pageContent).join('\n');
+        const messages = [
             {
-                fileData: {
-                    mimeType: uploadResponse.file.mimeType,
-                    fileUri: uploadResponse.file.uri,
-                },
+                role: 'system',
+                content: prompt,
             },
-            { text: prompt },
-        ]);
-        const responseText = result.response.text();
+            {
+                role: 'user',
+                content: resumeContent,
+            },
+        ];
+
+        const response = await model.invoke(messages);
+
+        const responseText = response.content as string;
         const jsonStartIndex = responseText.indexOf('{');
         const jsonEndIndex = responseText.lastIndexOf('}');
         const jsonResponse = responseText.substring(jsonStartIndex, jsonEndIndex + 1);

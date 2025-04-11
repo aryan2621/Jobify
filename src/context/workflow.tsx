@@ -1,4 +1,4 @@
-import { NodeType, TaskType } from '@/app/workflows/model';
+import { TaskType, NodeType } from '@/model/workflow';
 import { createContext, useContext, useState } from 'react';
 
 const DnDContext = createContext<[NodeType | TaskType | null, React.Dispatch<React.SetStateAction<NodeType | TaskType | null>>]>([null, () => {}]);

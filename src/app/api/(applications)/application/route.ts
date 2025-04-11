@@ -5,7 +5,7 @@ import { Application, ApplicationStatus } from '@/model/application';
 import { fetchJobById, setApplicationIdToJob } from '@/appwrite/server/collections/job-collection';
 import { createApplicationDocument, fetchApplicationById, updateApplicationStatus } from '@/appwrite/server/collections/application-collection';
 import nodemailer from 'nodemailer';
-import { EMAIL_SUBJECT } from '@/utils';
+import { EMAIL_SUBJECT } from '@/lib/utils/joconnect-utils';
 import { isRecognisedError, NotFoundError, UnauthorizedError } from '@/model/error';
 
 export async function POST(req: NextRequest) {

@@ -3,7 +3,7 @@ import { fetchUserByUserId, updateUser } from '@/appwrite/server/collections/use
 import { BadRequestError, isRecognisedError } from '@/model/error';
 import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { UserRoles } from '@/model/user';
+import { UserRole } from '@/model/user';
 
 export async function GET(req: NextRequest) {
     const token = req.cookies.get('token');
@@ -39,7 +39,7 @@ export async function PUT(req: NextRequest) {
         if (!dbUser) {
             throw new BadRequestError('You are not authorized to perform this action');
         }
-        const { firstName, lastName, password, roles } = await req.json();
+        const { firstName, lastName, password, role } = await req.json();
         let salt;
         let hashedPassword;
         if (password) {
@@ -50,7 +50,7 @@ export async function PUT(req: NextRequest) {
             firstName?: string;
             lastName?: string;
             password?: string;
-            roles?: UserRoles[];
+            role?: UserRole;
         }
         const obj: UpdateUserObj = {};
 
@@ -63,8 +63,8 @@ export async function PUT(req: NextRequest) {
         if (password) {
             obj.password = hashedPassword;
         }
-        if (roles) {
-            obj.roles = roles;
+        if (role) {
+            obj.role = role;
         }
         await updateUser(id, obj);
         return NextResponse.json({ message: 'User updated successfully' }, { status: 200 });

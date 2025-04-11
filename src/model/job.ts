@@ -12,6 +12,11 @@ export enum WorkplaceTypes {
     HYBRID = 'Hybrid',
     ONSITE = 'Onsite',
 }
+export enum JobState {
+    DRAFT = 'Draft',
+    PUBLISHED = 'Published',
+    CLOSED = 'Closed',
+}
 export class Job {
     id: string;
     profile: string;
@@ -25,6 +30,7 @@ export class Job {
     rejectionContent: string;
     selectionContent: string;
     createdAt: string;
+    state: JobState;
     createdBy: string;
     applications: string[];
 
@@ -41,6 +47,7 @@ export class Job {
         rejectionContent: string,
         selectionContent: string,
         createdAt: string,
+        state: JobState,
         createdBy: string,
         applications: string[]
     ) {
@@ -56,6 +63,7 @@ export class Job {
         this.rejectionContent = rejectionContent;
         this.selectionContent = selectionContent;
         this.createdAt = createdAt;
+        this.state = state;
         this.createdBy = createdBy;
         this.applications = applications;
     }

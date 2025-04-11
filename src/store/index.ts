@@ -31,8 +31,9 @@ export const userStore = create<Auth>()(
                             user.createdAt,
                             user.jobs,
                             user.applications,
-                            user.roles,
-                            user.tnC
+                            user.role,
+                            user.tnC,
+                            user.workflows
                         ),
                     });
                 },
@@ -59,8 +60,9 @@ export const userStore = create<Auth>()(
                             state.user.createdAt,
                             state.user.jobs,
                             state.user.applications,
-                            profile.roles ?? state.user.roles,
-                            state.user.tnC
+                            profile.role ?? state.user.role,
+                            state.user.tnC,
+                            state.user.workflows
                         );
 
                         return { user: updatedUser };
