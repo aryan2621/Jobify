@@ -21,6 +21,7 @@ import { UserSummary } from './components/summary';
 import { AdminSummary } from './components/summary';
 import ProfilePersonalTab from './components/profile-personal-tab';
 import ProfileSecurityTab from './components/profile-security-tab';
+import ProfileSettingsTab from './components/profile-settings-tab';
 import UserDashboard from './components/user-dashboard';
 import AdminDashboard from './components/admin-dashboard';
 
@@ -319,9 +320,10 @@ export default function ProfilePage() {
                                     </CardHeader>
                                     <CardContent>
                                         <Tabs value={activeTab} onValueChange={setActiveTab}>
-                                            <TabsList className='grid grid-cols-2 mb-6'>
+                                            <TabsList className='grid grid-cols-3 mb-6'>
                                                 <TabsTrigger value='personal'>Personal Info</TabsTrigger>
                                                 <TabsTrigger value='security'>Security</TabsTrigger>
+                                                <TabsTrigger value='settings'>Settings</TabsTrigger>
                                             </TabsList>
 
                                             <TabsContent value='personal'>
@@ -335,6 +337,15 @@ export default function ProfilePage() {
 
                                             <TabsContent value='security'>
                                                 <ProfileSecurityTab
+                                                    profile={profile}
+                                                    setProfile={setProfile}
+                                                    submitting={submitting}
+                                                    updateUser={updateUser}
+                                                />
+                                            </TabsContent>
+
+                                            <TabsContent value='settings'>
+                                                <ProfileSettingsTab
                                                     profile={profile}
                                                     setProfile={setProfile}
                                                     submitting={submitting}

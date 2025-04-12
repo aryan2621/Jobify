@@ -4,13 +4,21 @@ import { createApplicationCollection } from '../collections/application-collecti
 import { createUserCollection } from '../collections/user-collection';
 import { createJobCollection } from '../collections/job-collection';
 import { createWorkflowCollection } from '../collections/workflow-collection';
+import { createSettingsCollection } from '../collections/settings-collection';
+
 export default async function getOrCreateDatabase() {
     try {
         return await database.get(DB_NAME);
     } catch (error) {
         try {
             await database.create(DB_NAME, DB_NAME);
-            await Promise.all([createApplicationCollection(), createUserCollection(), createJobCollection(), createWorkflowCollection()]);
+            await Promise.all([
+                createApplicationCollection(),
+                createUserCollection(),
+                createJobCollection(),
+                createWorkflowCollection(),
+                createSettingsCollection(),
+            ]);
             return await database.get(DB_NAME);
         } catch (error) {
             console.log('Error creating database', error);

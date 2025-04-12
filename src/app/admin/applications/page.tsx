@@ -95,7 +95,19 @@ const StatusBadge = ({ status }: { status: ApplicationStatus }) => {
 };
 
 // Application List Item
-const ApplicationCard = ({ application, isSelected, onClick }: { application: Application; isSelected: boolean; onClick: () => void }) => {
+const ApplicationCard = ({
+    application,
+    isSelected,
+    onClick,
+    statusChangeLoading,
+    isChangingStatus,
+}: {
+    application: Application;
+    isSelected: boolean;
+    onClick: () => void;
+    statusChangeLoading: boolean;
+    isChangingStatus: boolean;
+}) => {
     return (
         <Card className={`mb-3 cursor-pointer transition-all hover:shadow-md ${isSelected ? 'border-primary shadow-md' : ''}`} onClick={onClick}>
             <CardContent className='p-4'>
@@ -109,7 +121,14 @@ const ApplicationCard = ({ application, isSelected, onClick }: { application: Ap
                             <p className='text-xs text-muted-foreground'>{application.email}</p>
                         </div>
                     </div>
-                    <StatusBadge status={application.status} />
+                    {isChangingStatus && statusChangeLoading ? (
+                        <div className='flex items-center'>
+                            <RefreshCw className='w-3 h-3 mr-1 animate-spin text-muted-foreground' />
+                            <span className='text-xs text-muted-foreground'>Updating...</span>
+                        </div>
+                    ) : (
+                        <StatusBadge status={application.status} />
+                    )}
                 </div>
 
                 <div className='mt-3 grid grid-cols-2 gap-x-2 gap-y-1 text-sm'>
@@ -224,10 +243,12 @@ const ApplicationDetail = ({
     application,
     onStatusChange,
     jobDetails,
+    statusChangeLoading,
 }: {
     application: Application | null;
     onStatusChange: (status: ApplicationStatus) => Promise<void>;
     jobDetails: Job | null;
+    statusChangeLoading: boolean;
 }) => {
     const [activeTab, setActiveTab] = useState('profile');
     const [fetchingResume, setFetchingResume] = useState(false);
@@ -302,7 +323,16 @@ const ApplicationDetail = ({
                                 Contact
                             </Button>
 
-                            <AlertDialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
+                            <AlertDialog
+                                open={showStatusDialog}
+                                onOpenChange={(open) => {
+                                    if (!open && statusChangeLoading) {
+                                        // Prevent closing the dialog while status change is in progress
+                                        return;
+                                    }
+                                    setShowStatusDialog(open);
+                                }}
+                            >
                                 <AlertDialogTrigger asChild>
                                     <Button size='sm'>
                                         Change Status
@@ -321,11 +351,20 @@ const ApplicationDetail = ({
                                             variant='outline'
                                             className={application.status === ApplicationStatus.APPLIED ? 'border-primary' : ''}
                                             onClick={async () => {
-                                                await onStatusChange(ApplicationStatus.APPLIED);
-                                                setShowStatusDialog(false);
+                                                try {
+                                                    await onStatusChange(ApplicationStatus.APPLIED);
+                                                    setShowStatusDialog(false);
+                                                } catch (error) {
+                                                    // Error is already handled in the parent component
+                                                }
                                             }}
+                                            disabled={statusChangeLoading}
                                         >
-                                            <Clock className='h-4 w-4 mr-2' />
+                                            {statusChangeLoading ? (
+                                                <RefreshCw className='h-4 w-4 mr-2 animate-spin' />
+                                            ) : (
+                                                <Clock className='h-4 w-4 mr-2' />
+                                            )}
                                             Mark as Pending
                                         </Button>
 
@@ -337,11 +376,20 @@ const ApplicationDetail = ({
                                                     : 'bg-green-600 hover:bg-green-700'
                                             }
                                             onClick={async () => {
-                                                await onStatusChange(ApplicationStatus.SELECTED);
-                                                setShowStatusDialog(false);
+                                                try {
+                                                    await onStatusChange(ApplicationStatus.SELECTED);
+                                                    setShowStatusDialog(false);
+                                                } catch (error) {
+                                                    // Error is already handled in the parent component
+                                                }
                                             }}
+                                            disabled={statusChangeLoading}
                                         >
-                                            <CheckCircle className='h-4 w-4 mr-2' />
+                                            {statusChangeLoading ? (
+                                                <RefreshCw className='h-4 w-4 mr-2 animate-spin' />
+                                            ) : (
+                                                <CheckCircle className='h-4 w-4 mr-2' />
+                                            )}
                                             Select Applicant
                                         </Button>
 
@@ -353,16 +401,25 @@ const ApplicationDetail = ({
                                                     : 'bg-red-600 hover:bg-red-700'
                                             }
                                             onClick={async () => {
-                                                await onStatusChange(ApplicationStatus.REJECTED);
-                                                setShowStatusDialog(false);
+                                                try {
+                                                    await onStatusChange(ApplicationStatus.REJECTED);
+                                                    setShowStatusDialog(false);
+                                                } catch (error) {
+                                                    // Error is already handled in the parent component
+                                                }
                                             }}
+                                            disabled={statusChangeLoading}
                                         >
-                                            <XCircle className='h-4 w-4 mr-2' />
+                                            {statusChangeLoading ? (
+                                                <RefreshCw className='h-4 w-4 mr-2 animate-spin' />
+                                            ) : (
+                                                <XCircle className='h-4 w-4 mr-2' />
+                                            )}
                                             Reject Applicant
                                         </Button>
                                     </div>
                                     <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogCancel disabled={statusChangeLoading}>Cancel</AlertDialogCancel>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
@@ -588,6 +645,7 @@ export default function AdminApplicationsPage() {
     const [jobs, setJobs] = useState<Map<string, Job>>(new Map());
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [statusChangeLoading, setStatusChangeLoading] = useState(false);
 
     // Filters state
     const [searchQuery, setSearchQuery] = useState('');
@@ -703,6 +761,7 @@ export default function AdminApplicationsPage() {
     const handleStatusChange = async (status: ApplicationStatus) => {
         if (!selectedApplication) return;
 
+        setStatusChangeLoading(true);
         try {
             await ky.put('/api/application', {
                 json: {
@@ -728,6 +787,8 @@ export default function AdminApplicationsPage() {
                 description: 'Failed to update application status',
                 variant: 'destructive',
             });
+        } finally {
+            setStatusChangeLoading(false);
         }
     };
 
@@ -883,6 +944,8 @@ export default function AdminApplicationsPage() {
                                         application={application}
                                         isSelected={selectedApplication?.id === application.id}
                                         onClick={() => setSelectedApplication(application)}
+                                        statusChangeLoading={statusChangeLoading}
+                                        isChangingStatus={selectedApplication?.id === application.id}
                                     />
                                 ))
                             )}
@@ -890,7 +953,12 @@ export default function AdminApplicationsPage() {
                     </div>
 
                     <div className='md:col-span-2'>
-                        <ApplicationDetail application={selectedApplication} onStatusChange={handleStatusChange} jobDetails={selectedJobDetails} />
+                        <ApplicationDetail
+                            application={selectedApplication}
+                            onStatusChange={handleStatusChange}
+                            jobDetails={selectedJobDetails}
+                            statusChangeLoading={statusChangeLoading}
+                        />
                     </div>
                 </div>
             </div>

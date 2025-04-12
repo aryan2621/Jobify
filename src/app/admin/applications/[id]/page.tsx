@@ -145,6 +145,7 @@ const ApplicationDetail = ({
     const [activeTab, setActiveTab] = useState('profile');
     const [fetchingResume, setFetchingResume] = useState(false);
     const [showStatusDialog, setShowStatusDialog] = useState(false);
+    const [statusLoading, setStatusLoading] = useState<ApplicationStatus | null>(null);
 
     if (!application) {
         return (
@@ -186,6 +187,16 @@ const ApplicationDetail = ({
         }
     };
 
+    const handleStatusChange = async (status: ApplicationStatus) => {
+        try {
+            setStatusLoading(status);
+            await onStatusChange(status);
+            setShowStatusDialog(false);
+        } finally {
+            setStatusLoading(null);
+        }
+    };
+
     return (
         <div className='space-y-4'>
             <Card>
@@ -217,9 +228,18 @@ const ApplicationDetail = ({
 
                             <AlertDialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
                                 <AlertDialogTrigger asChild>
-                                    <Button size='sm'>
-                                        Change Status
-                                        <ChevronDown className='h-4 w-4 ml-2' />
+                                    <Button size='sm' disabled={statusLoading !== null}>
+                                        {statusLoading !== null ? (
+                                            <div className='flex items-center'>
+                                                <div className='w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2'></div>
+                                                Updating...
+                                            </div>
+                                        ) : (
+                                            <>
+                                                Change Status
+                                                <ChevronDown className='h-4 w-4 ml-2' />
+                                            </>
+                                        )}
                                     </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
@@ -233,13 +253,20 @@ const ApplicationDetail = ({
                                         <Button
                                             variant='outline'
                                             className={application.status === ApplicationStatus.APPLIED ? 'border-primary' : ''}
-                                            onClick={async () => {
-                                                await onStatusChange(ApplicationStatus.APPLIED);
-                                                setShowStatusDialog(false);
-                                            }}
+                                            onClick={() => handleStatusChange(ApplicationStatus.APPLIED)}
+                                            disabled={application.status === ApplicationStatus.APPLIED || statusLoading !== null}
                                         >
-                                            <Clock className='h-4 w-4 mr-2' />
-                                            Mark as Pending
+                                            {statusLoading === ApplicationStatus.APPLIED ? (
+                                                <div className='flex items-center'>
+                                                    <div className='w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2'></div>
+                                                    Updating...
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <Clock className='h-4 w-4 mr-2' />
+                                                    Mark as Pending
+                                                </>
+                                            )}
                                         </Button>
 
                                         <Button
@@ -249,13 +276,20 @@ const ApplicationDetail = ({
                                                     ? 'bg-green-600 hover:bg-green-700'
                                                     : 'bg-green-600 hover:bg-green-700'
                                             }
-                                            onClick={async () => {
-                                                await onStatusChange(ApplicationStatus.SELECTED);
-                                                setShowStatusDialog(false);
-                                            }}
+                                            onClick={() => handleStatusChange(ApplicationStatus.SELECTED)}
+                                            disabled={application.status === ApplicationStatus.SELECTED || statusLoading !== null}
                                         >
-                                            <CheckCircle className='h-4 w-4 mr-2' />
-                                            Select Applicant
+                                            {statusLoading === ApplicationStatus.SELECTED ? (
+                                                <div className='flex items-center'>
+                                                    <div className='w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2'></div>
+                                                    Updating...
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <CheckCircle className='h-4 w-4 mr-2' />
+                                                    Select Applicant
+                                                </>
+                                            )}
                                         </Button>
 
                                         <Button
@@ -265,13 +299,20 @@ const ApplicationDetail = ({
                                                     ? 'bg-red-600 hover:bg-red-700'
                                                     : 'bg-red-600 hover:bg-red-700'
                                             }
-                                            onClick={async () => {
-                                                await onStatusChange(ApplicationStatus.REJECTED);
-                                                setShowStatusDialog(false);
-                                            }}
+                                            onClick={() => handleStatusChange(ApplicationStatus.REJECTED)}
+                                            disabled={application.status === ApplicationStatus.REJECTED || statusLoading !== null}
                                         >
-                                            <XCircle className='h-4 w-4 mr-2' />
-                                            Reject Applicant
+                                            {statusLoading === ApplicationStatus.REJECTED ? (
+                                                <div className='flex items-center'>
+                                                    <div className='w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2'></div>
+                                                    Updating...
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <XCircle className='h-4 w-4 mr-2' />
+                                                    Reject Applicant
+                                                </>
+                                            )}
                                         </Button>
                                     </div>
                                     <AlertDialogFooter>

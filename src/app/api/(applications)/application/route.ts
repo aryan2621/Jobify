@@ -4,9 +4,11 @@ import { setApplicationToUser } from '@/appwrite/server/collections/user-collect
 import { Application, ApplicationStatus } from '@/model/application';
 import { fetchJobById, setApplicationIdToJob } from '@/appwrite/server/collections/job-collection';
 import { createApplicationDocument, fetchApplicationById, updateApplicationStatus } from '@/appwrite/server/collections/application-collection';
-import nodemailer from 'nodemailer';
+import { fetchSettingsByUserIdPrivate } from '@/appwrite/server/collections/settings-collection';
 import { EMAIL_SUBJECT } from '@/lib/utils/joconnect-utils';
 import { isRecognisedError, NotFoundError, UnauthorizedError } from '@/model/error';
+import * as google from '@googleapis/gmail';
+import { OAuth2Client } from 'google-auth-library';
 
 export async function POST(req: NextRequest) {
     const token = req.cookies.get('token');
@@ -51,7 +53,7 @@ export async function PUT(req: NextRequest) {
             throw new UnauthorizedError('You are not authorized to perform this action');
         }
         const user = jwt.verify(token.value, process.env.JWT_SECRET!);
-        const id = (user as any).id;
+        const userId = (user as any).id;
         const body = await req.json();
         const { jobId, applicationId, status } = body;
 
@@ -59,34 +61,47 @@ export async function PUT(req: NextRequest) {
         if (!job || !application) {
             throw new NotFoundError('Requested job or application does not exist');
         }
-        if (job.createdBy !== id) {
+        if (job.createdBy !== userId) {
             throw new UnauthorizedError('You are not the owner of this job');
         }
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.NEXT_PUBLIC_EMAIL_ID,
-                pass: process.env.NEXT_PUBLIC_EMAIL_PASSWORD,
-            },
+        const emailSettings = await fetchSettingsByUserIdPrivate(userId);
+        const oauth2Client = new OAuth2Client(
+            process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
+            process.env.GOOGLE_CLIENT_SECRET!,
+            process.env.NEXT_PUBLIC_OAUTH_REDIRECT_URL!
+        );
+        oauth2Client.setCredentials({
+            access_token: emailSettings.accessToken,
+            refresh_token: emailSettings.refreshToken,
         });
+        const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
         let content = status === ApplicationStatus.REJECTED ? job.rejectionContent : job.selectionContent;
 
         content = content.replace('{firstName}', application.firstName);
         content = content.replace('{lastName}', application.lastName);
         content = content.replace('{jobTitle}', job.profile);
         content = content.replace('{company}', job.company);
-        content = content.replace('{interviewMode}', 'Online');
 
+        content = content.replace('{interviewMode}', 'Online');
         const subject = EMAIL_SUBJECT;
-        const from = process.env.NEXT_PUBLIC_EMAIL_ID;
+        const from = emailSettings.email;
         const to = application.email;
-        const mailOptions = {
-            from,
-            to,
-            subject,
-            text: content,
-        };
-        await Promise.all([transporter.sendMail(mailOptions), updateApplicationStatus(jobId, applicationId, status)]);
+
+        const emailLines = [`From: ${from}`, `To: ${to}`, `Subject: ${subject}`, '', content];
+
+        const email = emailLines.join('\r\n').trim();
+        const encodedEmail = Buffer.from(email).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+        await Promise.all([
+            gmail.users.messages.send({
+                userId: 'me',
+                requestBody: {
+                    raw: encodedEmail,
+                },
+            }),
+            updateApplicationStatus(jobId, applicationId, status),
+        ]);
+
         return NextResponse.json({ message: 'Application updated successfully' }, { status: 200 });
     } catch (error: any) {
         console.log('Error while updating application', error);
