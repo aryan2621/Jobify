@@ -85,7 +85,7 @@ export default function ContactPage() {
         e.preventDefault();
         setIsSubmitting(true);
 
-        // Simulating form submission
+        
         await new Promise((resolve) => setTimeout(resolve, 1500));
 
         setIsSubmitting(false);
@@ -134,7 +134,7 @@ export default function ContactPage() {
 
                     <TabsContent value='contact' className='space-y-8'>
                         <div className='grid gap-8 md:grid-cols-3'>
-                            {/* Contact Info Card */}
+                            {}
                             <div className='md:col-span-1 space-y-6'>
                                 <Card className='overflow-hidden'>
                                     <div className='bg-primary text-primary-foreground p-6'>
@@ -166,7 +166,7 @@ export default function ContactPage() {
                                 </Card>
                             </div>
 
-                            {/* Contact Form Card */}
+                            
                             <div className='md:col-span-2'>
                                 <Card>
                                     <CardHeader>
@@ -277,7 +277,7 @@ export default function ContactPage() {
                             </div>
                         </div>
 
-                        {/* Support categories – hiring managers & recruiters */}
+                        
                         <div className='mt-12'>
                             <h2 className='text-xl font-semibold mb-6'>How We Can Help Recruiters & Hiring Managers</h2>
                             <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5'>
@@ -321,7 +321,7 @@ export default function ContactPage() {
 
                     <TabsContent value='faq'>
                         <div className='grid gap-8 md:grid-cols-3'>
-                            {/* FAQ Categories */}
+                            
                             <div className='md:col-span-1'>
                                 <Card>
                                     <CardHeader>
@@ -356,7 +356,7 @@ export default function ContactPage() {
                                 </Card>
                             </div>
 
-                            {/* FAQ Accordion */}
+                            
                             <div className='md:col-span-2'>
                                 <Card>
                                     <CardHeader>

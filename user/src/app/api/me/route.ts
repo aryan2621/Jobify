@@ -4,7 +4,6 @@ import { getAvatarViewUrl } from '@/appwrite/server/storage';
 import { BadRequestError, isRecognisedError } from '@/model/error';
 import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-
 export async function GET(req: NextRequest) {
     const token = req.cookies.get('token');
     try {
@@ -20,7 +19,8 @@ export async function GET(req: NextRequest) {
         const avatarUrl = dbUser.avatarFileId ? getAvatarViewUrl(dbUser.avatarFileId) : null;
         const { ...rest } = dbUser as Record<string, unknown>;
         return NextResponse.json({ ...rest, avatarUrl }, { status: 200 });
-    } catch (error) {
+    }
+    catch (error) {
         console.log('Error while fetching user', error);
         if (isRecognisedError(error)) {
             const err = error as any;
@@ -29,7 +29,6 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ message: 'Error while fetching user' }, { status: 500 });
     }
 }
-
 export async function PUT(req: NextRequest) {
     const token = req.cookies.get('token');
     try {
@@ -54,7 +53,6 @@ export async function PUT(req: NextRequest) {
             password?: string;
         }
         const obj: UpdateUserObj = {};
-
         if (firstName) {
             obj.firstName = firstName;
         }
@@ -66,7 +64,8 @@ export async function PUT(req: NextRequest) {
         }
         await updateUser(id, obj);
         return NextResponse.json({ message: 'User updated successfully' }, { status: 200 });
-    } catch (error) {
+    }
+    catch (error) {
         console.log('Error while updating user', error);
         if (isRecognisedError(error)) {
             const err = error as any;

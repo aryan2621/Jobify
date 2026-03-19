@@ -3,7 +3,6 @@ export class Education {
     degree: string;
     degreeType: DegreeType;
     sgpa: number;
-
     constructor(college: string, degree: string, degreeType: DegreeType, sgpa: number) {
         this.college = college;
         this.degree = degree;
@@ -11,11 +10,10 @@ export class Education {
         this.sgpa = sgpa;
     }
 }
-
 export enum Gender {
     Male = 'Male',
     Female = 'Female',
-    Other = 'Other',
+    Other = 'Other'
 }
 export enum DegreeType {
     BACHELOR = 'Bachelor',
@@ -24,7 +22,7 @@ export enum DegreeType {
     HIGH_SCHOOL = 'High School',
     DIPLOMA = 'Diploma',
     CERTIFICATE = 'Certificate',
-    INTERMEDIATE = 'Intermediate',
+    INTERMEDIATE = 'Intermediate'
 }
 export class Experience {
     profile: string;
@@ -34,7 +32,6 @@ export class Experience {
     startDate: string;
     endDate: string;
     yoe: number;
-
     constructor(profile: string, company: string, employer: string, isCurrent: boolean, startDate: string, endDate: string, yoe: number) {
         this.profile = profile;
         this.company = company;
@@ -45,20 +42,18 @@ export class Experience {
         this.yoe = yoe;
     }
 }
-
 export enum ApplicationStatus {
     APPLIED = 'Applied',
     REJECTED = 'Rejected',
-    SELECTED = 'Selected',
+    SELECTED = 'Selected'
 }
-
 export enum JobSource {
     LINKEDIN = 'LinkedIn',
     ANGEL_LIST = 'Angel List',
     REFERRAL = 'Referral',
     JOB_PORTAL = 'Job Portal',
     COMPANY_WEBSITE = 'Company Website',
-    OTHER = 'Other',
+    OTHER = 'Other'
 }
 export class Application {
     id: string;
@@ -79,27 +74,7 @@ export class Application {
     jobId: string;
     createdAt: string;
     createdBy: string;
-
-    constructor(
-        id: string,
-        firstName: string,
-        lastName: string,
-        email: string,
-        phone: string,
-        currentLocation: string,
-        gender: Gender,
-        education: Education[],
-        experience: Experience[],
-        skills: string[],
-        source: JobSource,
-        resume: string,
-        socialLinks: string[],
-        coverLetter: string,
-        status: ApplicationStatus,
-        jobId: string,
-        createdAt: string,
-        createdBy: string
-    ) {
+    constructor(id: string, firstName: string, lastName: string, email: string, phone: string, currentLocation: string, gender: Gender, education: Education[], experience: Experience[], skills: string[], source: JobSource, resume: string, socialLinks: string[], coverLetter: string, status: ApplicationStatus, jobId: string, createdAt: string, createdBy: string) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;

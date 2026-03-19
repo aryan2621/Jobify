@@ -30,10 +30,7 @@ function makeEmail(to: string, from: string, subject: string, html: string): str
         .replace(/=+$/, '');
 }
 
-/**
- * Get a Gmail API client for the given user. Uses only refresh_token so the client
- * auto-refreshes access tokens. Returns null if user has no Gmail settings.
- */
+
 async function getGmailClient(userId: string): Promise<{ gmail: googleGmail.gmail_v1.Gmail; fromEmail: string } | null> {
     let settings: { email: string; refreshToken: string };
     try {
@@ -54,11 +51,7 @@ async function getGmailClient(userId: string): Promise<{ gmail: googleGmail.gmai
 }
 
 export class EmailService {
-    /**
-     * Exchange auth code for tokens and persist Gmail settings for the user.
-     * Uses same pattern as server-side OAuth: OAuth2Client.getToken(code) then save refresh_token.
-     * If no refresh_token is returned (e.g. app already authorized), throws so user can revoke and retry.
-     */
+    
     public static async connectToGmail(authCode: string, userId: string): Promise<void> {
         const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
         const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -120,11 +113,7 @@ export class EmailService {
         }
     }
 
-    /**
-     * Send an HTML email via the user's connected Gmail. Same pattern as example:
-     * get Gmail client (refresh_token only), build MIME with makeEmail, send via API.
-     * Returns { error } on failure; {} on success.
-     */
+    
     public static async sendEmail(params: {
         userId: string;
         to: string;
@@ -149,7 +138,7 @@ export class EmailService {
         }
     }
 
-    /** Escape user-controlled content for safe use in HTML email body. */
+    
     public static escapeHtml(s: string): string {
         return escapeHtml(s);
     }

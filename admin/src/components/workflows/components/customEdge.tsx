@@ -1,5 +1,3 @@
-// Enhanced customEdge.tsx - Improved edge styling with better delete controls
-
 import { BaseEdge, EdgeLabelRenderer, EdgeProps, getBezierPath, useReactFlow } from '@xyflow/react';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,7 +19,7 @@ export const CustomEdge = ({
 }: EdgeProps) => {
     const { setEdges } = useReactFlow();
 
-    // Get the bezier path properties based on the source and target coordinates
+    
     const [edgePath, labelX, labelY] = getBezierPath({
         sourceX,
         sourceY,
@@ -31,12 +29,12 @@ export const CustomEdge = ({
         targetPosition,
     });
 
-    // Edge deletion handler
+    
     const onDelete = () => {
         setEdges((edges) => edges.filter((edge) => edge.id !== id));
     };
 
-    // Default styles for the edge
+    
     const defaultStyle = {
         strokeWidth: 2,
         stroke: selected ? '#3b82f6' : '#64748b',

@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchAllJobs } from '@/appwrite/server/collections/job-collection';
 import { JobState } from '@/model/job';
 import { isRecognisedError, UnauthorizedError } from '@/model/error';
-
 const MAX_LIMIT = 100;
-
 export async function GET(req: NextRequest) {
     const token = req.cookies.get('token');
     try {
@@ -23,7 +21,8 @@ export async function GET(req: NextRequest) {
         const limit = Math.min(parsedLimit, MAX_LIMIT);
         const jobs = await fetchAllJobs(lastId, limit, JobState.PUBLISHED);
         return NextResponse.json(jobs, { status: 200 });
-    } catch (error) {
+    }
+    catch (error) {
         console.log('Error while fetching jobs', error);
         if (isRecognisedError(error)) {
             return NextResponse.json({ message: error.message }, { status: error.statusCode });

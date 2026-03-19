@@ -27,7 +27,7 @@ export default function WorkflowList() {
     const router = useRouter();
     const { toast } = useToast();
 
-    // State
+    
     const [workflows, setWorkflows] = useState<Workflow[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [searchQuery, setSearchQuery] = useState<string>('');
@@ -35,7 +35,7 @@ export default function WorkflowList() {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
     const [workflowToDelete, setWorkflowToDelete] = useState<string | null>(null);
 
-    // Load workflows
+    
     useEffect(() => {
         const loadWorkflows = async () => {
             setIsLoading(true);
@@ -72,7 +72,7 @@ export default function WorkflowList() {
         loadWorkflows();
     }, [toast]);
 
-    // Filter workflows based on search and status
+    
     const filteredWorkflows = workflows.filter((workflow) => {
         const matchesSearch =
             workflow.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -83,17 +83,17 @@ export default function WorkflowList() {
         return matchesSearch && matchesStatus;
     });
 
-    // Navigate to workflow editor
+    
     const handleEditWorkflow = (id: string) => {
         router.push(`/workflow/${id}`);
     };
 
-    // Create new workflow
+    
     const handleCreateWorkflow = () => {
         router.push('/workflow');
     };
 
-    // Delete workflow
+    
     const confirmDeleteWorkflow = (id: string) => {
         setWorkflowToDelete(id);
         setDeleteDialogOpen(true);
@@ -122,7 +122,7 @@ export default function WorkflowList() {
         }
     };
 
-    // Format date for display
+    
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         return date.toLocaleDateString('en-US', {
@@ -132,7 +132,7 @@ export default function WorkflowList() {
         });
     };
 
-    // Status badge component
+    
     const StatusBadge = ({ status }: { status: string }) => {
         const getBadgeVariant = (status: string) => {
             switch (status) {
@@ -298,7 +298,7 @@ export default function WorkflowList() {
                     </div>
                 )}
 
-                {/* Delete Confirmation Dialog */}
+                {}
                 <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                     <DialogContent>
                         <DialogHeader>

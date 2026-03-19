@@ -11,22 +11,8 @@ export class User {
     applications: string[];
     tnC: boolean;
     workflows: string[];
-    /** Storage file id for profile avatar image */
     avatarFileId?: string;
-    constructor(
-        id: string,
-        firstName: string,
-        lastName: string,
-        username: string,
-        email: string,
-        password: string,
-        confirmPassword: string,
-        createdAt: string,
-        jobs: string[],
-        applications: string[],
-        tnC: boolean,
-        workflows: string[]
-    ) {
+    constructor(id: string, firstName: string, lastName: string, username: string, email: string, password: string, confirmPassword: string, createdAt: string, jobs: string[], applications: string[], tnC: boolean, workflows: string[]) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -41,7 +27,6 @@ export class User {
         this.workflows = workflows;
     }
 }
-
 export class Profile {
     firstName: string;
     lastName: string;
@@ -51,17 +36,7 @@ export class Profile {
     username: string;
     jobs: string[] = [];
     applications: string[] = [];
-
-    constructor(
-        firstName: string,
-        lastName: string,
-        password: string,
-        confirmPassword: string,
-        email: string,
-        username: string,
-        jobs: string[],
-        applications: string[]
-    ) {
+    constructor(firstName: string, lastName: string, password: string, confirmPassword: string, email: string, username: string, jobs: string[], applications: string[]) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.password = password;

@@ -33,7 +33,7 @@ export class Job {
     state: JobState;
     createdBy: string;
     applications: string[];
-    /** When set, applications for this job start this workflow (Inngest-driven). */
+    
     workflowId?: string;
 
     constructor(

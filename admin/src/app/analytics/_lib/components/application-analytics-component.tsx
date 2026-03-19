@@ -77,7 +77,7 @@ export default function ApplicationAnalyticsComponent() {
     );
 
     const getBarRadius = (category: string): [number, number, number, number] => {
-        const index = presentCategories.indexOf(category);
+        const index = (presentCategories as readonly string[]).indexOf(category);
         if (presentCategories.length === 1) return [4, 4, 4, 4];
         if (index === 0) return [0, 0, 4, 4];
         if (index === presentCategories.length - 1) return [4, 4, 0, 0];
@@ -137,9 +137,9 @@ export default function ApplicationAnalyticsComponent() {
                                                 outerRadius={90}
                                             >
                                                 <Label
-                                                    content={(props: { viewBox?: { cx?: number; cy?: number } }) => {
-                                                        const { viewBox } = props;
-                                                        if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
+                                                    content={(props) => {
+                                                        const viewBox = props.viewBox as { cx?: number; cy?: number } | undefined;
+                                                        if (viewBox?.cx != null && viewBox?.cy != null) {
                                                             return (
                                                                 <text x={viewBox.cx} y={viewBox.cy} textAnchor='middle' dominantBaseline='middle'>
                                                                     <tspan
@@ -151,7 +151,7 @@ export default function ApplicationAnalyticsComponent() {
                                                                     </tspan>
                                                                     <tspan
                                                                         x={viewBox.cx}
-                                                                        y={(viewBox.cy ?? 0) + 24}
+                                                                        y={viewBox.cy + 24}
                                                                         className='fill-muted-foreground'
                                                                     >
                                                                         Total

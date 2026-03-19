@@ -12,7 +12,7 @@ export const useJobFetching = (initialLimit = 10) => {
     const observerRef = useRef<HTMLDivElement | null>(null);
     const loadingRef = useRef(false);
 
-    // Filter states
+    
     const [searchQuery, setSearchQuery] = useState('');
     const [jobType, setJobType] = useState('all');
     const [workplaceType, setWorkplaceType] = useState('all');
@@ -42,11 +42,11 @@ export const useJobFetching = (initialLimit = 10) => {
 
     const debouncedFetchJobs = useDebounce(fetchJobs, 300);
 
-    // Apply filters
+    
     useEffect(() => {
         let filtered = [...jobs];
 
-        // Filter by search query
+        
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
             filtered = filtered.filter(
@@ -59,22 +59,22 @@ export const useJobFetching = (initialLimit = 10) => {
             );
         }
 
-        // Filter by job type
+        
         if (jobType !== 'all') {
             filtered = filtered.filter((job) => job.type === jobType);
         }
 
-        // Filter by workplace type
+        
         if (workplaceType !== 'all') {
             filtered = filtered.filter((job) => job.workplaceType === workplaceType);
         }
 
-        // Filter by job state
+        
         if (jobState !== 'all') {
             filtered = filtered.filter((job) => job.state === jobState);
         }
 
-        // Apply sorting
+        
         filtered.sort((a, b) => {
             switch (sortBy) {
                 case 'newest':
@@ -100,7 +100,7 @@ export const useJobFetching = (initialLimit = 10) => {
         setFilteredJobs(filtered);
     }, [jobs, searchQuery, jobType, workplaceType, jobState, sortBy]);
 
-    // Reset filters
+    
     const resetFilters = () => {
         setSearchQuery('');
         setJobType('all');
@@ -109,7 +109,7 @@ export const useJobFetching = (initialLimit = 10) => {
         setSortBy('newest');
     };
 
-    // Setup initial fetch and observer
+    
     useEffect(() => {
         debouncedFetchJobs();
     }, [debouncedFetchJobs]);

@@ -20,14 +20,14 @@ interface InterviewNodeBuilderProps {
     onSubmit: (node: InterviewNode) => void;
 }
 
-// Helper to get date-time string for input
+
 const getDateTimeString = (date?: Date): string => {
     if (!date) return '';
     date = new Date(date);
     return date.toISOString().slice(0, 16);
 };
 
-// Validation interface
+
 interface ValidationState {
     label: { valid: boolean; message: string };
     link: { valid: boolean; message: string };
@@ -38,7 +38,7 @@ interface ValidationState {
 const InterviewNodeBuilderComponent = ({ node, onSubmit }: InterviewNodeBuilderProps) => {
     const { toast } = useToast();
 
-    // Create a deep copy of the node to avoid mutation
+    
     const cpNode = new InterviewNode(
         node.id,
         node.data,
@@ -53,7 +53,7 @@ const InterviewNodeBuilderComponent = ({ node, onSubmit }: InterviewNodeBuilderP
         node.participants ? [...node.participants] : undefined
     );
 
-    // State
+    
     const [newNode, setNewNode] = useState(cpNode);
     const [calendarConnected, setCalendarConnected] = useState<boolean>(false);
     const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
@@ -64,14 +64,14 @@ const InterviewNodeBuilderComponent = ({ node, onSubmit }: InterviewNodeBuilderP
         description: { valid: true, message: '' },
     });
 
-    // Field change handler
+    
     const handleChange = (field: keyof InterviewNode, value: any) => {
         setNewNode((prev) => ({
             ...prev,
             [field]: value,
         }));
 
-        // Clear validation error when field is edited
+        
         if (field in validation) {
             setValidation((prev) => ({
                 ...prev,
@@ -80,21 +80,21 @@ const InterviewNodeBuilderComponent = ({ node, onSubmit }: InterviewNodeBuilderP
         }
     };
 
-    // Label change handler
+    
     const handleLabelChange = (value: string) => {
         setNewNode((prev) => ({
             ...prev,
             data: { ...prev.data, label: value },
         }));
 
-        // Clear validation
+        
         setValidation((prev) => ({
             ...prev,
             label: { valid: true, message: '' },
         }));
     };
 
-    // OAuth handlers
+    
     const handleOAuthSuccess = (response: any) => {
         console.log('OAuth successful:', response);
         setCalendarConnected(true);
@@ -112,7 +112,7 @@ const InterviewNodeBuilderComponent = ({ node, onSubmit }: InterviewNodeBuilderP
         });
     };
 
-    // Validate all fields
+    
     const validateForm = (): boolean => {
         const newValidation: ValidationState = {
             label: { valid: true, message: '' },
@@ -123,7 +123,7 @@ const InterviewNodeBuilderComponent = ({ node, onSubmit }: InterviewNodeBuilderP
 
         let isValid = true;
 
-        // Validate label
+        
         if (!newNode.data.label.trim()) {
             newValidation.label = {
                 valid: false,
@@ -132,7 +132,7 @@ const InterviewNodeBuilderComponent = ({ node, onSubmit }: InterviewNodeBuilderP
             isValid = false;
         }
 
-        // Validate link
+        
         if (!newNode.link.trim()) {
             newValidation.link = {
                 valid: false,
@@ -147,7 +147,7 @@ const InterviewNodeBuilderComponent = ({ node, onSubmit }: InterviewNodeBuilderP
             isValid = false;
         }
 
-        // Validate time
+        
         if (!newNode.time) {
             newValidation.time = {
                 valid: false,
@@ -165,7 +165,7 @@ const InterviewNodeBuilderComponent = ({ node, onSubmit }: InterviewNodeBuilderP
             }
         }
 
-        // Validate description
+        
         if (!newNode.description.trim()) {
             newValidation.description = {
                 valid: false,
@@ -184,7 +184,7 @@ const InterviewNodeBuilderComponent = ({ node, onSubmit }: InterviewNodeBuilderP
         return isValid;
     };
 
-    // Handle form submission
+    
     const handleSubmit = () => {
         setFormSubmitted(true);
 
@@ -209,7 +209,7 @@ const InterviewNodeBuilderComponent = ({ node, onSubmit }: InterviewNodeBuilderP
                     <Input value={newNode.data.name ?? `interview_${newNode.id.slice(0, 8)}`} disabled className='bg-muted' />
                 </div>
 
-                {/* Basic information */}
+                {}
                 <div>
                     <Label
                         className={cn('mb-2 block', formSubmitted && !validation.label.valid && 'text-destructive')}
@@ -230,7 +230,7 @@ const InterviewNodeBuilderComponent = ({ node, onSubmit }: InterviewNodeBuilderP
                     )}
                 </div>
 
-                {/* Meeting link */}
+                {}
                 <div>
                     <Label className={cn('mb-2 block', formSubmitted && !validation.link.valid && 'text-destructive')}>
                         Meeting Link <span className='text-destructive ml-0.5'>*</span>
@@ -252,7 +252,7 @@ const InterviewNodeBuilderComponent = ({ node, onSubmit }: InterviewNodeBuilderP
                     )}
                 </div>
 
-                {/* Interview time */}
+                
                 <div>
                     <Label className={cn('mb-2 block', formSubmitted && !validation.time.valid && 'text-destructive')}>
                         Interview Time <span className='text-destructive ml-0.5'>*</span>
@@ -274,7 +274,7 @@ const InterviewNodeBuilderComponent = ({ node, onSubmit }: InterviewNodeBuilderP
                     )}
                 </div>
 
-                {/* Duration (minutes) */}
+                
                 <div>
                     <Label className='mb-2 block'>Duration (minutes)</Label>
                     <Input
@@ -286,7 +286,7 @@ const InterviewNodeBuilderComponent = ({ node, onSubmit }: InterviewNodeBuilderP
                     />
                 </div>
 
-                {/* Participants (comma-separated emails) */}
+                
                 <div>
                     <Label className='mb-2 block'>Participants (emails, comma-separated)</Label>
                     <Input
@@ -304,7 +304,7 @@ const InterviewNodeBuilderComponent = ({ node, onSubmit }: InterviewNodeBuilderP
                     />
                 </div>
 
-                {/* Description */}
+                
                 <div>
                     <Label
                         className={cn('mb-2 block', formSubmitted && !validation.description.valid && 'text-destructive')}
@@ -330,7 +330,7 @@ const InterviewNodeBuilderComponent = ({ node, onSubmit }: InterviewNodeBuilderP
                     </div>
                 </div>
 
-                {/* Calendar integration */}
+                
                 <div>
                     <TooltipProvider>
                         <div className='flex items-center justify-between mb-3'>
@@ -372,7 +372,7 @@ const InterviewNodeBuilderComponent = ({ node, onSubmit }: InterviewNodeBuilderP
                     </div>
                 </div>
 
-                {/* Attachments (simplified for now) */}
+                
                 <div>
                     <Label className='mb-2 block'>Attachments (Optional)</Label>
                     <div

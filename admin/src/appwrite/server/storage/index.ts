@@ -4,7 +4,7 @@ import { createHash } from 'crypto';
 import { storage } from '../config';
 import { v4 as uuidv4 } from 'uuid';
 
-/** Allowed file extensions for resume-bucket (resumes + avatars). */
+
 const RESUME_BUCKET_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'];
 
 function getAvatarViewUrl(fileId: string): string {

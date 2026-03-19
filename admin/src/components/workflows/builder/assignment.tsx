@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { AlertCircle, Calendar, Clock, FileText, FileUp, Info, Link as LinkIcon, ExternalLink } from 'lucide-react';
-import { cn } from '@/lib/utils'; // Assuming you have a utils file with cn function
+import { cn } from '@/lib/utils'; 
 import { isURL } from '@/lib/utils/validation-utils';
 import { AssignmentNode, AssignmentSubmissionTracking } from '@/model/workflow';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,14 +17,14 @@ interface AssignmentNodeBuilderProps {
     onSubmit: (node: AssignmentNode) => void;
 }
 
-// Helper to get date-time string for input
+
 const getDateTimeString = (date?: Date): string => {
     if (!date) return '';
     date = new Date(date);
     return date.toISOString().slice(0, 16);
 };
 
-// Validation interface
+
 interface ValidationState {
     label: { valid: boolean; message: string };
     url: { valid: boolean; message: string };
@@ -35,7 +35,7 @@ interface ValidationState {
 const AssignmentNodeBuilderComponent = ({ node, onSubmit }: AssignmentNodeBuilderProps) => {
     const { toast } = useToast();
 
-    // Create a deep copy of the node to avoid mutation
+    
     const cpNode = new AssignmentNode(
         node.id,
         node.data,
@@ -46,10 +46,10 @@ const AssignmentNodeBuilderComponent = ({ node, onSubmit }: AssignmentNodeBuilde
         node.attachments || [],
         node.sourcePosition,
         node.targetPosition,
-        node.submissionTracking ?? 'none'
+        node.submissionTracking === 'none' || !node.submissionTracking ? 'link' : node.submissionTracking
     );
 
-    // State
+    
     const [newNode, setNewNode] = useState(cpNode);
     const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
     const [validation, setValidation] = useState<ValidationState>({
@@ -59,14 +59,14 @@ const AssignmentNodeBuilderComponent = ({ node, onSubmit }: AssignmentNodeBuilde
         description: { valid: true, message: '' },
     });
 
-    // Field change handler
+    
     const handleChange = (field: keyof AssignmentNode, value: any) => {
         setNewNode((prev) => ({
             ...prev,
             [field]: value,
         }));
 
-        // Clear validation error when field is edited
+        
         if (field in validation) {
             setValidation((prev) => ({
                 ...prev,
@@ -75,21 +75,21 @@ const AssignmentNodeBuilderComponent = ({ node, onSubmit }: AssignmentNodeBuilde
         }
     };
 
-    // Label change handler
+    
     const handleLabelChange = (value: string) => {
         setNewNode((prev) => ({
             ...prev,
             data: { ...prev.data, label: value },
         }));
 
-        // Clear validation
+        
         setValidation((prev) => ({
             ...prev,
             label: { valid: true, message: '' },
         }));
     };
 
-    // Validate all fields
+    
     const validateForm = (): boolean => {
         const newValidation: ValidationState = {
             label: { valid: true, message: '' },
@@ -100,7 +100,7 @@ const AssignmentNodeBuilderComponent = ({ node, onSubmit }: AssignmentNodeBuilde
 
         let isValid = true;
 
-        // Validate label
+        
         if (!newNode.data.label.trim()) {
             newValidation.label = {
                 valid: false,
@@ -109,7 +109,7 @@ const AssignmentNodeBuilderComponent = ({ node, onSubmit }: AssignmentNodeBuilde
             isValid = false;
         }
 
-        // Validate URL
+        
         if (!newNode.url.trim()) {
             newValidation.url = {
                 valid: false,
@@ -124,7 +124,7 @@ const AssignmentNodeBuilderComponent = ({ node, onSubmit }: AssignmentNodeBuilde
             isValid = false;
         }
 
-        // Validate deadline
+        
         if (!newNode.deadline) {
             newValidation.deadline = {
                 valid: false,
@@ -142,7 +142,7 @@ const AssignmentNodeBuilderComponent = ({ node, onSubmit }: AssignmentNodeBuilde
             }
         }
 
-        // Validate description
+        
         if (!newNode.description.trim()) {
             newValidation.description = {
                 valid: false,
@@ -161,7 +161,7 @@ const AssignmentNodeBuilderComponent = ({ node, onSubmit }: AssignmentNodeBuilde
         return isValid;
     };
 
-    // Handle form submission
+    
     const handleSubmit = () => {
         setFormSubmitted(true);
 
@@ -187,7 +187,7 @@ const AssignmentNodeBuilderComponent = ({ node, onSubmit }: AssignmentNodeBuilde
                     <Input value={newNode.data.name ?? `assignment_${newNode.id.slice(0, 8)}`} disabled className='bg-muted' />
                 </div>
 
-                {/* Basic information */}
+                {}
                 <div>
                     <Label
                         className={cn('mb-2 block', formSubmitted && !validation.label.valid && 'text-destructive')}
@@ -208,7 +208,7 @@ const AssignmentNodeBuilderComponent = ({ node, onSubmit }: AssignmentNodeBuilde
                     )}
                 </div>
 
-                {/* Assignment URL */}
+                {}
                 <div>
                     <Label className={cn('mb-2 block', formSubmitted && !validation.url.valid && 'text-destructive')}>
                         Assignment URL <span className='text-destructive ml-0.5'>*</span>
@@ -230,7 +230,7 @@ const AssignmentNodeBuilderComponent = ({ node, onSubmit }: AssignmentNodeBuilde
                     )}
                 </div>
 
-                {/* Deadline */}
+                
                 <div>
                     <Label
                         className={cn('mb-2 block', formSubmitted && !validation.deadline.valid && 'text-destructive')}
@@ -254,7 +254,7 @@ const AssignmentNodeBuilderComponent = ({ node, onSubmit }: AssignmentNodeBuilde
                     )}
                 </div>
 
-                {/* Description */}
+                
                 <div>
                     <Label
                         className={cn('mb-2 block', formSubmitted && !validation.description.valid && 'text-destructive')}
@@ -280,7 +280,7 @@ const AssignmentNodeBuilderComponent = ({ node, onSubmit }: AssignmentNodeBuilde
                     </div>
                 </div>
 
-                {/* Submission tracking (e.g. Google Form webhook) */}
+                
                 <div>
                     <Label className='mb-2 block'>Submission tracking</Label>
                     <Select
@@ -291,14 +291,13 @@ const AssignmentNodeBuilderComponent = ({ node, onSubmit }: AssignmentNodeBuilde
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="none">None</SelectItem>
                             <SelectItem value="link">Internal link</SelectItem>
-                            <SelectItem value="google_form">Google Form (webhook on submit)</SelectItem>
+                            <SelectItem value="google_form" disabled>Google Form (not available yet)</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
 
-                {/* Attachments */}
+                
                 <div>
                     <Label className='mb-2 block'>Attachments (Optional)</Label>
                     <div

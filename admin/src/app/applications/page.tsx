@@ -28,7 +28,7 @@ import {
     Inbox,
 } from 'lucide-react';
 
-// UI Components
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -52,12 +52,12 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
-// Models
+
 import { Application, ApplicationStatus } from '@/model/application';
 import { Job } from '@/model/job';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-// Format date to be more user-friendly
+
 const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -66,7 +66,7 @@ const formatDate = (dateString: string): string => {
     });
 };
 
-// Status Badge component
+
 const StatusBadge = ({ status }: { status: ApplicationStatus }) => {
     const variants = {
         [ApplicationStatus.APPLIED]: {
@@ -93,7 +93,7 @@ const StatusBadge = ({ status }: { status: ApplicationStatus }) => {
     );
 };
 
-// Application List Item
+
 const ApplicationCard = ({
     application,
     isSelected,
@@ -163,7 +163,7 @@ const ApplicationCard = ({
     );
 };
 
-// Filter Bar Component
+
 const FilterBar = ({
     searchQuery,
     setSearchQuery,
@@ -237,7 +237,7 @@ const FilterBar = ({
     );
 };
 
-// Application Detail Component
+
 const ApplicationDetail = ({
     application,
     onStatusChange,
@@ -327,7 +327,7 @@ const ApplicationDetail = ({
                                 open={showStatusDialog}
                                 onOpenChange={(open) => {
                                     if (!open && statusChangeLoading) {
-                                        // Prevent closing the dialog while status change is in progress
+                                        
                                         return;
                                     }
                                     setShowStatusDialog(open);
@@ -355,7 +355,7 @@ const ApplicationDetail = ({
                                                     await onStatusChange(ApplicationStatus.APPLIED);
                                                     setShowStatusDialog(false);
                                                 } catch (error) {
-                                                    // Error is already handled in the parent component
+                                                    
                                                 }
                                             }}
                                             disabled={statusChangeLoading}
@@ -380,7 +380,7 @@ const ApplicationDetail = ({
                                                     await onStatusChange(ApplicationStatus.SELECTED);
                                                     setShowStatusDialog(false);
                                                 } catch (error) {
-                                                    // Error is already handled in the parent component
+                                                    
                                                 }
                                             }}
                                             disabled={statusChangeLoading}
@@ -405,7 +405,7 @@ const ApplicationDetail = ({
                                                     await onStatusChange(ApplicationStatus.REJECTED);
                                                     setShowStatusDialog(false);
                                                 } catch (error) {
-                                                    // Error is already handled in the parent component
+                                                    
                                                 }
                                             }}
                                             disabled={statusChangeLoading}
@@ -612,7 +612,7 @@ const ApplicationDetail = ({
     );
 };
 
-// Helper function to calculate days remaining
+
 const getDaysRemaining = (deadline: string) => {
     const today = new Date();
     const lastDate = new Date(deadline);
@@ -621,7 +621,7 @@ const getDaysRemaining = (deadline: string) => {
     return diffDays;
 };
 
-// Custom hook for debouncing
+
 function useDebounce<T>(value: T, delay: number): T {
     const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
@@ -647,15 +647,15 @@ export default function AdminApplicationsPage() {
     const [error, setError] = useState<string | null>(null);
     const [statusChangeLoading, setStatusChangeLoading] = useState(false);
 
-    // Filters state
+    
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [sortOption, setSortOption] = useState('newest');
 
-    // Debounced search query
+    
     const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
-    // Fetch applications
+    
     const fetchApplications = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -693,7 +693,7 @@ export default function AdminApplicationsPage() {
 
             setApplications(fetchedApplications);
 
-            // If there are applications, fetch the related jobs
+            
             if (fetchedApplications.length > 0) {
                 const jobIds = [...new Set(fetchedApplications.map((app) => app.jobId))];
                 fetchJobsData(jobIds);
@@ -710,12 +710,12 @@ export default function AdminApplicationsPage() {
         }
     }, [selectedApplication]);
 
-    // Fetch job details for applications
+    
     const fetchJobsData = async (jobIds: string[]) => {
         try {
             const jobsMap = new Map<string, Job>();
 
-            // Fetch each job in parallel
+            
             await Promise.all(
                 jobIds.map(async (jobId) => {
                     try {
@@ -752,12 +752,12 @@ export default function AdminApplicationsPage() {
         }
     };
 
-    // Initial fetch
+    
     useEffect(() => {
         fetchApplications();
     }, [fetchApplications]);
 
-    // Handle status change
+    
     const handleStatusChange = async (status: ApplicationStatus) => {
         if (!selectedApplication) return;
 
@@ -771,7 +771,7 @@ export default function AdminApplicationsPage() {
                 },
             });
 
-            // Update local state
+            
             setApplications((prevApplications) => prevApplications.map((app) => (app.id === selectedApplication.id ? { ...app, status } : app)));
 
             setSelectedApplication((prev) => (prev ? { ...prev, status } : null));
@@ -792,23 +792,23 @@ export default function AdminApplicationsPage() {
         }
     };
 
-    // Reset filters
+    
     const resetFilters = () => {
         setSearchQuery('');
         setStatusFilter('all');
         setSortOption('newest');
     };
 
-    // Filtered and sorted applications
+    
     const filteredApplications = useMemo(() => {
         let filtered = [...applications];
 
-        // Apply status filter
+        
         if (statusFilter !== 'all') {
             filtered = filtered.filter((app) => app.status === statusFilter);
         }
 
-        // Apply search filter
+        
         if (debouncedSearchQuery) {
             const query = debouncedSearchQuery.toLowerCase();
             filtered = filtered.filter(
@@ -822,7 +822,7 @@ export default function AdminApplicationsPage() {
             );
         }
 
-        // Apply sorting
+        
         filtered.sort((a, b) => {
             switch (sortOption) {
                 case 'newest':
@@ -841,7 +841,7 @@ export default function AdminApplicationsPage() {
         return filtered;
     }, [applications, statusFilter, debouncedSearchQuery, sortOption]);
 
-    // Get the job details for the selected application
+    
     const selectedJobDetails = useMemo(() => {
         if (!selectedApplication) return null;
         return jobs.get(selectedApplication.jobId) || null;
@@ -888,7 +888,7 @@ export default function AdminApplicationsPage() {
 
                         <div className='h-[calc(100vh-300px)] overflow-auto space-y-2'>
                             {loading ? (
-                                // Loading skeleton
+                                
                                 Array(5)
                                     .fill(0)
                                     .map((_, index) => (
@@ -917,7 +917,7 @@ export default function AdminApplicationsPage() {
                                         </Card>
                                     ))
                             ) : filteredApplications.length === 0 ? (
-                                // Empty state
+                                
                                 <Card className='py-10'>
                                     <CardContent className='flex flex-col items-center justify-center text-center'>
                                         <Inbox className='h-12 w-12 text-muted-foreground mb-4' />
@@ -937,7 +937,7 @@ export default function AdminApplicationsPage() {
                                     </CardContent>
                                 </Card>
                             ) : (
-                                // Application list
+                                
                                 filteredApplications.map((application) => (
                                     <ApplicationCard
                                         key={application.id}

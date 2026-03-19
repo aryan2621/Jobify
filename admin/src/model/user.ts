@@ -12,7 +12,7 @@ export class User {
     tnC: boolean;
     workflows: string[];
     avatarFileId?: string;
-    /** Resolved view URL for profile picture; set from API (GET /api/me, POST /api/me/avatar) and login. */
+    
     avatarUrl?: string | null;
     constructor(
         id: string,

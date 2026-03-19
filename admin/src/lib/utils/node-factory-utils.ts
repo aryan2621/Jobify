@@ -25,18 +25,13 @@ function getTypeLabel(type: NodeType | TaskType): string {
     return 'node';
 }
 
-/**
- * Builds node data with a unique, read-only name (builder-level + short hash) for the workflow.
- */
+
 function buildNodeData(type: NodeType | TaskType, id: string, data: any): { label: string; name: string; [key: string]: any } {
     const name = `${getTypeLabel(type)}_${id.slice(0, 8)}`;
     return { label: data?.label ?? '', name, ...data };
 }
 
-/**
- * Factory function to create nodes based on type.
- * Each node gets a unique `data.name` (builder-level + short hash), read-only in the UI.
- */
+
 export const nodeFactory = (
     type: NodeType | TaskType,
     data: any,
@@ -54,7 +49,7 @@ export const nodeFactory = (
         case TaskType.NOTIFY:
             return new NotificationNode(id, nodeData, position, [], sourcePosition, targetPosition);
         case TaskType.ASSIGNMENT:
-            return new AssignmentNode(id, nodeData, position, '', new Date(), '', [], sourcePosition, targetPosition, 'none');
+            return new AssignmentNode(id, nodeData, position, '', new Date(), '', [], sourcePosition, targetPosition, 'link');
         case TaskType.INTERVIEW:
             return new InterviewNode(id, nodeData, position, '', '', [], new Date(), sourcePosition, targetPosition);
         case TaskType.WAIT:

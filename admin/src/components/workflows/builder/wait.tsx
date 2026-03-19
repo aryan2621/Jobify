@@ -15,7 +15,7 @@ interface WaitNodeBuilderProps {
 }
 
 const WaitNodeBuilderComponent = ({ node, onSubmit }: WaitNodeBuilderProps) => {
-    // Create a deep copy of the node to avoid mutation
+    
     const cpNode = new WaitNode(
         node.id,
         node.data,
@@ -31,7 +31,7 @@ const WaitNodeBuilderComponent = ({ node, onSubmit }: WaitNodeBuilderProps) => {
     const [newNode, setNewNode] = useState(cpNode);
     const [useExactDate, setUseExactDate] = useState<boolean>(!!node.exactDateTime);
 
-    // Date-time string for input
+    
     const getDateTimeString = (date?: Date): string => {
         if (!date) return '';
         date = new Date(date);
@@ -63,7 +63,7 @@ const WaitNodeBuilderComponent = ({ node, onSubmit }: WaitNodeBuilderProps) => {
                             onCheckedChange={(checked) => {
                                 setUseExactDate(checked);
                                 if (checked && !newNode.exactDateTime) {
-                                    // Set default to tomorrow
+                                    
                                     const tomorrow = new Date();
                                     tomorrow.setDate(tomorrow.getDate() + 1);
                                     setNewNode({ ...newNode, exactDateTime: tomorrow });

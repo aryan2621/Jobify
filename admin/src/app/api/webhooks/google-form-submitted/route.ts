@@ -2,12 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchApplicationById } from '@/appwrite/server/collections/application-collection';
 import { updateApplicationWorkflowState } from '@/appwrite/server/collections/application-collection';
 
-/**
- * Webhook for Google Form submission (or other tools).
- * Call this from Google Apps Script when the candidate submits the form.
- * Body: { applicationId: string, assignmentNodeId?: string }
- * Optional header: x-webhook-secret for verification (set WEBHOOK_SECRET env).
- */
+
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();

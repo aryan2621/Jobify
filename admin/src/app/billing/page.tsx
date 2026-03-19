@@ -165,7 +165,7 @@ const PricingPage = () => {
             </div>
 
             <div className='grid md:grid-cols-3 gap-6 mb-16'>
-                {/* Basic Plan */}
+                
                 <Card className='relative flex flex-col border-border hover:border-primary/30 hover:shadow-md transition-all duration-300'>
                     <CardHeader className='pb-4'>
                         <CardTitle className='flex justify-between items-start'>
@@ -224,7 +224,7 @@ const PricingPage = () => {
                     </CardFooter>
                 </Card>
 
-                {/* Pro Plan */}
+                {}
                 <Card className='relative flex flex-col border-primary shadow-lg scale-[1.02] z-10'>
                     <Badge variant='default' className='absolute -top-4 left-0 right-0 mx-auto w-fit px-3 py-1  text-xs font-semibold rounded-full'>
                         MOST POPULAR
@@ -286,7 +286,7 @@ const PricingPage = () => {
                     </CardFooter>
                 </Card>
 
-                {/* Enterprise Plan */}
+                {}
                 <Card className='relative flex flex-col border-border hover:border-primary/30 hover:shadow-md transition-all duration-300'>
                     <CardHeader className='pb-4'>
                         <CardTitle className='flex justify-between items-start'>
@@ -346,7 +346,7 @@ const PricingPage = () => {
                 </Card>
             </div>
 
-            {/* FAQs */}
+            {}
             <div className='mb-16'>
                 <div className='text-center mb-8'>
                     <h2 className='text-2xl font-bold mb-2'>Frequently Asked Questions</h2>
@@ -361,7 +361,7 @@ const PricingPage = () => {
                 </Accordion>
             </div>
 
-            {/* Call to Action */}
+            
             <div className='text-center'>
                 <Card className='bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20'>
                     <CardContent className='py-10'>

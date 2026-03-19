@@ -1,5 +1,4 @@
 'use client';
-
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,39 +6,26 @@ import { Badge } from '@/components/ui/badge';
 import NavbarLayout from '@/layouts/navbar';
 import { Job } from '@/model/job';
 import { Briefcase, Building2, Eye, RefreshCw } from 'lucide-react';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-
 import { getDaysRemaining } from '@/lib/job-utils/utils';
 import { FilterBar } from '@/components/elements/filter-bar';
 import { useJobFetching } from '@/hooks/use-job-fetching';
 import { JobDetail } from '@/components/elements/job-detail';
-
-const JobTableRow = ({ job, onView }: { job: Job; onView: () => void }) => {
+const JobTableRow = ({ job, onView }: {
+    job: Job;
+    onView: () => void;
+}) => {
     const daysRemaining = getDaysRemaining(job.lastDateToApply);
     const isExpired = daysRemaining <= 0;
-
-    return (
-        <TableRow>
+    return (<TableRow>
             <TableCell>
                 <div>
                     <div className='font-medium'>{job.profile}</div>
                     <div className='text-xs text-muted-foreground flex items-center mt-0.5'>
-                        <Building2 className='h-3 w-3 mr-1 flex-shrink-0' />
+                        <Building2 className='h-3 w-3 mr-1 flex-shrink-0'/>
                         {job.company || 'Company'} • {job.location}
                     </div>
                 </div>
@@ -61,35 +47,16 @@ const JobTableRow = ({ job, onView }: { job: Job; onView: () => void }) => {
             </TableCell>
             <TableCell>
                 <Button variant='ghost' size='sm' onClick={onView} className='h-8 text-xs'>
-                    <Eye className='h-3.5 w-3.5 mr-1' />
+                    <Eye className='h-3.5 w-3.5 mr-1'/>
                     View
                 </Button>
             </TableCell>
-        </TableRow>
-    );
+        </TableRow>);
 };
-
 export default function JobListings() {
     const [viewJob, setViewJob] = useState<Job | null>(null);
-
-    const {
-        filteredJobs,
-        loading,
-        hasMore,
-        observerRef,
-        searchQuery,
-        setSearchQuery,
-        jobType,
-        setJobType,
-        workplaceType,
-        setWorkplaceType,
-        sortBy,
-        setSortBy,
-        resetFilters,
-    } = useJobFetching(10);
-
-    return (
-        <NavbarLayout>
+    const { filteredJobs, loading, hasMore, observerRef, searchQuery, setSearchQuery, jobType, setJobType, workplaceType, setWorkplaceType, sortBy, setSortBy, resetFilters, } = useJobFetching(10);
+    return (<NavbarLayout>
             <div className='container mx-auto px-4 py-6'>
                 <div className='flex flex-col md:flex-row justify-between items-start md:items-center mb-6'>
                     <div>
@@ -100,21 +67,9 @@ export default function JobListings() {
                     </div>
                 </div>
 
-                <FilterBar
-                    searchQuery={searchQuery}
-                    setSearchQuery={setSearchQuery}
-                    jobType={jobType}
-                    setJobType={setJobType}
-                    workplaceType={workplaceType}
-                    setWorkplaceType={setWorkplaceType}
-                    sortBy={sortBy}
-                    setSortBy={setSortBy}
-                    resetFilters={resetFilters}
-                    compact={false}
-                />
+                <FilterBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} jobType={jobType} setJobType={setJobType} workplaceType={workplaceType} setWorkplaceType={setWorkplaceType} sortBy={sortBy} setSortBy={setSortBy} resetFilters={resetFilters} compact={false}/>
 
-                {loading && filteredJobs.length === 0 ? (
-                    <Card>
+                {loading && filteredJobs.length === 0 ? (<Card>
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -126,49 +81,41 @@ export default function JobListings() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {[1, 2, 3, 4, 5].map((i) => (
-                                    <TableRow key={i}>
+                                {[1, 2, 3, 4, 5].map((i) => (<TableRow key={i}>
                                         <TableCell>
-                                            <Skeleton className='h-5 w-40' />
-                                            <Skeleton className='h-3 w-28 mt-1' />
+                                            <Skeleton className='h-5 w-40'/>
+                                            <Skeleton className='h-3 w-28 mt-1'/>
                                         </TableCell>
                                         <TableCell>
-                                            <Skeleton className='h-5 w-16' />
+                                            <Skeleton className='h-5 w-16'/>
                                         </TableCell>
                                         <TableCell>
-                                            <Skeleton className='h-5 w-20' />
+                                            <Skeleton className='h-5 w-20'/>
                                         </TableCell>
                                         <TableCell>
-                                            <Skeleton className='h-5 w-20' />
+                                            <Skeleton className='h-5 w-20'/>
                                         </TableCell>
                                         <TableCell>
-                                            <Skeleton className='h-8 w-20' />
+                                            <Skeleton className='h-8 w-20'/>
                                         </TableCell>
-                                    </TableRow>
-                                ))}
+                                    </TableRow>))}
                             </TableBody>
                         </Table>
-                    </Card>
-                ) : filteredJobs.length === 0 ? (
-                    <Card>
+                    </Card>) : filteredJobs.length === 0 ? (<Card>
                         <CardContent className='py-10 flex flex-col items-center justify-center text-center'>
-                            <Briefcase className='h-12 w-12 text-muted-foreground mb-4' />
+                            <Briefcase className='h-12 w-12 text-muted-foreground mb-4'/>
                             <h2 className='text-xl font-semibold mb-2'>No Jobs Found</h2>
                             <p className='text-muted-foreground mb-6 max-w-md'>
                                 {searchQuery || jobType !== 'all' || workplaceType !== 'all'
-                                    ? 'No jobs match your current filters. Try adjusting your search criteria.'
-                                    : 'There are no job listings available at the moment.'}
+                ? 'No jobs match your current filters. Try adjusting your search criteria.'
+                : 'There are no job listings available at the moment.'}
                             </p>
-                            {(searchQuery || jobType !== 'all' || workplaceType !== 'all') && (
-                                <Button variant='outline' onClick={resetFilters}>
-                                    <RefreshCw className='h-4 w-4 mr-2' />
+                            {(searchQuery || jobType !== 'all' || workplaceType !== 'all') && (<Button variant='outline' onClick={resetFilters}>
+                                    <RefreshCw className='h-4 w-4 mr-2'/>
                                     Reset Filters
-                                </Button>
-                            )}
+                                </Button>)}
                         </CardContent>
-                    </Card>
-                ) : (
-                    <Card>
+                    </Card>) : (<Card>
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -180,25 +127,16 @@ export default function JobListings() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredJobs.map((job) => (
-                                    <JobTableRow
-                                        key={job.id}
-                                        job={job}
-                                        onView={() => setViewJob(job)}
-                                    />
-                                ))}
+                                {filteredJobs.map((job) => (<JobTableRow key={job.id} job={job} onView={() => setViewJob(job)}/>))}
                             </TableBody>
                         </Table>
                         <div ref={observerRef} className='h-10'>
-                            {loading && filteredJobs.length > 0 && (
-                                <div className='flex items-center justify-center py-3 border-t'>
-                                    <div className='h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent' />
+                            {loading && filteredJobs.length > 0 && (<div className='flex items-center justify-center py-3 border-t'>
+                                    <div className='h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent'/>
                                     <span className='ml-2 text-sm text-muted-foreground'>Loading more jobs...</span>
-                                </div>
-                            )}
+                                </div>)}
                         </div>
-                    </Card>
-                )}
+                    </Card>)}
 
                 <Dialog open={!!viewJob} onOpenChange={(open) => !open && setViewJob(null)}>
                     <DialogContent className='max-w-2xl max-h-[90vh] p-0 gap-0'>
@@ -207,12 +145,11 @@ export default function JobListings() {
                         </DialogHeader>
                         <ScrollArea className='max-h-[90vh]'>
                             <div className='p-6'>
-                                <JobDetail job={viewJob} />
+                                <JobDetail job={viewJob}/>
                             </div>
                         </ScrollArea>
                     </DialogContent>
                 </Dialog>
             </div>
-        </NavbarLayout>
-    );
+        </NavbarLayout>);
 }

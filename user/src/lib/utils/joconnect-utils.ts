@@ -292,7 +292,6 @@ export const jobs: {
         ],
     },
 ];
-
 export const dummyApplications: Application[] = [
     {
         id: '1',
@@ -367,7 +366,6 @@ export const dummyApplications: Application[] = [
         createdBy: 'SYSTEM',
     },
 ];
-
 export const predefinedSkills = [
     'Software Development',
     'Web Development',
@@ -400,7 +398,6 @@ export const predefinedSkills = [
     'Community Management',
     'Human Resources',
 ];
-
 export const countries = [
     {
         name: 'Afghanistan',
@@ -1338,7 +1335,6 @@ export const countries = [
         part_of: ['FI'],
     },
 ];
-
 export const APPLICANTS_DEFAULT_PAGE_SIZE = 5;
 export const REJECTION_EMAIL_CONTENT = `Dear {firstName} {lastName},
 

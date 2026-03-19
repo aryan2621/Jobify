@@ -1,7 +1,6 @@
 export enum EmailProvider {
-    GMAIL = 'gmail',
+    GMAIL = 'gmail'
 }
-
 export class Settings {
     id: string;
     userId: string;
@@ -11,17 +10,7 @@ export class Settings {
     refreshToken?: string;
     createdAt: string;
     updatedAt: string;
-
-    constructor(
-        id: string,
-        userId: string,
-        provider: EmailProvider,
-        email: string,
-        accessToken?: string,
-        refreshToken?: string,
-        createdAt?: string,
-        updatedAt?: string,
-    ) {
+    constructor(id: string, userId: string, provider: EmailProvider, email: string, accessToken?: string, refreshToken?: string, createdAt?: string, updatedAt?: string) {
         this.id = id;
         this.userId = userId;
         this.provider = provider;

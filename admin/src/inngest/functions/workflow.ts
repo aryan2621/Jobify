@@ -51,8 +51,8 @@ export const runWorkflowStep = inngest.createFunction(
 
         const nodes: any[] = typeof workflowDoc.nodes === 'string' ? JSON.parse(workflowDoc.nodes) : workflowDoc.nodes;
         const edges: any[] = typeof workflowDoc.edges === 'string' ? JSON.parse(workflowDoc.edges) : workflowDoc.edges;
-        const application = applicationDoc as { id: string; email?: string; firstName?: string; lastName?: string; workflowId?: string; stage?: string; currentNodeId?: string };
-        const job = jobDoc as { id: string; profile?: string; company?: string; createdBy?: string };
+        const application = applicationDoc as unknown as { id: string; email?: string; firstName?: string; lastName?: string; workflowId?: string; stage?: string; currentNodeId?: string };
+        const job = jobDoc as unknown as { id: string; profile?: string; company?: string; createdBy?: string };
 
         const currentNodeId =
             incomingNodeId ?? (application.currentNodeId as string | undefined) ?? getFirstNodeAfterStart(nodes, edges);
@@ -101,7 +101,7 @@ export const runWorkflowStep = inngest.createFunction(
         const isEnd = nextNode?.type === NodeType.END;
 
         if (isWait && waitNode) {
-            nodeToRunNext = getNextNodeId(nodes, edges, nextNodeId) ?? nextNodeId;
+            nodeToRunNext = getNextNodeId(nodes, edges, nextNodeId!) ?? nextNodeId!;
         }
 
         await updateApplicationWorkflowProgress(applicationId, { currentNodeId: nodeToRunNext ?? currentNodeId });
@@ -118,7 +118,7 @@ export const runWorkflowStep = inngest.createFunction(
             return { done: false, scheduled: true };
         }
         if (isWait && waitNode?.duration != null && waitNode?.unit) {
-            const ms = { minutes: 60e3, hours: 3600e3, days: 86400e3, weeks: 604800e3 }[waitNode.unit] ?? 86400e3;
+            const ms = ({ minutes: 60e3, hours: 3600e3, days: 86400e3, weeks: 604800e3 } as any)[waitNode.unit] ?? 86400e3;
             await step.sleep('wait-duration', `${(waitNode.duration * ms) / 1000}s`);
         }
 
@@ -129,7 +129,3 @@ export const runWorkflowStep = inngest.createFunction(
         return { done: false };
     }
 );
-</think>
-Fixing the workflow function: loading application first to obtain workflowId.
-<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
-StrReplace

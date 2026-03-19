@@ -23,11 +23,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
 const HeaderSection = () => {
     const [scrolled, setScrolled] = useState(false);
     const user = userStore((state) => state.user);
-
     useEffect(() => {
         const handleScroll = () => {
             setScrolled(window.scrollY > 10);
@@ -35,31 +33,20 @@ const HeaderSection = () => {
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
-
-    return (
-        <header
-            className={`px-4 lg:px-6 h-16 flex items-center fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-background/90 backdrop-blur-sm shadow-sm' : 'bg-transparent'}`}
-        >
+    return (<header className={`px-4 lg:px-6 h-16 flex items-center fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-background/90 backdrop-blur-sm shadow-sm' : 'bg-transparent'}`}>
             <Link href='/' className='flex items-center justify-center' prefetch={false}>
-                <BriefcaseIcon className='h-6 w-6 text-primary' />
+                <BriefcaseIcon className='h-6 w-6 text-primary'/>
                 <span className='font-bold text-lg ml-2 hidden sm:inline'>JobConnect</span>
                 <span className='sr-only'>Job Board</span>
             </Link>
             <nav className='ml-auto flex gap-4 sm:gap-6 items-center'>
-                <Link
-                    href='/jobs'
-                    className='text-sm font-medium hover:text-primary transition-colors'
-                    prefetch={false}
-                >
+                <Link href='/jobs' className='text-sm font-medium hover:text-primary transition-colors' prefetch={false}>
                     Browse Jobs
                 </Link>
                 <Link href='/contact' className='text-sm font-medium hover:text-primary transition-colors' prefetch={false}>
                     Contact
                 </Link>
-                {user && user.id ? (
-                    <ProfileMenu user={user} />
-                ) : (
-                    <div className='flex gap-2'>
+                {user && user.id ? (<ProfileMenu user={user}/>) : (<div className='flex gap-2'>
                         <Link href='/login' prefetch={false}>
                             <Button variant='outline' size='sm'>
                                 Login
@@ -68,31 +55,21 @@ const HeaderSection = () => {
                         <Link href='/signup' prefetch={false}>
                             <Button size='sm'>Sign Up</Button>
                         </Link>
-                    </div>
-                )}
+                    </div>)}
             </nav>
-        </header>
-    );
+        </header>);
 };
-
 const HeroSection = () => {
     const user = userStore((state) => state.user);
     const [searchQuery, setSearchQuery] = useState('');
     const [location, setLocation] = useState('');
-
     const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         window.location.href = `/jobs?q=${searchQuery}&location=${location}`;
     };
-    return (
-        <section className='w-full pt-32 pb-20 md:pt-40 md:pb-28 relative'>
+    return (<section className='w-full pt-32 pb-20 md:pt-40 md:pb-28 relative'>
             <div className='absolute inset-0 bg-gradient-to-br from-primary/10 to-background z-0'></div>
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className='container relative z-10'
-            >
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className='container relative z-10'>
                 <div className='grid lg:grid-cols-2 gap-12 items-center'>
                     <div className='flex flex-col gap-6'>
                         <div>
@@ -111,22 +88,12 @@ const HeroSection = () => {
                         <div className='bg-card shadow-lg rounded-xl p-4 border border-border/60'>
                             <form onSubmit={handleSearch} className='flex flex-col md:flex-row gap-3'>
                                 <div className='relative flex-1'>
-                                    <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
-                                    <Input
-                                        placeholder='Job title, keywords, or company'
-                                        className='pl-9 w-full'
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                    />
+                                    <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground'/>
+                                    <Input placeholder='Job title, keywords, or company' className='pl-9 w-full' value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}/>
                                 </div>
                                 <div className='relative flex-1'>
-                                    <Globe className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
-                                    <Input
-                                        placeholder='Location'
-                                        className='pl-9 w-full'
-                                        value={location}
-                                        onChange={(e) => setLocation(e.target.value)}
-                                    />
+                                    <Globe className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground'/>
+                                    <Input placeholder='Location' className='pl-9 w-full' value={location} onChange={(e) => setLocation(e.target.value)}/>
                                 </div>
                                 <Button type='submit' className='whitespace-nowrap'>
                                     Search Jobs
@@ -134,16 +101,9 @@ const HeroSection = () => {
                             </form>
                             <div className='flex flex-wrap gap-2 mt-3'>
                                 <span className='text-xs text-muted-foreground'>Trending:</span>
-                                {['Remote', 'Software Engineer', 'Marketing', 'Data Science', 'Design'].map((tag) => (
-                                    <Badge
-                                        key={tag}
-                                        variant='secondary'
-                                        className='text-xs cursor-pointer hover:bg-secondary/80'
-                                        onClick={() => window.location.assign(`/jobs?q=${encodeURIComponent(tag)}`)}
-                                    >
+                                {['Remote', 'Software Engineer', 'Marketing', 'Data Science', 'Design'].map((tag) => (<Badge key={tag} variant='secondary' className='text-xs cursor-pointer hover:bg-secondary/80' onClick={() => window.location.assign(`/jobs?q=${encodeURIComponent(tag)}`)}>
                                         {tag}
-                                    </Badge>
-                                ))}
+                                    </Badge>))}
                             </div>
                         </div>
 
@@ -153,151 +113,124 @@ const HeroSection = () => {
                                     Browse Jobs
                                 </Link>
                             </Button>
-                            {!user?.id && (
-                                <Button variant='outline' asChild>
+                            {!user?.id && (<Button variant='outline' asChild>
                                     <Link href='/signup' prefetch={false}>
                                         Sign Up
                                     </Link>
-                                </Button>
-                            )}
+                                </Button>)}
                         </div>
                     </div>
 
                     <div className='relative group hidden lg:block'>
                         <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[90%] h-[90%] bg-primary/30 rounded-full blur-3xl opacity-60'></div>
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.5, delay: 0.2 }}
-                        >
-                            <Image
-                                width={800}
-                                height={600}
-                                className='w-full rounded-lg shadow-2xl border border-border/50 transform translate-y-0 hover:-translate-y-2 transition-transform duration-500'
-                                src='/posts.png'
-                                alt='Job board dashboard'
-                            />
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, delay: 0.2 }}>
+                            <Image width={800} height={600} className='w-full rounded-lg shadow-2xl border border-border/50 transform translate-y-0 hover:-translate-y-2 transition-transform duration-500' src='/posts.png' alt='Job board dashboard'/>
                         </motion.div>
                     </div>
                 </div>
             </motion.div>
-        </section>
-    );
+        </section>);
 };
-
 const STATS = [
     { label: 'Active Jobs', target: 10000 },
     { label: 'Companies', target: 2500 },
     { label: 'Job Seekers', target: 1000000 },
     { label: 'Successful Hires', target: 500000 },
 ] as const;
-
 function formatStatValue(current: number, target: number): string {
-    if (target >= 1e6) return `${Math.round(current / 1e6)}M+`;
-    if (target >= 100000) return `${Math.round(current / 1e3)}K+`;
+    if (target >= 1e6)
+        return `${Math.round(current / 1e6)}M+`;
+    if (target >= 100000)
+        return `${Math.round(current / 1e3)}K+`;
     return `${Math.round(current).toLocaleString()}+`;
 }
-
 function useCountUp(target: number, inView: boolean, durationMs = 2000) {
     const [value, setValue] = useState(0);
     const startRef = useRef<number | null>(null);
     const rafRef = useRef<number>(0);
-
     useEffect(() => {
-        if (!inView) return;
+        if (!inView)
+            return;
         startRef.current = null;
-
         const tick = (timestamp: number) => {
-            if (startRef.current === null) startRef.current = timestamp;
+            if (startRef.current === null)
+                startRef.current = timestamp;
             const elapsed = timestamp - startRef.current;
             const t = Math.min(elapsed / durationMs, 1);
             const easeOut = 1 - (1 - t) ** 3;
             setValue(easeOut * target);
-            if (t < 1) rafRef.current = requestAnimationFrame(tick);
+            if (t < 1)
+                rafRef.current = requestAnimationFrame(tick);
         };
-
         rafRef.current = requestAnimationFrame(tick);
         return () => cancelAnimationFrame(rafRef.current);
     }, [inView, target, durationMs]);
-
     useEffect(() => {
-        if (!inView) setValue(0);
+        if (!inView)
+            setValue(0);
     }, [inView]);
-
     return value;
 }
-
 const StatsSection = () => {
     const sectionRef = useRef<HTMLElement>(null);
     const [inView, setInView] = useState(false);
-
     useEffect(() => {
         const el = sectionRef.current;
-        if (!el) return;
-        const obs = new IntersectionObserver(
-            ([entry]) => {
-                if (entry?.isIntersecting) setInView(true);
-            },
-            { threshold: 0.2 }
-        );
+        if (!el)
+            return;
+        const obs = new IntersectionObserver(([entry]) => {
+            if (entry?.isIntersecting)
+                setInView(true);
+        }, { threshold: 0.2 });
         obs.observe(el);
         return () => obs.disconnect();
     }, []);
-
-    return (
-        <section ref={sectionRef} className='w-full py-16 bg-muted/40'>
+    return (<section ref={sectionRef} className='w-full py-16 bg-muted/40'>
             <div className='container'>
                 <div className='grid grid-cols-2 md:grid-cols-4 gap-8'>
-                    {STATS.map((stat, index) => (
-                        <StatCard key={stat.label} label={stat.label} target={stat.target} inView={inView} />
-                    ))}
+                    {STATS.map((stat, index) => (<StatCard key={stat.label} label={stat.label} target={stat.target} inView={inView}/>))}
                 </div>
             </div>
-        </section>
-    );
+        </section>);
 };
-
-function StatCard({ label, target, inView }: { label: string; target: number; inView: boolean }) {
+function StatCard({ label, target, inView }: {
+    label: string;
+    target: number;
+    inView: boolean;
+}) {
     const value = useCountUp(target, inView);
-    return (
-        <div className='flex flex-col items-center text-center'>
+    return (<div className='flex flex-col items-center text-center'>
             <p className='text-3xl md:text-4xl font-bold text-primary tabular-nums'>
                 {formatStatValue(value, target)}
             </p>
             <p className='text-sm text-muted-foreground'>{label}</p>
-        </div>
-    );
+        </div>);
 }
 const reviewList = [
     {
         image: 'https://github.com/shadcn.png',
         name: 'Sophia Collins',
         userName: 'Cybersecurity Analyst',
-        comment:
-            'As someone in a specialized field, finding the right position was always challenging. JobConnect matched me with my dream company within two weeks!',
+        comment: 'As someone in a specialized field, finding the right position was always challenging. JobConnect matched me with my dream company within two weeks!',
         rating: 4.8,
     },
     {
         image: 'https://github.com/shadcn.png',
         name: 'Ethan Parker',
         userName: 'Data Scientist',
-        comment:
-            'The resume ATS checker was invaluable. It helped me fine-tune my application materials and I received responses from 8 out of 10 jobs I applied for.',
+        comment: 'The resume ATS checker was invaluable. It helped me fine-tune my application materials and I received responses from 8 out of 10 jobs I applied for.',
         rating: 5.0,
     },
     {
         image: 'https://github.com/shadcn.png',
         name: 'Isabella Reed',
         userName: 'DevOps Engineer',
-        comment:
-            "I landed a role with a 30% salary increase thanks to JobConnect. The platform suggested positions I wouldn't have considered but that perfectly matched my skillset.",
+        comment: "I landed a role with a 30% salary increase thanks to JobConnect. The platform suggested positions I wouldn't have considered but that perfectly matched my skillset.",
         rating: 4.9,
     },
 ];
-
 const TestimonialSection = () => {
-    return (
-        <section className='w-full py-20 bg-gradient-to-b from-background to-muted/30'>
+    return (<section className='w-full py-20 bg-gradient-to-b from-background to-muted/30'>
             <div className='container'>
                 <div className='text-center mb-12'>
                     <Badge variant='outline' className='mb-4 px-3 py-1 text-sm bg-primary/10 text-primary border-primary/30'>
@@ -309,24 +242,15 @@ const TestimonialSection = () => {
                     </p>
                 </div>
 
-                <Carousel
-                    opts={{
-                        align: 'start',
-                    }}
-                    className='w-full mx-auto'
-                >
+                <Carousel opts={{
+            align: 'start',
+        }} className='w-full mx-auto'>
                     <CarouselContent>
-                        {reviewList.map((review) => (
-                            <CarouselItem key={review.name} className='md:basis-1/2 lg:basis-1/3 p-2'>
+                        {reviewList.map((review) => (<CarouselItem key={review.name} className='md:basis-1/2 lg:basis-1/3 p-2'>
                                 <Card className='h-full border border-border/50 hover:border-primary/20 transition-colors duration-300 hover:shadow-md'>
                                     <CardContent className='pt-6'>
                                         <div className='flex gap-1 mb-4'>
-                                            {[...Array(5)].map((_, i) => (
-                                                <Star
-                                                    key={i}
-                                                    className={`size-4 ${i < Math.floor(review.rating) ? 'fill-primary text-primary' : 'fill-muted text-muted'}`}
-                                                />
-                                            ))}
+                                            {[...Array(5)].map((_, i) => (<Star key={i} className={`size-4 ${i < Math.floor(review.rating) ? 'fill-primary text-primary' : 'fill-muted text-muted'}`}/>))}
                                             <span className='text-xs text-muted-foreground ml-2'>{review.rating.toFixed(1)}</span>
                                         </div>
                                         <p className='text-sm mb-6'>{`"${review.comment}"`}</p>
@@ -335,7 +259,7 @@ const TestimonialSection = () => {
                                     <CardHeader className='pt-0'>
                                         <div className='flex flex-row items-center gap-4'>
                                             <Avatar>
-                                                <AvatarImage src={review.image} alt={review.name} />
+                                                <AvatarImage src={review.image} alt={review.name}/>
                                                 <AvatarFallback>{review.name.charAt(0)}</AvatarFallback>
                                             </Avatar>
 
@@ -346,65 +270,41 @@ const TestimonialSection = () => {
                                         </div>
                                     </CardHeader>
                                 </Card>
-                            </CarouselItem>
-                        ))}
+                            </CarouselItem>))}
                     </CarouselContent>
                     <div className='flex justify-center mt-8'>
-                        <CarouselPrevious className='static transform-none mx-2' />
-                        <CarouselNext className='static transform-none mx-2' />
+                        <CarouselPrevious className='static transform-none mx-2'/>
+                        <CarouselNext className='static transform-none mx-2'/>
                     </div>
                 </Carousel>
             </div>
-        </section>
-    );
+        </section>);
 };
-
 const FooterSection = () => {
     const currentYear = new Date().getFullYear();
-    return (
-        <footer className='border-t bg-card'>
+    return (<footer className='border-t bg-card'>
             <div className='container py-12'>
                 <div className='grid grid-cols-1 md:grid-cols-4 gap-8'>
                     <div className='md:col-span-2'>
                         <Link href='/' className='flex items-center gap-2 mb-4 text-foreground' prefetch={false}>
-                            <BriefcaseIcon className='h-6 w-6 text-primary' />
+                            <BriefcaseIcon className='h-6 w-6 text-primary'/>
                             <span className='font-bold text-xl'>JobConnect</span>
                         </Link>
                         <p className='text-muted-foreground mb-4 max-w-md'>
                             Connecting talented professionals with innovative companies. Your career journey starts here.
                         </p>
                         <div className='flex gap-3'>
-                            <Link
-                                href='#'
-                                className='h-10 w-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors'
-                                prefetch={false}
-                                aria-label='Twitter'
-                            >
-                                <Twitter className='h-5 w-5' />
+                            <Link href='#' className='h-10 w-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors' prefetch={false} aria-label='Twitter'>
+                                <Twitter className='h-5 w-5'/>
                             </Link>
-                            <Link
-                                href='#'
-                                className='h-10 w-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors'
-                                prefetch={false}
-                                aria-label='LinkedIn'
-                            >
-                                <Linkedin className='h-5 w-5' />
+                            <Link href='#' className='h-10 w-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors' prefetch={false} aria-label='LinkedIn'>
+                                <Linkedin className='h-5 w-5'/>
                             </Link>
-                            <Link
-                                href='#'
-                                className='h-10 w-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors'
-                                prefetch={false}
-                                aria-label='Facebook'
-                            >
-                                <Facebook className='h-5 w-5' />
+                            <Link href='#' className='h-10 w-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors' prefetch={false} aria-label='Facebook'>
+                                <Facebook className='h-5 w-5'/>
                             </Link>
-                            <Link
-                                href='#'
-                                className='h-10 w-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors'
-                                prefetch={false}
-                                aria-label='Instagram'
-                            >
-                                <Instagram className='h-5 w-5' />
+                            <Link href='#' className='h-10 w-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors' prefetch={false} aria-label='Instagram'>
+                                <Instagram className='h-5 w-5'/>
                             </Link>
                         </div>
                     </div>
@@ -443,42 +343,37 @@ const FooterSection = () => {
                     <p className='text-xs text-muted-foreground text-center'>&copy; {currentYear} JobConnect. All rights reserved.</p>
                 </div>
             </div>
-        </footer>
-    );
+        </footer>);
 };
-
 const features = [
     {
         title: 'AI-Powered Job Matching',
         description: 'Our intelligent algorithms analyze your skills, experience, and preferences to connect you with the perfect opportunities.',
-        icon: <Zap className='w-8 h-8 text-blue-500' />,
+        icon: <Zap className='w-8 h-8 text-blue-500'/>,
         image: '/post.png',
     },
     {
         title: 'Advanced Resume Analysis',
         description: "Get instant feedback on your resume's ATS compatibility and receive personalized tips to improve your chances of success.",
-        icon: <Globe className='w-8 h-8 text-green-500' />,
+        icon: <Globe className='w-8 h-8 text-green-500'/>,
         image: '/posts.png',
     },
     {
         title: 'Streamlined Applications',
         description: 'Apply to multiple positions with a single click and track your applications in real-time from start to finish.',
-        icon: <CheckCircle className='w-8 h-8 text-purple-500' />,
+        icon: <CheckCircle className='w-8 h-8 text-purple-500'/>,
         image: '/applications.png',
     },
     {
         title: 'Comprehensive Analytics',
         description: 'Gain valuable insights into your job search performance with detailed analytics and actionable recommendations.',
-        icon: <BarChart className='w-8 h-8 text-indigo-500' />,
+        icon: <BarChart className='w-8 h-8 text-indigo-500'/>,
         image: '/analytic.png',
     },
 ];
-
 const FeatureSection = () => {
     const [selectedFeature, setSelectedFeature] = useState<(typeof features)[number] | null>(null);
-
-    return (
-        <section className='w-full py-20'>
+    return (<section className='w-full py-20'>
             <div className='container'>
                 <div className='text-center mb-12'>
                     <Badge variant='outline' className='mb-4 px-3 py-1 text-sm bg-primary/10 text-primary border-primary/30'>
@@ -491,17 +386,8 @@ const FeatureSection = () => {
                 </div>
 
                 <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
-                    {features.map((feature) => (
-                        <motion.div
-                            key={feature.title}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.4 }}
-                        >
-                            <Card
-                                className='cursor-pointer hover:shadow-lg transition-all duration-300 h-full border border-border/50 hover:border-primary/20'
-                                onClick={() => setSelectedFeature(feature)}
-                            >
+                    {features.map((feature) => (<motion.div key={feature.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+                            <Card className='cursor-pointer hover:shadow-lg transition-all duration-300 h-full border border-border/50 hover:border-primary/20' onClick={() => setSelectedFeature(feature)}>
                                 <CardHeader className='space-y-4'>
                                     <div className='p-3 rounded-lg bg-muted w-fit'>{feature.icon}</div>
                                     <CardTitle className='text-xl'>{feature.title}</CardTitle>
@@ -510,18 +396,11 @@ const FeatureSection = () => {
                                 <CardContent>
                                     <div className='relative group rounded-md overflow-hidden'>
                                         <div className='absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300'></div>
-                                        <Image
-                                            src={feature.image}
-                                            alt={feature.title}
-                                            width={400}
-                                            height={250}
-                                            className='w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105'
-                                        />
+                                        <Image src={feature.image} alt={feature.title} width={400} height={250} className='w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105'/>
                                     </div>
                                 </CardContent>
                             </Card>
-                        </motion.div>
-                    ))}
+                        </motion.div>))}
                 </div>
 
                 <div className='flex justify-center mt-8'>
@@ -543,25 +422,20 @@ const FeatureSection = () => {
                         <DialogDescription>{selectedFeature?.description}</DialogDescription>
                     </DialogHeader>
 
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className='grid md:grid-cols-2 gap-8 mt-6'
-                    >
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className='grid md:grid-cols-2 gap-8 mt-6'>
                         <div className='space-y-6'>
                             <div className='space-y-4'>
                                 <h3 className='font-semibold text-lg'>Key Benefits</h3>
                                 <div className='flex items-start gap-3'>
-                                    <CheckCircle className='w-5 h-5 text-primary mt-0.5 flex-shrink-0' />
+                                    <CheckCircle className='w-5 h-5 text-primary mt-0.5 flex-shrink-0'/>
                                     <p>Save time and effort with smart automation and intelligent matching.</p>
                                 </div>
                                 <div className='flex items-start gap-3'>
-                                    <CheckCircle className='w-5 h-5 text-primary mt-0.5 flex-shrink-0' />
+                                    <CheckCircle className='w-5 h-5 text-primary mt-0.5 flex-shrink-0'/>
                                     <p>Increase efficiency with personalized recommendations and insights.</p>
                                 </div>
                                 <div className='flex items-start gap-3'>
-                                    <CheckCircle className='w-5 h-5 text-primary mt-0.5 flex-shrink-0' />
+                                    <CheckCircle className='w-5 h-5 text-primary mt-0.5 flex-shrink-0'/>
                                     <p>Improve outcomes with data-driven decision making and analytics.</p>
                                 </div>
                             </div>
@@ -574,23 +448,20 @@ const FeatureSection = () => {
                         <div className='relative group'>
                             <div className='absolute top-2 left-1/2 transform -translate-x-1/2 w-[90%] mx-auto h-32 bg-primary/30 rounded-full blur-3xl opacity-60'></div>
                             <div className='relative h-[300px] rounded-lg overflow-hidden'>
-                                <Image src={selectedFeature?.image ?? ''} alt={selectedFeature?.title ?? ''} fill className='object-cover' />
+                                <Image src={selectedFeature?.image ?? ''} alt={selectedFeature?.title ?? ''} fill className='object-cover'/>
                             </div>
                         </div>
                     </motion.div>
                 </DialogContent>
             </Dialog>
-        </section>
-    );
+        </section>);
 };
-
 const CTASection = () => {
     const user = userStore((state) => state.user);
-    return (
-        <section className='py-20 w-full'>
+    return (<section className='py-20 w-full'>
             <div className='container'>
                 <div className='bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl p-8 md:p-12 relative overflow-hidden'>
-                    <div className='absolute inset-0 bg-grid-white/5 mask-gradient-to-r' />
+                    <div className='absolute inset-0 bg-grid-white/5 mask-gradient-to-r'/>
 
                     <div className='grid md:grid-cols-2 gap-10 items-center relative z-10'>
                         <div>
@@ -610,21 +481,18 @@ const CTASection = () => {
 
                         <div className='hidden md:block relative h-[300px]'>
                             <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4/5 h-4/5 bg-primary/20 rounded-full blur-3xl'></div>
-                            <Image src='/analytic.png' alt='Career growth visualization' fill className='object-contain' />
+                            <Image src='/analytic.png' alt='Career growth visualization' fill className='object-contain'/>
                         </div>
                     </div>
                 </div>
             </div>
-        </section>
-    );
+        </section>);
 };
-
 const ContactChatbot = () => {
     const user = userStore((state) => state.user);
     const router = useRouter();
     const [open, setOpen] = useState(false);
     const [formData, setFormData] = useState({ name: '', email: '', inquiryType: '', message: '' });
-
     useEffect(() => {
         if (user && open) {
             setFormData((prev) => ({
@@ -634,37 +502,31 @@ const ContactChatbot = () => {
             }));
         }
     }, [user, open]);
-
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const params = new URLSearchParams();
-        if (formData.inquiryType) params.set('inquiryType', formData.inquiryType);
-        if (formData.message) params.set('message', formData.message);
+        if (formData.inquiryType)
+            params.set('inquiryType', formData.inquiryType);
+        if (formData.message)
+            params.set('message', formData.message);
         setOpen(false);
         setFormData({ name: '', email: '', inquiryType: '', message: '' });
         router.push(`/contact?${params.toString()}`);
     };
-
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { id, value } = e.target;
         setFormData((prev) => ({ ...prev, [id]: value }));
     };
-
-    return (
-        <>
-            <Button
-                onClick={() => setOpen(true)}
-                className='fixed bottom-4 right-4 h-14 w-14 rounded-full p-0 shadow-lg z-40'
-                aria-label='Contact us'
-            >
-                <MessageCircle className='h-6 w-6' />
+    return (<>
+            <Button onClick={() => setOpen(true)} className='fixed bottom-4 right-4 h-14 w-14 rounded-full p-0 shadow-lg z-40' aria-label='Contact us'>
+                <MessageCircle className='h-6 w-6'/>
             </Button>
 
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className='fixed left-auto top-auto right-4 bottom-20 translate-x-0 translate-y-0 w-full max-w-[380px] max-h-[calc(100vh-6rem)] overflow-y-auto p-4 rounded-lg shadow-xl data-[state=open]:slide-in-from-bottom-4 data-[state=open]:slide-in-from-right-0 data-[state=closed]:slide-out-to-bottom-4 data-[state=closed]:slide-out-to-right-0'>
                     <DialogHeader className='space-y-1'>
                         <DialogTitle className='text-lg flex items-center gap-2'>
-                            <MessageCircle className='h-5 w-5' />
+                            <MessageCircle className='h-5 w-5'/>
                             Contact
                         </DialogTitle>
                         <DialogDescription>Send a quick message. We&apos;ll respond within 24 hours.</DialogDescription>
@@ -673,34 +535,17 @@ const ContactChatbot = () => {
                     <form onSubmit={handleSubmit} className='space-y-3'>
                             <div className='space-y-1.5'>
                                 <Label htmlFor='name' className='text-xs'>Name</Label>
-                                <Input
-                                    id='name'
-                                    placeholder='Your name'
-                                    required
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    disabled={!!user}
-                                    className='h-9 text-sm'
-                                />
+                                <Input id='name' placeholder='Your name' required value={formData.name} onChange={handleChange} disabled={!!user} className='h-9 text-sm'/>
                             </div>
                             <div className='space-y-1.5'>
                                 <Label htmlFor='email' className='text-xs'>Email</Label>
-                                <Input
-                                    id='email'
-                                    type='email'
-                                    placeholder='you@example.com'
-                                    required
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    disabled={!!user}
-                                    className='h-9 text-sm'
-                                />
+                                <Input id='email' type='email' placeholder='you@example.com' required value={formData.email} onChange={handleChange} disabled={!!user} className='h-9 text-sm'/>
                             </div>
                             <div className='space-y-1.5'>
                                 <Label className='text-xs'>Inquiry</Label>
                                 <Select value={formData.inquiryType} onValueChange={(v) => setFormData((p) => ({ ...p, inquiryType: v }))}>
                                     <SelectTrigger className='h-9 text-sm'>
-                                        <SelectValue placeholder='Select type' />
+                                        <SelectValue placeholder='Select type'/>
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value='general'>General</SelectItem>
@@ -714,18 +559,10 @@ const ContactChatbot = () => {
                             </div>
                             <div className='space-y-1.5'>
                                 <Label htmlFor='message' className='text-xs'>Message</Label>
-                                <Textarea
-                                    id='message'
-                                    placeholder='Your message...'
-                                    rows={3}
-                                    required
-                                    value={formData.message}
-                                    onChange={handleChange}
-                                    className='text-sm resize-none'
-                                />
+                                <Textarea id='message' placeholder='Your message...' rows={3} required value={formData.message} onChange={handleChange} className='text-sm resize-none'/>
                             </div>
                             <Button type='submit' size='sm' className='w-full'>
-                                <Send className='mr-2 h-4 w-4' />
+                                <Send className='mr-2 h-4 w-4'/>
                                 Continue to contact form
                             </Button>
                             <p className='text-center'>
@@ -736,27 +573,27 @@ const ContactChatbot = () => {
                         </form>
                 </DialogContent>
             </Dialog>
-        </>
-    );
+        </>);
 };
-
 interface ProfileMenuProps {
     user: User;
 }
-
 const ProfileMenu: React.FC<ProfileMenuProps> = ({ user }) => {
     const router = useRouter();
     const logout = userStore((state) => state.logout);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-
     useEffect(() => {
-        if (!user?.id) return;
+        if (!user?.id)
+            return;
         ky.get('/api/me')
-            .json<{ avatarUrl?: string | null }>()
-            .then((res: { avatarUrl?: string | null }) => setAvatarUrl(res.avatarUrl ?? null))
-            .catch(() => {});
+            .json<{
+            avatarUrl?: string | null;
+        }>()
+            .then((res: {
+            avatarUrl?: string | null;
+        }) => setAvatarUrl(res.avatarUrl ?? null))
+            .catch(() => { });
     }, [user?.id]);
-
     const handleLogout = async () => {
         try {
             await logout();
@@ -765,7 +602,8 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ user }) => {
                 title: 'Logged Out',
                 description: 'You have been logged out successfully',
             });
-        } catch (error: any) {
+        }
+        catch (error: any) {
             toast({
                 title: 'Error',
                 description: error.message ?? 'Error while logging out',
@@ -773,12 +611,11 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ user }) => {
         }
     };
     const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`;
-    return (
-        <DropdownMenu>
+    return (<DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant='ghost' className='relative h-8 w-8 rounded-full'>
                     <Avatar className='h-8 w-8'>
-                        <AvatarImage src={avatarUrl ?? undefined} alt={`${user.firstName} ${user.lastName}`} />
+                        <AvatarImage src={avatarUrl ?? undefined} alt={`${user.firstName} ${user.lastName}`}/>
                         <AvatarFallback>{initials}</AvatarFallback>
                     </Avatar>
                 </Button>
@@ -790,48 +627,42 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ user }) => {
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                     <Link href='/profile' className='flex w-full items-center' prefetch={false}>
-                        <UserIcon className='mr-2 h-4 w-4' />
+                        <UserIcon className='mr-2 h-4 w-4'/>
                         <span>Profile</span>
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                     <Link href='/jobs' className='flex w-full items-center' prefetch={false}>
-                        <BriefcaseIcon className='mr-2 h-4 w-4' />
+                        <BriefcaseIcon className='mr-2 h-4 w-4'/>
                         <span>Browse Jobs</span>
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                     <Link href='/applications' className='flex w-full items-center' prefetch={false}>
-                        <FileText className='mr-2 h-4 w-4' />
+                        <FileText className='mr-2 h-4 w-4'/>
                         <span>My Applications</span>
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                     <Link href='/contact' className='flex w-full items-center' prefetch={false}>
-                        <CircleHelpIcon className='mr-2 h-4 w-4' />
+                        <CircleHelpIcon className='mr-2 h-4 w-4'/>
                         <span>Contact</span>
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                    <button
-                        className='flex w-full items-center'
-                        onClick={async (e) => {
-                            e.preventDefault();
-                            await handleLogout();
-                        }}
-                    >
-                        <LogOut className='mr-2 h-4 w-4' />
+                    <button className='flex w-full items-center' onClick={async (e) => {
+            e.preventDefault();
+            await handleLogout();
+        }}>
+                        <LogOut className='mr-2 h-4 w-4'/>
                         <span>Log out</span>
                     </button>
                 </DropdownMenuItem>
             </DropdownMenuContent>
-        </DropdownMenu>
-    );
+        </DropdownMenu>);
 };
-
 export default function Component() {
-    return (
-        <div className='flex flex-col min-h-[100dvh]'>
+    return (<div className='flex flex-col min-h-[100dvh]'>
             <HeaderSection />
             <main className='flex-1 pt-16'>
                 <HeroSection />
@@ -842,6 +673,5 @@ export default function Component() {
             </main>
             <FooterSection />
             <ContactChatbot />
-        </div>
-    );
+        </div>);
 }

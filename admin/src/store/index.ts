@@ -4,8 +4,10 @@ import ky from 'ky';
 import { devtools, persist } from 'zustand/middleware';
 import { create } from 'zustand';
 
+export type SessionUser = Omit<User, 'password' | 'confirmPassword'> & { avatarUrl?: string | null };
+
 interface Auth {
-    user: (User & { avatarUrl?: string | null }) | null;
+    user: SessionUser | null;
     login: (req: LoginUserRequest) => Promise<void>;
     signup: (user: User) => Promise<void>;
     logout: () => Promise<void>;
@@ -19,7 +21,7 @@ export const userStore = create<Auth>()(
             (set) => ({
                 user: null,
                 login: async (req) => {
-                    const user = await ky.post('/api/login', { json: req }).json<User & { avatarUrl?: string | null }>();
+                    const user = await ky.post('/api/login', { json: req }).json<SessionUser>();
                     set({
                         user: {
                             id: user.id,

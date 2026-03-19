@@ -1,11 +1,9 @@
 export const isRecognisedError = (error: any) => {
-    return (
-        error instanceof DuplicateError ||
+    return (error instanceof DuplicateError ||
         error instanceof NotFoundError ||
         error instanceof UnauthorizedError ||
         error instanceof ForbiddenError ||
-        error instanceof BadRequestError
-    );
+        error instanceof BadRequestError);
 };
 export class DuplicateError extends Error {
     statusCode = 409;
@@ -14,7 +12,6 @@ export class DuplicateError extends Error {
         this.name = this.constructor.name;
     }
 }
-
 export class NotFoundError extends Error {
     statusCode = 404;
     constructor(message: string) {
@@ -22,7 +19,6 @@ export class NotFoundError extends Error {
         this.name = this.constructor.name;
     }
 }
-
 export class UnauthorizedError extends Error {
     statusCode = 401;
     constructor(message: string) {
@@ -30,7 +26,6 @@ export class UnauthorizedError extends Error {
         this.name = this.constructor.name;
     }
 }
-
 export class ForbiddenError extends Error {
     statusCode = 403;
     constructor(message: string) {
@@ -38,7 +33,6 @@ export class ForbiddenError extends Error {
         this.name = this.constructor.name;
     }
 }
-
 export class BadRequestError extends Error {
     statusCode = 400;
     constructor(message: string) {
@@ -46,7 +40,6 @@ export class BadRequestError extends Error {
         this.name = this.constructor.name;
     }
 }
-
 export class InternalServerError extends Error {
     statusCode = 500;
     constructor(message: string) {

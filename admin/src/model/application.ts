@@ -60,7 +60,7 @@ export enum JobSource {
     COMPANY_WEBSITE = 'Company Website',
     OTHER = 'Other',
 }
-/** Workflow run state per application (e.g. assignment node id -> { submitted, submittedAt }). */
+
 export type ApplicationWorkflowState = Record<string, { submitted?: boolean; submittedAt?: string; [key: string]: unknown }>;
 
 export class Application {
@@ -82,13 +82,13 @@ export class Application {
     jobId: string;
     createdAt: string;
     createdBy: string;
-    /** Workflow template this application is running. */
+    
     workflowId?: string;
-    /** Fine-grained stage for workflow (e.g. assignment_sent, interview_scheduled). */
+    
     stage?: string;
-    /** Current node id in the workflow (for Inngest resume). */
+    
     currentNodeId?: string;
-    /** Node-specific state (e.g. assignment node id -> { submitted, submittedAt }). */
+    
     workflowState?: ApplicationWorkflowState;
 
     constructor(

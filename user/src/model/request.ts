@@ -9,7 +9,6 @@ export class LoginUserRequest {
 export class UserApplicationsRequest {
     lastId: string | null;
     limit: number | null;
-
     constructor(lastId: string | null, limit: number | null) {
         this.lastId = lastId;
         this.limit = limit;

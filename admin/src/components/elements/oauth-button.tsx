@@ -20,7 +20,7 @@ export function OAuthHandler({ config, onSuccess, onError, children }: OAuthHand
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const messageListenerRef = useRef<boolean>(false);
 
-    // Use useCallback to ensure we can properly clean up the event listener
+    
     const handleAuthMessage = useCallback(
         (event: MessageEvent) => {
             console.log('Received OAuth message:', event.data);
@@ -35,7 +35,7 @@ export function OAuthHandler({ config, onSuccess, onError, children }: OAuthHand
             }
 
             if (event.data.type === 'oauth_response') {
-                // Clean up the event listener and interval
+                
                 window.removeEventListener('message', handleAuthMessage);
                 messageListenerRef.current = false;
 
@@ -54,7 +54,7 @@ export function OAuthHandler({ config, onSuccess, onError, children }: OAuthHand
             }
 
             if (event.data.type === 'oauth_window_closed') {
-                // Clean up the event listener and interval
+                
                 window.removeEventListener('message', handleAuthMessage);
                 messageListenerRef.current = false;
 
@@ -69,22 +69,22 @@ export function OAuthHandler({ config, onSuccess, onError, children }: OAuthHand
         [onSuccess, onError, toast]
     );
 
-    // Clean up when component unmounts
+    
     useEffect(() => {
         return () => {
-            // Remove message listener if active
+            
             if (messageListenerRef.current) {
                 window.removeEventListener('message', handleAuthMessage);
                 messageListenerRef.current = false;
             }
 
-            // Clear timeout if active
+            
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
                 timeoutRef.current = null;
             }
 
-            // Try to close the auth window
+            
             try {
                 if (authWindowRef.current) {
                     authWindowRef.current.close();
@@ -97,17 +97,17 @@ export function OAuthHandler({ config, onSuccess, onError, children }: OAuthHand
     }, [handleAuthMessage]);
 
     const initiateOAuth = () => {
-        // Don't open another window if one is already open
+        
         if (authWindowOpen) {
             return;
         }
 
-        // Remove any existing listener
+        
         if (messageListenerRef.current) {
             window.removeEventListener('message', handleAuthMessage);
         }
 
-        // Add new listener and mark as active
+        
         window.addEventListener('message', handleAuthMessage);
         messageListenerRef.current = true;
 
@@ -128,14 +128,11 @@ export function OAuthHandler({ config, onSuccess, onError, children }: OAuthHand
         authWindowRef.current = newAuthWindow;
         setAuthWindowOpen(true);
 
-        // Clear any existing timeout
+        
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
         }
 
-        // Do not poll window.closed — when the popup navigates to Google, Cross-Origin-Opener-Policy
-        // blocks the opener from reading window.closed and triggers console warnings. Rely on postMessage
-        // from the callback page for success/close; this timeout only resets state after 5min.
         timeoutRef.current = setTimeout(() => {
             timeoutRef.current = null;
             if (messageListenerRef.current) {

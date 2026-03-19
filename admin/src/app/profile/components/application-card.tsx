@@ -10,7 +10,7 @@ interface ApplicationCardProps {
 }
 
 const ApplicationCard = ({ application }: ApplicationCardProps) => {
-    // Helper function to get status badge variant
+    
     const getStatusVariant = (status: ApplicationStatus) => {
         switch (status) {
             case ApplicationStatus.SELECTED:
@@ -23,7 +23,7 @@ const ApplicationCard = ({ application }: ApplicationCardProps) => {
         }
     };
 
-    // Helper function to get status icon
+    
     const getStatusIcon = (status: ApplicationStatus) => {
         switch (status) {
             case ApplicationStatus.SELECTED:
@@ -36,7 +36,7 @@ const ApplicationCard = ({ application }: ApplicationCardProps) => {
         }
     };
 
-    // Format date to be more readable
+    
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         return date.toLocaleDateString('en-US', {
@@ -46,11 +46,11 @@ const ApplicationCard = ({ application }: ApplicationCardProps) => {
         });
     };
 
-    // Get the most recent experience (if any)
+    
     const currentJobTitle =
         application.experience && application.experience.length > 0 ? application.experience[0].profile : 'No previous experience';
 
-    // Get the most recent employer (if any)
+    
     const currentEmployer = application.experience && application.experience.length > 0 ? application.experience[0].company : '';
 
     return (

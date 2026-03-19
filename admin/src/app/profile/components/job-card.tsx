@@ -12,7 +12,7 @@ interface JobCardProps {
     isPosted: boolean;
 }
 
-// Job card for displaying job list items
+
 const JobCard = ({ job, isPosted = false }: JobCardProps) => {
     return (
         <Card className='mb-4 hover:shadow-md transition-shadow'>

@@ -3,8 +3,7 @@ import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { BarChartIcon, BriefcaseIcon, CircleHelpIcon } from '@/components/elements/icon';
 import Image from 'next/image';
-import { userStore } from '@/store';
-import { User } from '@/model/user';
+import { userStore, type SessionUser } from '@/store';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -581,7 +580,7 @@ const CTASection = () => {
 };
 
 interface ProfileMenuProps {
-    user: User;
+    user: SessionUser;
 }
 
 const ProfileMenu: React.FC<ProfileMenuProps> = ({ user }) => {

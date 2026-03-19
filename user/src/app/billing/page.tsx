@@ -1,5 +1,4 @@
 'use client';
-
 import NavbarLayout from '@/layouts/navbar';
 import { loadStripe } from '@stripe/stripe-js';
 import { formatPriceINR } from '@/lib/utils';
@@ -14,9 +13,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import Link from 'next/link';
-
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
-
 const basicFeatures = [
     { name: 'Apply to 30 jobs per month', included: true },
     { name: 'Basic profile visibility to recruiters', included: true },
@@ -29,7 +26,6 @@ const basicFeatures = [
     { name: 'Priority in recruiter search', included: false },
     { name: '1:1 career coaching', included: false },
 ];
-
 const proFeatures = [
     { name: 'Apply to 200 jobs per month', included: true },
     { name: 'Enhanced profile visibility to recruiters', included: true },
@@ -42,7 +38,6 @@ const proFeatures = [
     { name: 'Advanced application tracking', included: true },
     { name: '1:1 career coaching', included: false },
 ];
-
 const enterpriseFeatures = [
     { name: 'Unlimited job applications', included: true },
     { name: 'Top profile visibility to recruiters', included: true },
@@ -55,7 +50,6 @@ const enterpriseFeatures = [
     { name: 'Custom career roadmap', included: true },
     { name: 'Dedicated account manager', included: true },
 ];
-
 const faqs = [
     {
         question: 'Can I change plans later?',
@@ -78,60 +72,51 @@ const faqs = [
         answer: 'We offer a 30-day money-back guarantee. If Jobify isn’t right for you, we’ll refund you.',
     },
 ];
-
 const PricingPage = () => {
     const [isYearly, setIsYearly] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-
     const handleSubscription = async (plan: SubscriptionType) => {
         if (plan === SubscriptionType.ENTERPRISE) {
             window.location.href = '/contact';
             return;
         }
-
         try {
             setSelectedPlan(plan);
             setIsLoading(true);
-
             const stripe = await stripePromise;
             const response = await ky.post('/api/checkout-session', {
                 json: { plan, isYearly },
             });
-
-            const { sessionId } = (await response.json()) as { sessionId: string };
+            const { sessionId } = (await response.json()) as {
+                sessionId: string;
+            };
             stripe?.redirectToCheckout({ sessionId });
-        } catch (error) {
+        }
+        catch (error) {
             console.error('Error while processing subscription:', error);
             toast.error('Unable to process your subscription. Please try again.');
-        } finally {
+        }
+        finally {
             setIsLoading(false);
         }
     };
-
-    const renderFeatureList = (features: { name: string; included: boolean }[]) => (
-        <ul className='space-y-3'>
-            {features.map((feature, index) => (
-                <li key={index} className='flex items-start'>
-                    {feature.included ? (
-                        <Check className='mr-2 h-5 w-5 text-green-500 flex-shrink-0 mt-0.5' />
-                    ) : (
-                        <X className='mr-2 h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5' />
-                    )}
+    const renderFeatureList = (features: {
+        name: string;
+        included: boolean;
+    }[]) => (<ul className='space-y-3'>
+            {features.map((feature, index) => (<li key={index} className='flex items-start'>
+                    {feature.included ? (<Check className='mr-2 h-5 w-5 text-green-500 flex-shrink-0 mt-0.5'/>) : (<X className='mr-2 h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5'/>)}
                     <span className={feature.included ? '' : 'text-muted-foreground'}>{feature.name}</span>
-                </li>
-            ))}
-        </ul>
-    );
-
+                </li>))}
+        </ul>);
     const priceByPlan = (plan: SubscriptionType) => {
-        if (plan === SubscriptionType.ENTERPRISE) return 'Custom';
+        if (plan === SubscriptionType.ENTERPRISE)
+            return 'Custom';
         const price = isYearly ? yearlySubscriptionPrices[plan] : subscriptionPrices[plan];
         return formatPriceINR(price);
     };
-
-    return (
-        <div className='container mx-auto px-4 py-12 max-w-6xl'>
+    return (<div className='container mx-auto px-4 py-12 max-w-6xl'>
             <div className='text-center mb-12'>
                 <Badge variant='outline' className='mb-4 px-3 py-1 text-sm bg-primary/10 text-primary border-primary/30'>
                     Pricing Plans
@@ -145,18 +130,16 @@ const PricingPage = () => {
             <div className='flex flex-col items-center mb-12'>
                 <div className='flex items-center justify-center space-x-3 mb-4'>
                     <span className={`text-sm ${!isYearly ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>Monthly</span>
-                    <Switch checked={isYearly} onCheckedChange={setIsYearly} className='data-[state=checked]:bg-primary' />
+                    <Switch checked={isYearly} onCheckedChange={setIsYearly} className='data-[state=checked]:bg-primary'/>
                     <span className={`text-sm ${isYearly ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>Yearly</span>
-                    {isYearly && (
-                        <Badge variant='secondary' className='ml-1 bg-green-100 text-green-800 hover:bg-green-100'>
+                    {isYearly && (<Badge variant='secondary' className='ml-1 bg-green-100 text-green-800 hover:bg-green-100'>
                             Save 17%
-                        </Badge>
-                    )}
+                        </Badge>)}
                 </div>
             </div>
 
             <div id='pricing-plans' className='grid md:grid-cols-3 gap-6 mb-16'>
-                {/* Basic Plan */}
+                
                 <Card className='relative flex flex-col border-border hover:border-primary/30 hover:shadow-md transition-all duration-300'>
                     <CardHeader className='pb-4'>
                         <CardTitle className='flex justify-between items-start'>
@@ -177,7 +160,7 @@ const PricingPage = () => {
                     <CardContent className='flex-grow'>
                         <div className='flex items-center mb-4 pb-4 border-b'>
                             <div className='p-2 rounded-full bg-primary/10 mr-2'>
-                                <Zap className='h-5 w-5 text-primary' />
+                                <Zap className='h-5 w-5 text-primary'/>
                             </div>
                             <p className='text-sm'>Great when you’re exploring and applying to a few roles</p>
                         </div>
@@ -186,36 +169,19 @@ const PricingPage = () => {
                     </CardContent>
 
                     <CardFooter className='pt-4 pb-6'>
-                        <Button
-                            className='w-full h-11'
-                            onClick={() => handleSubscription(SubscriptionType.BASIC)}
-                            disabled={isLoading && selectedPlan === SubscriptionType.BASIC}
-                        >
-                            {isLoading && selectedPlan === SubscriptionType.BASIC ? (
-                                <span className='flex items-center'>
-                                    <svg
-                                        className='animate-spin -ml-1 mr-2 h-4 w-4 text-white'
-                                        xmlns='http://www.w3.org/2000/svg'
-                                        fill='none'
-                                        viewBox='0 0 24 24'
-                                    >
+                        <Button className='w-full h-11' onClick={() => handleSubscription(SubscriptionType.BASIC)} disabled={isLoading && selectedPlan === SubscriptionType.BASIC}>
+                            {isLoading && selectedPlan === SubscriptionType.BASIC ? (<span className='flex items-center'>
+                                    <svg className='animate-spin -ml-1 mr-2 h-4 w-4 text-white' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
                                         <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
-                                        <path
-                                            className='opacity-75'
-                                            fill='currentColor'
-                                            d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
-                                        ></path>
+                                        <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
                                     </svg>
                                     Processing...
-                                </span>
-                            ) : (
-                                'Get Started'
-                            )}
+                                </span>) : ('Get Started')}
                         </Button>
                     </CardFooter>
                 </Card>
 
-                {/* Pro Plan */}
+                
                 <Card className='relative flex flex-col border-primary shadow-lg scale-[1.02] z-10'>
                     <CardHeader className='pb-4'>
                         <CardTitle className='flex justify-between items-start'>
@@ -233,7 +199,7 @@ const PricingPage = () => {
                     <CardContent className='flex-grow'>
                         <div className='flex items-center mb-4 pb-4 border-b'>
                             <div className='p-2 rounded-full bg-primary/10 mr-2'>
-                                <BarChart className='h-5 w-5 text-primary' />
+                                <BarChart className='h-5 w-5 text-primary'/>
                             </div>
                             <p className='text-sm'>Best when you’re applying often and want to stand out</p>
                         </div>
@@ -242,36 +208,19 @@ const PricingPage = () => {
                     </CardContent>
 
                     <CardFooter className='pt-4 pb-6'>
-                        <Button
-                            className='w-full h-11 bg-primary hover:bg-primary/90'
-                            onClick={() => handleSubscription(SubscriptionType.PRO)}
-                            disabled={isLoading && selectedPlan === SubscriptionType.PRO}
-                        >
-                            {isLoading && selectedPlan === SubscriptionType.PRO ? (
-                                <span className='flex items-center'>
-                                    <svg
-                                        className='animate-spin -ml-1 mr-2 h-4 w-4 text-white'
-                                        xmlns='http://www.w3.org/2000/svg'
-                                        fill='none'
-                                        viewBox='0 0 24 24'
-                                    >
+                        <Button className='w-full h-11 bg-primary hover:bg-primary/90' onClick={() => handleSubscription(SubscriptionType.PRO)} disabled={isLoading && selectedPlan === SubscriptionType.PRO}>
+                            {isLoading && selectedPlan === SubscriptionType.PRO ? (<span className='flex items-center'>
+                                    <svg className='animate-spin -ml-1 mr-2 h-4 w-4 text-white' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
                                         <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
-                                        <path
-                                            className='opacity-75'
-                                            fill='currentColor'
-                                            d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
-                                        ></path>
+                                        <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
                                     </svg>
                                     Processing...
-                                </span>
-                            ) : (
-                                'Choose Pro'
-                            )}
+                                </span>) : ('Choose Pro')}
                         </Button>
                     </CardFooter>
                 </Card>
 
-                {/* Enterprise Plan */}
+                
                 <Card className='relative flex flex-col border-border hover:border-primary/30 hover:shadow-md transition-all duration-300'>
                     <CardHeader className='pb-4'>
                         <CardTitle className='flex justify-between items-start'>
@@ -291,7 +240,7 @@ const PricingPage = () => {
                     <CardContent className='flex-grow'>
                         <div className='flex items-center mb-4 pb-4 border-b'>
                             <div className='p-2 rounded-full bg-primary/10 mr-2'>
-                                <Shield className='h-5 w-5 text-primary' />
+                                <Shield className='h-5 w-5 text-primary'/>
                             </div>
                             <p className='text-sm'>Full support and visibility for your career move</p>
                         </div>
@@ -300,18 +249,14 @@ const PricingPage = () => {
                     </CardContent>
 
                     <CardFooter className='pt-4 pb-6'>
-                        <Button
-                            variant='outline'
-                            className='w-full h-11 border-primary text-primary hover:bg-primary/5'
-                            onClick={() => handleSubscription(SubscriptionType.ENTERPRISE)}
-                        >
+                        <Button variant='outline' className='w-full h-11 border-primary text-primary hover:bg-primary/5' onClick={() => handleSubscription(SubscriptionType.ENTERPRISE)}>
                             Contact Sales
                         </Button>
                     </CardFooter>
                 </Card>
             </div>
 
-            {/* Compare All Features */}
+            
             <div className='mb-16'>
                 <div className='text-center mb-8'>
                     <h2 className='text-2xl font-bold mb-2'>Compare All Features</h2>
@@ -346,13 +291,13 @@ const PricingPage = () => {
                                     <tr className='border-b'>
                                         <td className='py-3 px-4 text-muted-foreground'>Resume score & AI feedback</td>
                                         <td className='py-3 px-4 text-center'>
-                                            <X className='mx-auto h-5 w-5 text-muted-foreground' />
+                                            <X className='mx-auto h-5 w-5 text-muted-foreground'/>
                                         </td>
                                         <td className='py-3 px-4 text-center'>
-                                            <Check className='mx-auto h-5 w-5 text-green-500' />
+                                            <Check className='mx-auto h-5 w-5 text-green-500'/>
                                         </td>
                                         <td className='py-3 px-4 text-center'>
-                                            <Check className='mx-auto h-5 w-5 text-green-500' />
+                                            <Check className='mx-auto h-5 w-5 text-green-500'/>
                                         </td>
                                     </tr>
                                     <tr className='border-b'>
@@ -370,13 +315,13 @@ const PricingPage = () => {
                                     <tr className='border-b'>
                                         <td className='py-3 px-4 text-muted-foreground'>Priority in recruiter search</td>
                                         <td className='py-3 px-4 text-center'>
-                                            <X className='mx-auto h-5 w-5 text-muted-foreground' />
+                                            <X className='mx-auto h-5 w-5 text-muted-foreground'/>
                                         </td>
                                         <td className='py-3 px-4 text-center'>
-                                            <Check className='mx-auto h-5 w-5 text-green-500' />
+                                            <Check className='mx-auto h-5 w-5 text-green-500'/>
                                         </td>
                                         <td className='py-3 px-4 text-center'>
-                                            <Check className='mx-auto h-5 w-5 text-green-500' />
+                                            <Check className='mx-auto h-5 w-5 text-green-500'/>
                                         </td>
                                     </tr>
                                     <tr className='border-b'>
@@ -388,13 +333,13 @@ const PricingPage = () => {
                                     <tr>
                                         <td className='py-3 px-4 text-muted-foreground'>1:1 career coaching</td>
                                         <td className='py-3 px-4 text-center'>
-                                            <X className='mx-auto h-5 w-5 text-muted-foreground' />
+                                            <X className='mx-auto h-5 w-5 text-muted-foreground'/>
                                         </td>
                                         <td className='py-3 px-4 text-center'>
-                                            <X className='mx-auto h-5 w-5 text-muted-foreground' />
+                                            <X className='mx-auto h-5 w-5 text-muted-foreground'/>
                                         </td>
                                         <td className='py-3 px-4 text-center'>
-                                            <Check className='mx-auto h-5 w-5 text-green-500' />
+                                            <Check className='mx-auto h-5 w-5 text-green-500'/>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -404,13 +349,13 @@ const PricingPage = () => {
                 </Card>
             </div>
 
-            {/* Value Proposition Section */}
+            
             <div className='grid md:grid-cols-3 gap-8 mb-16'>
                 <Card className='bg-muted/30 hover:shadow-md transition-all duration-300'>
                     <CardContent className='pt-6'>
                         <div className='flex flex-col items-center text-center'>
                             <div className='h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4'>
-                                <Zap className='h-6 w-6 text-primary' />
+                                <Zap className='h-6 w-6 text-primary'/>
                             </div>
                             <h3 className='font-medium mb-2'>Get Noticed by Recruiters</h3>
                             <p className='text-sm text-muted-foreground'>
@@ -424,7 +369,7 @@ const PricingPage = () => {
                     <CardContent className='pt-6'>
                         <div className='flex flex-col items-center text-center'>
                             <div className='h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4'>
-                                <Users className='h-6 w-6 text-primary' />
+                                <Users className='h-6 w-6 text-primary'/>
                             </div>
                             <h3 className='font-medium mb-2'>Track Your Progress</h3>
                             <p className='text-sm text-muted-foreground'>
@@ -438,7 +383,7 @@ const PricingPage = () => {
                     <CardContent className='pt-6'>
                         <div className='flex flex-col items-center text-center'>
                             <div className='h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4'>
-                                <BarChart className='h-6 w-6 text-primary' />
+                                <BarChart className='h-6 w-6 text-primary'/>
                             </div>
                             <h3 className='font-medium mb-2'>Land Interviews Faster</h3>
                             <p className='text-sm text-muted-foreground'>
@@ -449,7 +394,7 @@ const PricingPage = () => {
                 </Card>
             </div>
 
-            {/* FAQs */}
+            
             <div className='mb-16'>
                 <div className='text-center mb-8'>
                     <h2 className='text-2xl font-bold mb-2'>Frequently Asked Questions</h2>
@@ -457,18 +402,16 @@ const PricingPage = () => {
                 </div>
 
                 <Accordion type='single' collapsible className='w-full max-w-2xl mx-auto'>
-                    {faqs.map((faq, index) => (
-                        <AccordionItem key={index} value={`faq-${index}`}>
+                    {faqs.map((faq, index) => (<AccordionItem key={index} value={`faq-${index}`}>
                             <AccordionTrigger className='text-left'>{faq.question}</AccordionTrigger>
                             <AccordionContent>
                                 <p className='text-muted-foreground'>{faq.answer}</p>
                             </AccordionContent>
-                        </AccordionItem>
-                    ))}
+                        </AccordionItem>))}
                 </Accordion>
             </div>
 
-            {/* Call to Action */}
+            
             <div className='text-center'>
                 <Card className='bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20'>
                     <CardContent className='py-10'>
@@ -484,27 +427,23 @@ const PricingPage = () => {
                                 </Button>
                                 <Button variant='outline' size='lg' className='px-8' asChild>
                                     <Link href='/contact'>
-                                        <MessageSquare className='mr-2 h-4 w-4' />
+                                        <MessageSquare className='mr-2 h-4 w-4'/>
                                         Contact Us
                                     </Link>
                                 </Button>
                             </div>
                             <p className='text-xs text-muted-foreground mt-6 flex items-center justify-center'>
-                                <Shield className='h-3 w-3 mr-1' />
+                                <Shield className='h-3 w-3 mr-1'/>
                                 Secure payment processing via Stripe
                             </p>
                         </div>
                     </CardContent>
                 </Card>
             </div>
-        </div>
-    );
+        </div>);
 };
-
 export default function Component() {
-    return (
-        <NavbarLayout>
+    return (<NavbarLayout>
             <PricingPage />
-        </NavbarLayout>
-    );
+        </NavbarLayout>);
 }

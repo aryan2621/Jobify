@@ -1,10 +1,7 @@
 import { Position } from '@xyflow/react';
 
 
-/**
- * Email configuration interface
- * Structure for email notification settings
- */
+
 export interface EmailConfig {
     to: string;
     cc?: string;
@@ -13,31 +10,22 @@ export interface EmailConfig {
     body: string;
 }
 
-/**
- * Message configuration interface
- * Structure for SMS and WhatsApp notification settings
- */
+
 export interface MessageConfig {
     phoneNumber: string;
     body: string;
 }
 
-/**
- * Template variables for Notify node (resolved at execution).
- * Supported in body/subject: {{candidate.name}}, {{candidate.email}}, {{job.title}}, {{job.company}}, {{assignment.deadline}}, etc.
- */
+
 export const NOTIFY_TEMPLATE_VARS = ['candidate.name', 'candidate.email', 'job.title', 'job.company', 'assignment.deadline'] as const;
 
-/**
- * Workflow interface
- * Defines the structure of a complete workflow
- */
+
 export interface Workflow {
     id: string;
     name: string;
-    description?: string; // Optional description for the workflow
+    description?: string; 
     nodes: WorkflowNode[];
-    edges: any[]; // Using any for edges as the exact type from React Flow might vary
+    edges: any[]; 
     createdAt: string;
     updatedAt: string;
     createdBy: string;
@@ -47,10 +35,7 @@ export interface Workflow {
     tags?: string[];
 }
 
-/**
- * Node type enumeration
- * Defines the basic types of nodes in the workflow
- */
+
 export enum NodeType {
     START = 'input',
     END = 'output',
@@ -66,9 +51,7 @@ export enum TaskType {
     UPDATE_STATUS = 'update_status',
 }
 
-/**
- * Application stage values for workflow execution and Update Status node.
- */
+
 export enum ApplicationStage {
     APPLIED = 'applied',
     REJECTED = 'rejected',
@@ -82,9 +65,7 @@ export enum ApplicationStage {
     WITHDRAWN = 'withdrawn',
 }
 
-/**
- * Condition operator for Condition node branching.
- */
+
 export enum ConditionOperator {
     EQ = 'eq',
     NE = 'ne',
@@ -96,9 +77,7 @@ export enum ConditionOperator {
     NOT_EXISTS = 'notExists',
 }
 
-/**
- * Single condition for a branch (e.g. workflowState.assignment_xyz.submitted eq true).
- */
+
 export interface ConditionBranch {
     id: string;
     field: string;
@@ -106,19 +85,14 @@ export interface ConditionBranch {
     value?: string | number | boolean;
 }
 
-/**
- * Notification option enumeration
- * Defines the available notification methods
- */
+
 export enum NotificationOption {
     EMAIL = 'email',
     SMS = 'sms',
     WHATSAPP = 'whatsapp',
 }
 
-/**
- * Delay unit types for wait nodes
- */
+
 export enum DelayUnit {
     MINUTES = 'minutes',
     HOURS = 'hours',
@@ -126,20 +100,17 @@ export enum DelayUnit {
     WEEKS = 'weeks',
 }
 
-// import { NodeType, TaskType, DelayUnit, NotificationOption } from '../enums';
-// import { EmailConfig, MessageConfig, Condition } from './interfaces';
 
-/**
- * Base class for all workflow nodes
- * Contains common properties shared by all node types
- */
-/** Start node trigger type (default: application received) */
+
+
+
+
 export type StartTrigger = 'application_received';
 
-/** End node outcome for workflow completion */
+
 export type EndOutcome = 'rejected' | 'hired' | 'withdrawn' | 'ongoing';
 
-/** Assignment submission tracking method */
+
 export type AssignmentSubmissionTracking = 'none' | 'link' | 'google_form';
 
 export class WorkflowNode {
@@ -147,13 +118,13 @@ export class WorkflowNode {
     type: NodeType;
     data: {
         label: string;
-        /** Unique identifier for the node within a workflow: builder-level prefix + short hash. Read-only. */
+        
         name?: string;
         emailConfig?: EmailConfig;
         messageConfig?: MessageConfig;
-        /** Start only: when workflow is triggered (default application_received) */
+        
         trigger?: StartTrigger;
-        /** End only: final outcome for analytics */
+        
         outcome?: EndOutcome;
     };
     position: { x: number; y: number };
@@ -185,9 +156,7 @@ export class WorkflowNode {
     }
 }
 
-/**
- * Wait Node for pausing workflow execution
- */
+
 export class WaitNode extends WorkflowNode {
     type = NodeType.TASK;
     taskType = TaskType.WAIT;
@@ -215,10 +184,7 @@ export class WaitNode extends WorkflowNode {
     }
 }
 
-/**
- * Start node class
- * Represents the beginning of a workflow (trigger: application submitted on job).
- */
+
 export class StartNode extends WorkflowNode {
     type = NodeType.START;
 
@@ -233,10 +199,7 @@ export class StartNode extends WorkflowNode {
     }
 }
 
-/**
- * End node class
- * Represents the end point of a workflow (optional outcome for analytics).
- */
+
 export class EndNode extends WorkflowNode {
     type = NodeType.END;
 
@@ -251,10 +214,7 @@ export class EndNode extends WorkflowNode {
     }
 }
 
-/**
- * Base task node class
- * Abstract class for all task type nodes
- */
+
 export class BaseTaskNode extends WorkflowNode {
     type = NodeType.TASK;
     taskType: TaskType;
@@ -276,10 +236,7 @@ export class BaseTaskNode extends WorkflowNode {
     }
 }
 
-/**
- * Notification node class
- * For sending notifications via email, SMS, WhatsApp
- */
+
 export class NotificationNode extends BaseTaskNode {
     notificationOptions: NotificationOption[] = [];
 
@@ -300,11 +257,7 @@ export class NotificationNode extends BaseTaskNode {
     }
 }
 
-/**
- * Assignment node class
- * For creating and tracking configurable assignments/tasks (e.g. Google Form link).
- * submissionTracking: how we know assignment is done (google_form = webhook from form submit).
- */
+
 export class AssignmentNode extends BaseTaskNode {
     url: string = '';
     deadline: Date = new Date();
@@ -334,17 +287,14 @@ export class AssignmentNode extends BaseTaskNode {
 }
 
 
-/**
- * Interview node class
- * For booking interview time slots between parties
- */
+
 export class InterviewNode extends BaseTaskNode {
     link: string = '';
     description: string = '';
     attachments: string[] = [];
     time: Date = new Date();
-    duration?: number; // Duration in minutes
-    participants?: string[]; // List of participant emails or IDs
+    duration?: number; 
+    participants?: string[]; 
 
     constructor(
         id: string,
@@ -363,17 +313,13 @@ export class InterviewNode extends BaseTaskNode {
         this.link = link;
         this.description = description;
         this.attachments = attachments;
-        this.time = time || new Date(Date.now() + 24 * 60 * 60 * 1000); // Default to tomorrow
+        this.time = time || new Date(Date.now() + 24 * 60 * 60 * 1000); 
         this.duration = duration;
         this.participants = participants;
     }
 }
 
-/**
- * Condition node class
- * Branches workflow based on application stage, workflowState (e.g. assignment submitted), or other fields.
- * Multiple outgoing edges; each edge can have conditionId matching one of conditions; one edge is default (else).
- */
+
 export class ConditionNode extends BaseTaskNode {
     conditions: ConditionBranch[] = [];
 
@@ -390,10 +336,7 @@ export class ConditionNode extends BaseTaskNode {
     }
 }
 
-/**
- * Update status node class
- * Sets application.stage so Condition nodes and UI reflect current state (e.g. shortlisted, interview_scheduled).
- */
+
 export class UpdateStatusNode extends BaseTaskNode {
     stage: ApplicationStage;
 

@@ -4,7 +4,6 @@ import { LoginUserRequest } from '@/model/request';
 import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
-
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
@@ -42,7 +41,8 @@ export async function POST(request: NextRequest) {
             sameSite: 'lax',
         });
         return response;
-    } catch (error) {
+    }
+    catch (error) {
         console.log('Error while signing in', error);
         if (isRecognisedError(error)) {
             const err = error as any;

@@ -24,7 +24,7 @@ const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
     const pathname = usePathname();
 
     useEffect(() => {
-        // Check for saved preference
+        
         const savedCollapsed = localStorage.getItem('sidebarCollapsed');
         if (savedCollapsed) {
             setIsCollapsed(savedCollapsed === 'true');
@@ -35,7 +35,7 @@ const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
     const toggleSidebar = () => {
         const newState = !isCollapsed;
         setIsCollapsed(newState);
-        // Save preference
+        
         localStorage.setItem('sidebarCollapsed', String(newState));
     };
 

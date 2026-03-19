@@ -46,15 +46,15 @@ export function createWorkflowCollection() {
         });
 }
 
-// Create a new workflow
+
 export async function createWorkflow(workflow: Workflow) {
     try {
-        // Ensure we have a createdAt timestamp if not provided
+        
         if (!workflow.createdAt) {
             workflow.createdAt = new Date().toISOString();
         }
 
-        // Always update the updatedAt timestamp
+        
         workflow.updatedAt = new Date().toISOString();
 
         return await database.createDocument(DB_NAME, WORKFLOW_COLLECTION, workflow.id, {
@@ -77,10 +77,10 @@ export async function createWorkflow(workflow: Workflow) {
     }
 }
 
-// Update an existing workflow
+
 export async function updateWorkflow(workflow: Workflow) {
     try {
-        // Always update the updatedAt timestamp
+        
         workflow.updatedAt = new Date().toISOString();
 
         return await database.updateDocument(DB_NAME, WORKFLOW_COLLECTION, workflow.id, {
@@ -100,7 +100,7 @@ export async function updateWorkflow(workflow: Workflow) {
     }
 }
 
-// Get workflow by ID
+
 export async function getWorkflowById(id: string) {
     try {
         return await database.getDocument(DB_NAME, WORKFLOW_COLLECTION, id);
@@ -110,7 +110,7 @@ export async function getWorkflowById(id: string) {
     }
 }
 
-// Get all workflows
+
 export async function getAllWorkflows(lastId?: string | null, limit?: number | null) {
     try {
         const queries = [];
@@ -121,7 +121,7 @@ export async function getAllWorkflows(lastId?: string | null, limit?: number | n
             queries.push(Query.limit(limit));
         }
 
-        // Order by most recent first
+        
         queries.push(Query.orderDesc('updatedAt'));
 
         const workflows =
@@ -136,7 +136,7 @@ export async function getAllWorkflows(lastId?: string | null, limit?: number | n
     }
 }
 
-// Get workflows by user ID
+
 export async function getWorkflowsByUserId(userId: string) {
     try {
         const workflows = await database.listDocuments(DB_NAME, WORKFLOW_COLLECTION, [
@@ -150,7 +150,7 @@ export async function getWorkflowsByUserId(userId: string) {
     }
 }
 
-// Get workflow templates
+
 export async function getWorkflowTemplates() {
     try {
         const templates = await database.listDocuments(DB_NAME, WORKFLOW_COLLECTION, [Query.equal('isTemplate', true), Query.orderDesc('updatedAt')]);
@@ -161,7 +161,7 @@ export async function getWorkflowTemplates() {
     }
 }
 
-// Delete a workflow
+
 export async function deleteWorkflow(id: string) {
     try {
         return await database.deleteDocument(DB_NAME, WORKFLOW_COLLECTION, id);

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-
 export async function GET(req: NextRequest) {
     const token = req.cookies.get('token');
     try {
@@ -9,7 +8,8 @@ export async function GET(req: NextRequest) {
         const response = NextResponse.json({ status: 200 });
         response.cookies.delete({ name: 'token', path: '/' });
         return response;
-    } catch (error) {
+    }
+    catch (error) {
         console.log('Error while logging out', error);
         return new NextResponse('Something went wrong', { status: 500 });
     }

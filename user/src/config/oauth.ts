@@ -9,7 +9,6 @@ export const googleCalenderOAuthConfig: OAuthConfig = {
         prompt: 'consent',
     },
 };
-
 export const gmailOAuthConfig: OAuthConfig = {
     service: 'Gmail',
     clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,

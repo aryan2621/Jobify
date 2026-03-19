@@ -13,7 +13,7 @@ import { useToast } from '@/components/ui/use-toast';
 import AiDialog from '@/components/elements/ai-dialog';
 import { Check, Mail, AlertCircle } from 'lucide-react';
 
-/** Template variables supported in email body/subject (replaced at send time). */
+
 const EMAIL_BODY_VARIABLES: { value: string; label: string }[] = [
     { value: '{{candidate.name}}', label: 'candidate.name' },
     { value: '{{candidate.email}}', label: 'candidate.email' },
@@ -52,7 +52,7 @@ function BodyFieldWithMentions({ value, onChange, placeholder }: BodyFieldWithMe
         }
     }, [value]);
 
-    /** Measure where the @ character is inside the textarea, in px relative to the textarea's top-left. */
+    
     const measureAtPosition = useCallback((ta: HTMLTextAreaElement, atIdx: number): { top: number; left: number } => {
         if (!canvasRef.current) canvasRef.current = document.createElement('canvas');
         const canvas = canvasRef.current;
@@ -65,9 +65,9 @@ function BodyFieldWithMentions({ value, onChange, placeholder }: BodyFieldWithMe
         const lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.5;
         const taWidth = ta.clientWidth - paddingLeft - parseFloat(style.paddingRight);
 
-        // Split text up to @ into wrapped lines
+        
         const textUpTo = ta.value.slice(0, atIdx);
-        const words = textUpTo.split(/(\n)/); // preserve newlines
+        const words = textUpTo.split(/(\n)/); 
         const lines: string[] = [];
         let currentLine = '';
 
@@ -77,7 +77,7 @@ function BodyFieldWithMentions({ value, onChange, placeholder }: BodyFieldWithMe
                 currentLine = '';
                 continue;
             }
-            // Word-wrap simulation
+            
             const chars = segment.split('');
             for (const char of chars) {
                 const test = currentLine + char;
@@ -174,7 +174,7 @@ function BodyFieldWithMentions({ value, onChange, placeholder }: BodyFieldWithMe
                     className="absolute z-50 max-h-40 w-56 overflow-auto rounded-md border bg-popover py-1 text-popover-foreground shadow-md"
                     role="listbox"
                     style={{
-                        // Position just below the @ character
+                        
                         top: dropdownPos.top + lineHeight,
                         left: dropdownPos.left,
                     }}

@@ -41,7 +41,7 @@ export default function Sidebar({ nodes, edges, workflowId }: SidebarProps) {
     const [workflowName, setWorkflowName] = useState<string>('New Workflow');
     const [isSaving, setIsSaving] = useState(false);
 
-    // Drag and drop handlers
+    
     const onDragStart = (event: React.DragEvent<HTMLDivElement>, nodeType: NodeType | TaskType) => {
         setType(nodeType);
         event.dataTransfer.effectAllowed = 'move';
@@ -51,12 +51,12 @@ export default function Sidebar({ nodes, edges, workflowId }: SidebarProps) {
         setType(null);
     };
 
-    // Run validation logic and return result (shared by validate and save)
+    
     const getValidationResult = (): { valid: boolean; messages: { type: 'error' | 'warning' | 'success'; message: string }[] } => {
         const validationMessages: { type: 'error' | 'warning' | 'success'; message: string }[] = [];
         let isValid = true;
 
-        // Check for start and end nodes
+        
         const startNodes = nodes.filter((node) => node.type === NodeType.START);
         const endNodes = nodes.filter((node) => node.type === NodeType.END);
 
@@ -87,7 +87,7 @@ export default function Sidebar({ nodes, edges, workflowId }: SidebarProps) {
             });
         }
 
-        // Check connectivity
+        
         const inDegree: { [key: string]: number } = {};
         const outDegree: { [key: string]: number } = {};
 
@@ -101,7 +101,7 @@ export default function Sidebar({ nodes, edges, workflowId }: SidebarProps) {
             outDegree[edge.source] = (outDegree[edge.source] || 0) + 1;
         });
 
-        // Find isolated nodes
+        
         const isolatedNodes = nodes.filter((node) => {
             return inDegree[node.id] === 0 && outDegree[node.id] === 0 && node.type !== NodeType.START && node.type !== NodeType.END;
         });
@@ -114,7 +114,7 @@ export default function Sidebar({ nodes, edges, workflowId }: SidebarProps) {
             isValid = false;
         }
 
-        // Find nodes without incoming connections (except START)
+        
         const noIncomingNodes = nodes.filter((node) => {
             return inDegree[node.id] === 0 && node.type !== NodeType.START;
         });
@@ -127,7 +127,7 @@ export default function Sidebar({ nodes, edges, workflowId }: SidebarProps) {
             isValid = false;
         }
 
-        // Find nodes without outgoing connections (except END)
+        
         const noOutgoingNodes = nodes.filter((node) => {
             return outDegree[node.id] === 0 && node.type !== NodeType.END;
         });
@@ -140,12 +140,12 @@ export default function Sidebar({ nodes, edges, workflowId }: SidebarProps) {
             isValid = false;
         }
 
-        // Check that each node has at most one incoming edge (Condition can have multiple outgoing)
+        
         const nodesWithMultipleIncoming = nodes.filter((node) => inDegree[node.id] > 1);
 
         const nodesWithMultipleOutgoing = nodes.filter((node) => {
             const out = outDegree[node.id];
-            if (out > 1 && node.type === NodeType.TASK && (node as any).taskType === TaskType.CONDITION) return false; // Condition allowed multiple outgoing
+            if (out > 1 && node.type === NodeType.TASK && (node as any).taskType === TaskType.CONDITION) return false; 
             return out > 1;
         });
 
@@ -165,7 +165,7 @@ export default function Sidebar({ nodes, edges, workflowId }: SidebarProps) {
             isValid = false;
         }
 
-        // Check that Start node has no incoming edges
+        
         if (startNodes.length === 1 && inDegree[startNodes[0].id] !== 0) {
             validationMessages.push({
                 type: 'error',
@@ -174,7 +174,7 @@ export default function Sidebar({ nodes, edges, workflowId }: SidebarProps) {
             isValid = false;
         }
 
-        // Check that End node has no outgoing edges
+        
         if (endNodes.length === 1 && outDegree[endNodes[0].id] !== 0) {
             validationMessages.push({
                 type: 'error',
@@ -183,10 +183,10 @@ export default function Sidebar({ nodes, edges, workflowId }: SidebarProps) {
             isValid = false;
         }
 
-        // Check for task configuration
+        
         const taskNodes = nodes.filter((node) => node.type === NodeType.TASK);
         const unconfiguredNodes = taskNodes.filter((node) => {
-            // Check based on task type
+            
             if (node.taskType === TaskType.NOTIFY) {
                 const notificationNode = node as any;
                 const hasEmail = notificationNode.data?.emailConfig?.to;
@@ -204,7 +204,7 @@ export default function Sidebar({ nodes, edges, workflowId }: SidebarProps) {
                 const hasExactDate = waitNode.exactDateTime;
                 return !hasRelative && !hasExactDate;
             } else if (node.taskType === TaskType.CONDITION) {
-                return false; // Condition is valid with or without conditions (default branch)
+                return false; 
             } else if (node.taskType === TaskType.UPDATE_STATUS) {
                 const updateNode = node as any;
                 return !updateNode.stage;
@@ -371,7 +371,7 @@ export default function Sidebar({ nodes, edges, workflowId }: SidebarProps) {
                 </Button>
             </div>
 
-            {/* Validation Dialog */}
+            
             <AlertDialog open={isValidationOpen} onOpenChange={setIsValidationOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>

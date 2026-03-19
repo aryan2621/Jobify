@@ -29,10 +29,7 @@ function ensureNodeName(data: any, type: NodeType | TaskType, id: string): any {
     return { ...data, label: data?.label ?? '', name };
 }
 
-/**
- * Factory function to create nodes based on type.
- * Each node gets a unique data.name (builder-level + short hash).
- */
+
 export function createNode(
     type: NodeType | TaskType,
     data: any,
@@ -72,11 +69,7 @@ export function createNode(
     }
 }
 
-/**
- * Create a deep clone of a node
- * @param node The node to clone
- * @returns A new node with the same properties
- */
+
 export function cloneNode(node: WorkflowNode): WorkflowNode {
     if (node.type === NodeType.START) {
         return new StartNode(node.id, { ...node.data }, { ...node.position }, node.sourcePosition, node.targetPosition);
@@ -173,10 +166,7 @@ function getTypeLabelForNode(node: any): string {
     return 'node';
 }
 
-/**
- * Deserialize a workflow node from JSON.
- * Backfills data.name if missing (builder-level + short id) for uniqueness within the workflow.
- */
+
 export function deserializeNode(node: any): WorkflowNode {
     const name = node.data?.name ?? `${getTypeLabelForNode(node)}_${node.id.slice(0, 8)}`;
     const nodeData = { ...node.data, label: node.data?.label ?? '', name };

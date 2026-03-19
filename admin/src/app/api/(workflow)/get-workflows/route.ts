@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
         let workflows;
 
-        // Fetch workflows based on type
+        
         switch (type) {
             case 'user':
                 workflows = await getWorkflowsByUserId(userId);
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
                 workflows = await getWorkflowTemplates();
                 break;
             case 'all':
-                // Only allow admins to fetch all workflows
+                
                 if ((user as any).role !== 'admin') {
                     throw new UnauthorizedError('You are not authorized to access all workflows');
                 }

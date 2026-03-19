@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
         const userId = payload.id;
 
         const jobs = await fetchJobsByUserId(userId);
-        const jobIds = jobs.map((j: { id?: string }) => j.id ?? (j as { $id?: string }).$id).filter(Boolean) as string[];
+        const jobIds = jobs.map((j: { $id?: string }) => j.$id).filter(Boolean) as string[];
         if (jobIds.length === 0) {
             return NextResponse.json([], { status: 200 });
         }
