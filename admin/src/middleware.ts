@@ -1,5 +1,4 @@
 import getOrCreateDatabase from '@/appwrite/server/database';
-import { getOrCreateStorage } from '@/appwrite/server/storage';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
