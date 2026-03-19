@@ -31,7 +31,7 @@ export const runWorkflowStep = inngest.createFunction(
             { event: APPLICATION_SUBMITTED },
             { event: WORKFLOW_STEP },
         ],
-        idempotency: 'event.data.applicationId + "-" + (event.data.currentNodeId ?? "start")',
+        idempotency: 'event.data.applicationId + "-" + (event.data.currentNodeId != null ? event.data.currentNodeId : "start")',
     },
     async ({ event, step }) => {
         const data = event.data as WorkflowPayload;
