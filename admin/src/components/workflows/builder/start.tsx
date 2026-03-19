@@ -5,7 +5,6 @@ import { StartNode } from '@/model/workflow';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { Play } from 'lucide-react';
 
 interface StartNodeBuilderComponentProps {
@@ -18,40 +17,27 @@ const StartNodeBuilderComponent = ({ node, onSubmit }: StartNodeBuilderComponent
     const [newNode, setNewNode] = useState(cpNode);
 
     return (
-        <div className='space-y-6'>
-            <div className='flex items-center'>
-                <div className='bg-green-100 dark:bg-green-900/30 p-2 rounded-full mr-3'>
-                    <Play className='h-5 w-5 text-green-500' />
-                </div>
-                <div>
-                    <h2 className='font-bold text-lg'>Configure Start Node</h2>
-                    <p className='text-sm text-muted-foreground'>Set the starting point of your workflow</p>
-                </div>
-            </div>
+        <div className='p-4'>
+            <h2 className='font-bold text-lg mb-4'>Configure Start Node</h2>
 
-            <div className='space-y-4'>
+            <div className='flex flex-col gap-4'>
                 <div>
-                    <Label htmlFor='name'>Name</Label>
-                    <Input id='name' value={newNode.data.name ?? `start_${newNode.id.slice(0, 8)}`} disabled className='bg-muted' />
-                    <p className='text-xs text-muted-foreground mt-1'>Unique identifier for this node (read-only)</p>
+                    <Label className='mb-2 block'>Name</Label>
+                    <Input value={newNode.data.name ?? `start_${newNode.id.slice(0, 8)}`} disabled className='bg-muted' />
                 </div>
                 <div>
-                    <Label htmlFor='label'>Node Label</Label>
+                    <Label className='mb-2 block'>Node Label</Label>
                     <Input
-                        id='label'
                         value={newNode.data.label}
                         onChange={(e) => {
                             setNewNode({ ...newNode, data: { ...newNode.data, label: e.target.value } });
                         }}
                         placeholder='e.g., Start Workflow'
                     />
-                    <p className='text-xs text-muted-foreground mt-1'>This label will be displayed on the node in the workflow editor</p>
                 </div>
             </div>
 
-            <Separator />
-
-            <Button onClick={() => onSubmit(newNode)} className='w-full'>
+            <Button onClick={() => onSubmit(newNode)} className='mt-4 w-full'>
                 Save Start Node Configuration
             </Button>
         </div>

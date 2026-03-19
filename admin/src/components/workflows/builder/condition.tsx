@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 import { GitBranch, Plus, Trash2 } from 'lucide-react';
 import { nanoid } from 'nanoid';
 
@@ -67,43 +66,30 @@ const ConditionNodeBuilderComponent = ({ node, onSubmit }: ConditionNodeBuilderP
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center">
-                <div className="bg-teal-100 dark:bg-teal-900/30 p-2 rounded-full mr-3">
-                    <GitBranch className="h-5 w-5 text-teal-600 dark:text-teal-400" />
-                </div>
-                <div>
-                    <h2 className="font-bold text-lg">Configure Condition</h2>
-                    <p className="text-sm text-muted-foreground">Branch workflow based on application stage or assignment submission</p>
-                </div>
-            </div>
+        <div className='p-4'>
+            <h2 className="font-bold text-lg mb-4">Configure Condition</h2>
 
-            <div className="space-y-4">
+            <div className="flex flex-col gap-4">
                 <div>
-                    <Label htmlFor="name">Name</Label>
+                    <Label className='mb-2 block'>Name</Label>
                     <Input
-                        id="name"
                         value={newNode.data.name ?? `condition_${newNode.id.slice(0, 8)}`}
                         disabled
                         className="bg-muted"
                     />
-                    <p className="text-xs text-muted-foreground mt-1">Unique identifier for this node (read-only)</p>
                 </div>
                 <div>
-                    <Label htmlFor="label">Node Label</Label>
+                    <Label className='mb-2 block'>Node Label</Label>
                     <Input
-                        id="label"
                         value={newNode.data.label}
                         onChange={(e) => setNewNode({ ...newNode, data: { ...newNode.data, label: e.target.value } })}
                         placeholder="e.g., Assignment submitted?"
                     />
                 </div>
 
-                <Separator />
-
                 <div>
                     <div className="flex items-center justify-between mb-2">
-                        <Label>Branch conditions</Label>
+                        <Label className='mb-2 block'>Branch conditions</Label>
                         <Button type="button" variant="outline" size="sm" onClick={addCondition}>
                             <Plus className="h-4 w-4 mr-1" /> Add
                         </Button>
@@ -116,18 +102,18 @@ const ConditionNodeBuilderComponent = ({ node, onSubmit }: ConditionNodeBuilderP
                             No conditions yet. Add one to branch (e.g. workflowState.[nodeName].submitted equals true).
                         </p>
                     ) : (
-                        <div className="space-y-3">
+                        <div className="flex flex-col gap-3">
                             {newNode.conditions.map((cond, index) => (
-                                <div key={cond.id} className="border rounded-md p-3 space-y-2">
+                                <div key={cond.id} className="border rounded-md p-3 flex flex-col gap-3">
                                     <div className="flex justify-between items-start">
                                         <span className="text-xs font-medium text-muted-foreground">Condition {index + 1}</span>
                                         <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeCondition(index)}>
                                             <Trash2 className="h-4 w-4" />
                                         </Button>
                                     </div>
-                                    <div className="grid grid-cols-1 gap-2">
+                                    <div className="flex flex-col gap-3">
                                         <div>
-                                            <Label className="text-xs">Field</Label>
+                                            <Label className="text-xs mb-1.5 block">Field</Label>
                                             <Select
                                                 value={cond.field}
                                                 onValueChange={(v) => updateCondition(index, { field: v })}
@@ -145,7 +131,7 @@ const ConditionNodeBuilderComponent = ({ node, onSubmit }: ConditionNodeBuilderP
                                             </Select>
                                         </div>
                                         <div>
-                                            <Label className="text-xs">Operator</Label>
+                                            <Label className="text-xs mb-1.5 block">Operator</Label>
                                             <Select
                                                 value={cond.operator}
                                                 onValueChange={(v) => updateCondition(index, { operator: v as ConditionOperator })}
@@ -164,7 +150,7 @@ const ConditionNodeBuilderComponent = ({ node, onSubmit }: ConditionNodeBuilderP
                                         </div>
                                         {cond.operator !== ConditionOperator.EXISTS && cond.operator !== ConditionOperator.NOT_EXISTS && (
                                             <div>
-                                                <Label className="text-xs">Value</Label>
+                                                <Label className="text-xs mb-1.5 block">Value</Label>
                                                 <Select
                                                     value={String(cond.value ?? '')}
                                                     onValueChange={(v) => updateCondition(index, { value: v === 'true' ? true : v === 'false' ? false : v })}
@@ -192,8 +178,7 @@ const ConditionNodeBuilderComponent = ({ node, onSubmit }: ConditionNodeBuilderP
                 </div>
             </div>
 
-            <Separator />
-            <Button onClick={() => onSubmit(newNode)} className="w-full">
+            <Button onClick={() => onSubmit(newNode)} className="mt-4 w-full">
                 Save Condition Configuration
             </Button>
         </div>

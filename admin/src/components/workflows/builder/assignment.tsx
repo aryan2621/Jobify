@@ -6,11 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { AlertCircle, Calendar, Clock, Eye, FileText, FileUp, Info, Link as LinkIcon, ExternalLink } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { AlertCircle, Calendar, Clock, FileText, FileUp, Info, Link as LinkIcon, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils'; // Assuming you have a utils file with cn function
 import { isURL } from '@/lib/utils/validation-utils';
 import { AssignmentNode, AssignmentSubmissionTracking } from '@/model/workflow';
@@ -55,7 +51,6 @@ const AssignmentNodeBuilderComponent = ({ node, onSubmit }: AssignmentNodeBuilde
 
     // State
     const [newNode, setNewNode] = useState(cpNode);
-    const [activeTab, setActiveTab] = useState<string>('details');
     const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
     const [validation, setValidation] = useState<ValidationState>({
         label: { valid: true, message: '' },
@@ -181,250 +176,147 @@ const AssignmentNodeBuilderComponent = ({ node, onSubmit }: AssignmentNodeBuilde
         }
     };
 
-    // Preview component
-    const AssignmentPreview = () => {
-        return (
-            <Card className='mt-4'>
-                <CardHeader className='pb-2'>
-                    <CardTitle className='text-base'>Assignment Preview</CardTitle>
-                    <CardDescription>How this assignment will appear to candidates</CardDescription>
-                </CardHeader>
-                <CardContent className='space-y-3'>
-                    <div className='flex justify-between items-start'>
-                        <div className='flex flex-col'>
-                            <h3 className='font-medium'>{newNode.data.label || 'Untitled Assignment'}</h3>
-                            {newNode.deadline && (
-                                <div className='flex items-center text-sm text-muted-foreground'>
-                                    <Calendar className='h-3.5 w-3.5 mr-1.5' />
-                                    <time dateTime={newNode.deadline.toISOString()}>
-                                        {newNode.deadline.toLocaleDateString('en-US', {
-                                            weekday: 'short',
-                                            month: 'short',
-                                            day: 'numeric',
-                                            year: 'numeric',
-                                        })}
-                                    </time>
-                                    <span className='mx-1'>•</span>
-                                    <Clock className='h-3.5 w-3.5 mr-1.5' />
-                                    <time dateTime={newNode.deadline.toISOString()}>
-                                        {newNode.deadline.toLocaleTimeString('en-US', {
-                                            hour: '2-digit',
-                                            minute: '2-digit',
-                                        })}
-                                    </time>
-                                </div>
-                            )}
-                        </div>
-
-                        <Badge variant='outline' className='h-6'>
-                            <FileText className='h-3.5 w-3.5 mr-1.5' />
-                            <span>Assignment</span>
-                        </Badge>
-                    </div>
-
-                    {newNode.description && (
-                        <div className='text-sm mt-2'>
-                            <p className='line-clamp-3'>{newNode.description}</p>
-                        </div>
-                    )}
-
-                    {newNode.url && (
-                        <div className='flex items-center justify-between mt-2 bg-muted/50 rounded-md p-2 text-sm'>
-                            <div className='flex items-center'>
-                                <LinkIcon className='h-4 w-4 mr-2 text-primary' />
-                                <span className='truncate max-w-xs'>{newNode.url}</span>
-                            </div>
-                            <Button variant='ghost' size='sm' className='h-8 w-8 p-0' disabled>
-                                <ExternalLink className='h-4 w-4' />
-                            </Button>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-        );
-    };
 
     return (
-        <div className='space-y-6'>
-            <div className='flex items-center'>
-                <div className='bg-primary/20 p-2 rounded-full mr-3'>
-                    <FileText className='h-5 w-5 text-primary' />
-                </div>
+        <div className='p-4'>
+            <h2 className='font-bold text-lg mb-4'>Configure Assignment</h2>
+
+            <div className='flex flex-col gap-4'>
                 <div>
-                    <h2 className='font-bold text-lg'>Configure Assignment</h2>
-                    <p className='text-sm text-muted-foreground'>Set up assignment details and deadline</p>
+                    <Label className='mb-2 block'>Name</Label>
+                    <Input value={newNode.data.name ?? `assignment_${newNode.id.slice(0, 8)}`} disabled className='bg-muted' />
+                </div>
+
+                {/* Basic information */}
+                <div>
+                    <Label
+                        className={cn('mb-2 block', formSubmitted && !validation.label.valid && 'text-destructive')}
+                    >
+                        Assignment Name <span className='text-destructive ml-0.5'>*</span>
+                    </Label>
+                    <Input
+                        value={newNode.data.label}
+                        onChange={(e) => handleLabelChange(e.target.value)}
+                        placeholder='e.g., Coding Challenge'
+                        className={cn(formSubmitted && !validation.label.valid && 'border-destructive')}
+                    />
+                    {formSubmitted && !validation.label.valid && (
+                        <p className='text-destructive text-xs flex items-center mt-1'>
+                            <AlertCircle className='h-3 w-3 mr-1' />
+                            {validation.label.message}
+                        </p>
+                    )}
+                </div>
+
+                {/* Assignment URL */}
+                <div>
+                    <Label className={cn('mb-2 block', formSubmitted && !validation.url.valid && 'text-destructive')}>
+                        Assignment URL <span className='text-destructive ml-0.5'>*</span>
+                    </Label>
+                    <div className='relative'>
+                        <LinkIcon className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+                        <Input
+                            value={newNode.url}
+                            onChange={(e) => handleChange('url', e.target.value)}
+                            placeholder='https://github.com/...'
+                            className={cn('pl-9', formSubmitted && !validation.url.valid && 'border-destructive')}
+                        />
+                    </div>
+                    {formSubmitted && !validation.url.valid && (
+                        <p className='text-destructive text-xs flex items-center mt-1'>
+                            <AlertCircle className='h-3 w-3 mr-1' />
+                            {validation.url.message}
+                        </p>
+                    )}
+                </div>
+
+                {/* Deadline */}
+                <div>
+                    <Label
+                        className={cn('mb-2 block', formSubmitted && !validation.deadline.valid && 'text-destructive')}
+                    >
+                        Deadline <span className='text-destructive ml-0.5'>*</span>
+                    </Label>
+                    <div className='relative'>
+                        <Calendar className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+                        <Input
+                            type='datetime-local'
+                            value={getDateTimeString(newNode.deadline)}
+                            onChange={(e) => handleChange('deadline', new Date(e.target.value))}
+                            className={cn('pl-9', formSubmitted && !validation.deadline.valid && 'border-destructive')}
+                        />
+                    </div>
+                    {formSubmitted && !validation.deadline.valid && (
+                        <p className='text-destructive text-xs flex items-center mt-1'>
+                            <AlertCircle className='h-3 w-3 mr-1' />
+                            {validation.deadline.message}
+                        </p>
+                    )}
+                </div>
+
+                {/* Description */}
+                <div>
+                    <Label
+                        className={cn('mb-2 block', formSubmitted && !validation.description.valid && 'text-destructive')}
+                    >
+                        Description <span className='text-destructive ml-0.5'>*</span>
+                    </Label>
+                    <Textarea
+                        value={newNode.description}
+                        onChange={(e) => handleChange('description', e.target.value)}
+                        placeholder='Enter assignment details, requirements, submission instructions, etc.'
+                        rows={4}
+                        className={cn(formSubmitted && !validation.description.valid && 'border-destructive')}
+                    />
+                    <div className='flex justify-between mt-1'>
+                        {formSubmitted && !validation.description.valid ? (
+                            <p className='text-destructive text-xs flex items-center'>
+                                <AlertCircle className='h-3 w-3 mr-1' />
+                                {validation.description.message}
+                            </p>
+                        ) : (
+                            <p className='text-xs text-muted-foreground'>Characters: {newNode.description.length}</p>
+                        )}
+                    </div>
+                </div>
+
+                {/* Submission tracking (e.g. Google Form webhook) */}
+                <div>
+                    <Label className='mb-2 block'>Submission tracking</Label>
+                    <Select
+                        value={newNode.submissionTracking}
+                        onValueChange={(v) => handleChange('submissionTracking', v as AssignmentSubmissionTracking)}
+                    >
+                        <SelectTrigger>
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="none">None</SelectItem>
+                            <SelectItem value="link">Internal link</SelectItem>
+                            <SelectItem value="google_form">Google Form (webhook on submit)</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                {/* Attachments */}
+                <div>
+                    <Label className='mb-2 block'>Attachments (Optional)</Label>
+                    <div
+                        className='border border-dashed rounded-md p-6 text-center cursor-pointer hover:bg-muted/50 transition-colors'
+                        onClick={() =>
+                            toast({
+                                title: 'Feature Not Implemented',
+                                description: 'File attachment functionality would go here',
+                            })
+                        }
+                    >
+                        <FileUp className='h-6 w-6 mx-auto mb-2 text-muted-foreground' />
+                        <p className='text-sm text-muted-foreground'>Click to upload or drag files here</p>
+                    </div>
                 </div>
             </div>
 
-            <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
-                <TabsList className='grid w-full grid-cols-2'>
-                    <TabsTrigger value='details'>
-                        <Info className='h-4 w-4 mr-2' />
-                        Assignment Details
-                    </TabsTrigger>
-                    <TabsTrigger value='preview'>
-                        <Eye className='h-4 w-4 mr-2' />
-                        Preview
-                    </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value='details' className='space-y-4 mt-4'>
-                    <div className='flex flex-col gap-4'>
-                        <div>
-                            <Label htmlFor='name'>Name</Label>
-                            <Input id='name' value={newNode.data.name ?? `assignment_${newNode.id.slice(0, 8)}`} disabled className='bg-muted' />
-                            <p className='text-xs text-muted-foreground mt-1'>Unique identifier for this node (read-only)</p>
-                        </div>
-                        {/* Basic information */}
-                        <div>
-                            <Label
-                                htmlFor='label'
-                                className={cn('flex items-center', formSubmitted && !validation.label.valid && 'text-destructive')}
-                            >
-                                Assignment Name <span className='text-destructive'>*</span>
-                            </Label>
-                            <Input
-                                id='label'
-                                value={newNode.data.label}
-                                onChange={(e) => handleLabelChange(e.target.value)}
-                                placeholder='e.g., Coding Challenge'
-                                className={cn(formSubmitted && !validation.label.valid && 'border-destructive')}
-                            />
-                            {formSubmitted && !validation.label.valid && (
-                                <p className='text-destructive text-xs flex items-center mt-1'>
-                                    <AlertCircle className='h-3 w-3 mr-1' />
-                                    {validation.label.message}
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Assignment URL */}
-                        <div>
-                            <Label htmlFor='url' className={cn('flex items-center', formSubmitted && !validation.url.valid && 'text-destructive')}>
-                                Assignment URL <span className='text-destructive'>*</span>
-                            </Label>
-                            <div className='relative'>
-                                <LinkIcon className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
-                                <Input
-                                    id='url'
-                                    value={newNode.url}
-                                    onChange={(e) => handleChange('url', e.target.value)}
-                                    placeholder='https://github.com/...'
-                                    className={cn('pl-9', formSubmitted && !validation.url.valid && 'border-destructive')}
-                                />
-                            </div>
-                            {formSubmitted && !validation.url.valid && (
-                                <p className='text-destructive text-xs flex items-center mt-1'>
-                                    <AlertCircle className='h-3 w-3 mr-1' />
-                                    {validation.url.message}
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Deadline */}
-                        <div>
-                            <Label
-                                htmlFor='deadline'
-                                className={cn('flex items-center', formSubmitted && !validation.deadline.valid && 'text-destructive')}
-                            >
-                                Deadline <span className='text-destructive'>*</span>
-                            </Label>
-                            <div className='relative'>
-                                <Calendar className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
-                                <Input
-                                    id='deadline'
-                                    type='datetime-local'
-                                    value={getDateTimeString(newNode.deadline)}
-                                    onChange={(e) => handleChange('deadline', new Date(e.target.value))}
-                                    className={cn('pl-9', formSubmitted && !validation.deadline.valid && 'border-destructive')}
-                                />
-                            </div>
-                            {formSubmitted && !validation.deadline.valid && (
-                                <p className='text-destructive text-xs flex items-center mt-1'>
-                                    <AlertCircle className='h-3 w-3 mr-1' />
-                                    {validation.deadline.message}
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Description */}
-                        <div>
-                            <Label
-                                htmlFor='description'
-                                className={cn('flex items-center', formSubmitted && !validation.description.valid && 'text-destructive')}
-                            >
-                                Description <span className='text-destructive'>*</span>
-                            </Label>
-                            <Textarea
-                                id='description'
-                                value={newNode.description}
-                                onChange={(e) => handleChange('description', e.target.value)}
-                                placeholder='Enter assignment details, requirements, submission instructions, etc.'
-                                rows={4}
-                                className={cn(formSubmitted && !validation.description.valid && 'border-destructive')}
-                            />
-                            <div className='flex justify-between mt-1'>
-                                {formSubmitted && !validation.description.valid ? (
-                                    <p className='text-destructive text-xs flex items-center'>
-                                        <AlertCircle className='h-3 w-3 mr-1' />
-                                        {validation.description.message}
-                                    </p>
-                                ) : (
-                                    <p className='text-xs text-muted-foreground'>Characters: {newNode.description.length}</p>
-                                )}
-                            </div>
-                        </div>
-
-                        <Separator />
-
-                        {/* Submission tracking (e.g. Google Form webhook) */}
-                        <div>
-                            <Label>Submission tracking</Label>
-                            <Select
-                                value={newNode.submissionTracking}
-                                onValueChange={(v) => handleChange('submissionTracking', v as AssignmentSubmissionTracking)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="none">None</SelectItem>
-                                    <SelectItem value="link">Internal link</SelectItem>
-                                    <SelectItem value="google_form">Google Form (webhook on submit)</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <p className="text-xs text-muted-foreground mt-1">
-                                Use Google Form to get notified when candidate submits; set up Apps Script to call our webhook with applicationId.
-                            </p>
-                        </div>
-
-                        {/* Attachments */}
-                        <div>
-                            <Label htmlFor='attachments'>Attachments (Optional)</Label>
-                            <div
-                                className='border border-dashed rounded-md p-6 text-center cursor-pointer hover:bg-muted/50 transition-colors'
-                                onClick={() =>
-                                    toast({
-                                        title: 'Feature Not Implemented',
-                                        description: 'File attachment functionality would go here',
-                                    })
-                                }
-                            >
-                                <FileUp className='h-6 w-6 mx-auto mb-2 text-muted-foreground' />
-                                <p className='text-sm text-muted-foreground'>Click to upload or drag files here</p>
-                            </div>
-                        </div>
-                    </div>
-                </TabsContent>
-
-                <TabsContent value='preview' className='mt-2'>
-                    <AssignmentPreview />
-                </TabsContent>
-            </Tabs>
-
-            <Separator />
-
-            <Button onClick={handleSubmit} className='w-full'>
+            <Button onClick={handleSubmit} className='mt-4 w-full'>
                 Save Assignment Configuration
             </Button>
         </div>

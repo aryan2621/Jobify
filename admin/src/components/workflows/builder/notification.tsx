@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -29,18 +29,19 @@ interface BodyFieldWithMentionsProps {
 
 function BodyFieldWithMentions({ value, onChange, placeholder }: BodyFieldWithMentionsProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const cursorAfterInsertRef = useRef<number | null>(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [filter, setFilter] = useState('');
     const [selectedIndex, setSelectedIndex] = useState(0);
+    const [atIndex, setAtIndex] = useState(-1);
+    const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
     const filtered = EMAIL_BODY_VARIABLES.filter((v) =>
         v.label.toLowerCase().includes(filter.toLowerCase())
     );
 
-    useEffect(() => {
-        setSelectedIndex((i) => (filtered.length ? Math.min(i, filtered.length - 1) : 0));
-    }, [filtered.length]);
+    useEffect(() => { setSelectedIndex(0); }, [filter]);
 
     useEffect(() => {
         if (textareaRef.current && cursorAfterInsertRef.current !== null) {
@@ -51,16 +52,72 @@ function BodyFieldWithMentions({ value, onChange, placeholder }: BodyFieldWithMe
         }
     }, [value]);
 
-    const openDropdown = useCallback((atIndex: number, filterText: string) => {
-        setFilter(filterText);
-        setDropdownOpen(true);
-        setSelectedIndex(0);
+    /** Measure where the @ character is inside the textarea, in px relative to the textarea's top-left. */
+    const measureAtPosition = useCallback((ta: HTMLTextAreaElement, atIdx: number): { top: number; left: number } => {
+        if (!canvasRef.current) canvasRef.current = document.createElement('canvas');
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d')!;
+        const style = getComputedStyle(ta);
+        ctx.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+
+        const paddingLeft = parseFloat(style.paddingLeft);
+        const paddingTop = parseFloat(style.paddingTop);
+        const lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.5;
+        const taWidth = ta.clientWidth - paddingLeft - parseFloat(style.paddingRight);
+
+        // Split text up to @ into wrapped lines
+        const textUpTo = ta.value.slice(0, atIdx);
+        const words = textUpTo.split(/(\n)/); // preserve newlines
+        const lines: string[] = [];
+        let currentLine = '';
+
+        for (const segment of words) {
+            if (segment === '\n') {
+                lines.push(currentLine);
+                currentLine = '';
+                continue;
+            }
+            // Word-wrap simulation
+            const chars = segment.split('');
+            for (const char of chars) {
+                const test = currentLine + char;
+                if (ctx.measureText(test).width > taWidth && currentLine.length > 0) {
+                    lines.push(currentLine);
+                    currentLine = char;
+                } else {
+                    currentLine = test;
+                }
+            }
+        }
+        lines.push(currentLine);
+
+        const lineIndex = lines.length - 1;
+        const lastLine = lines[lineIndex];
+        const x = paddingLeft + ctx.measureText(lastLine).width;
+        const y = paddingTop + lineIndex * lineHeight - ta.scrollTop;
+
+        return { top: y, left: x };
     }, []);
 
     const closeDropdown = useCallback(() => {
         setDropdownOpen(false);
         setFilter('');
+        setAtIndex(-1);
     }, []);
+
+    const insertVariable = useCallback(
+        (variable: { value: string; label: string }, currentAtIndex: number) => {
+            if (!textareaRef.current) return;
+            const pos = textareaRef.current.selectionStart ?? value.length;
+            const before = value.slice(0, currentAtIndex);
+            const after = value.slice(pos);
+            const newValue = before + variable.value + after;
+            cursorAfterInsertRef.current = currentAtIndex + variable.value.length;
+            onChange(newValue);
+            closeDropdown();
+        },
+        [value, onChange, closeDropdown]
+    );
 
     const handleChange = useCallback(
         (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -70,99 +127,69 @@ function BodyFieldWithMentions({ value, onChange, placeholder }: BodyFieldWithMe
 
             const textBeforeCursor = newValue.slice(0, cursorPos);
             const lastAt = textBeforeCursor.lastIndexOf('@');
-            if (lastAt === -1) {
-                closeDropdown();
-                return;
-            }
-            const filterText = textBeforeCursor.slice(lastAt + 1);
-            openDropdown(lastAt, filterText);
+
+            if (lastAt === -1) { closeDropdown(); return; }
+
+            const fragment = textBeforeCursor.slice(lastAt + 1);
+            if (fragment.includes(' ')) { closeDropdown(); return; }
+
+            const pos = measureAtPosition(e.target, lastAt);
+            setDropdownPos(pos);
+            setAtIndex(lastAt);
+            setFilter(fragment);
+            setDropdownOpen(true);
+            setSelectedIndex(0);
         },
-        [onChange, openDropdown, closeDropdown]
+        [onChange, closeDropdown, measureAtPosition]
     );
 
     const handleKeyDown = useCallback(
         (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
             if (!dropdownOpen || filtered.length === 0) return;
-
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                setSelectedIndex((i) => (i + 1) % filtered.length);
-                return;
-            }
-            if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                setSelectedIndex((i) => (filtered.length + i - 1) % filtered.length);
-                return;
-            }
-            if (e.key === 'Enter' || e.key === 'Tab') {
-                e.preventDefault();
-                const selected = filtered[selectedIndex];
-                if (selected && textareaRef.current) {
-                    const pos = textareaRef.current.selectionStart ?? value.length;
-                    const textBeforeCursor = value.slice(0, pos);
-                    const lastAt = textBeforeCursor.lastIndexOf('@');
-                    if (lastAt >= 0) {
-                        const before = value.slice(0, lastAt);
-                        const after = value.slice(pos);
-                        const newValue = before + selected.value + after;
-                        cursorAfterInsertRef.current = lastAt + selected.value.length;
-                        onChange(newValue);
-                    }
-                    closeDropdown();
-                }
-                return;
-            }
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                closeDropdown();
-            }
+            if (e.key === 'ArrowDown') { e.preventDefault(); setSelectedIndex((i) => (i + 1) % filtered.length); return; }
+            if (e.key === 'ArrowUp') { e.preventDefault(); setSelectedIndex((i) => (filtered.length + i - 1) % filtered.length); return; }
+            if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); insertVariable(filtered[selectedIndex], atIndex); return; }
+            if (e.key === 'Escape') { e.preventDefault(); closeDropdown(); }
         },
-        [dropdownOpen, filtered, selectedIndex, value, onChange, closeDropdown]
+        [dropdownOpen, filtered, selectedIndex, atIndex, insertVariable, closeDropdown]
     );
 
-    const handleSelect = useCallback(
-        (variable: { value: string; label: string }) => {
-            if (!textareaRef.current) return;
-            const pos = textareaRef.current.selectionStart ?? value.length;
-            const textBeforeCursor = value.slice(0, pos);
-            const lastAt = textBeforeCursor.lastIndexOf('@');
-            if (lastAt >= 0) {
-                const before = value.slice(0, lastAt);
-                const after = value.slice(pos);
-                const newValue = before + variable.value + after;
-                cursorAfterInsertRef.current = lastAt + variable.value.length;
-                onChange(newValue);
-            }
-            closeDropdown();
-        },
-        [value, onChange, closeDropdown]
-    );
+    const lineHeight = textareaRef.current
+        ? parseFloat(getComputedStyle(textareaRef.current).lineHeight) || 22
+        : 22;
 
     return (
-        <div className='relative'>
+        <div className="relative">
             <Textarea
                 ref={textareaRef}
                 value={value}
                 onChange={handleChange}
                 onKeyDown={handleKeyDown}
-                onBlur={closeDropdown}
+                onBlur={() => setTimeout(closeDropdown, 150)}
                 placeholder={placeholder}
-                className='min-h-[100px]'
+                className="min-h-[100px]"
             />
             {dropdownOpen && filtered.length > 0 && (
                 <ul
-                    className='absolute z-50 mt-1 max-h-40 w-full min-w-[12rem] overflow-auto rounded-md border bg-popover py-1 text-popover-foreground shadow-md'
-                    role='listbox'
+                    className="absolute z-50 max-h-40 w-56 overflow-auto rounded-md border bg-popover py-1 text-popover-foreground shadow-md"
+                    role="listbox"
+                    style={{
+                        // Position just below the @ character
+                        top: dropdownPos.top + lineHeight,
+                        left: dropdownPos.left,
+                    }}
                 >
                     {filtered.map((v, i) => (
                         <li
                             key={v.value}
-                            role='option'
+                            role="option"
                             aria-selected={i === selectedIndex}
-                            className={`cursor-pointer px-3 py-2 text-sm font-mono ${i === selectedIndex ? 'bg-accent text-accent-foreground' : ''}`}
-                            onMouseDown={(e) => {
+                            className={`cursor-pointer px-3 py-2 text-sm font-mono ${
+                                i === selectedIndex ? 'bg-accent text-accent-foreground' : ''
+                            }`}
+                            onPointerDown={(e) => {
                                 e.preventDefault();
-                                handleSelect(v);
+                                insertVariable(v, atIndex);
                             }}
                         >
                             {v.label}
@@ -173,7 +200,6 @@ function BodyFieldWithMentions({ value, onChange, placeholder }: BodyFieldWithMe
         </div>
     );
 }
-
 interface NotificationNodeBuilderProps {
     node: NotificationNode;
     onSubmit: (node: NotificationNode) => void;
@@ -189,7 +215,7 @@ interface FormField {
 
 const FormInput = ({ label, type = 'text', placeholder, value, onChange, required }: FormField) => (
     <div>
-        <Label>
+        <Label className='mb-2 block'>
             {label}
             {required && <span className='text-destructive ml-0.5'>*</span>}
         </Label>
@@ -235,7 +261,7 @@ const EmailConfig = ({
             required
         />
         <div>
-            <Label>
+            <Label className='mb-2 block'>
                 Body
                 <span className='text-destructive ml-0.5'>*</span>
             </Label>
@@ -317,7 +343,6 @@ const NotificationNodeBuilderComponent = ({ node, onSubmit }: NotificationNodeBu
                 <div>
                     <Label className='mb-2 block'>Name</Label>
                     <Input value={newNode.data.name ?? `notify_${newNode.id.slice(0, 8)}`} disabled className='bg-muted' />
-                    <p className='text-xs text-muted-foreground mt-1'>Unique identifier for this node (read-only)</p>
                 </div>
                 <FormInput
                     label='Label'

@@ -242,12 +242,6 @@ export const Editor = ({ workflowId }: EditorProps) => {
 
             // Add node to diagram
             setNodes((nds) => nds.concat(newNode));
-
-            // Show success message
-            toast({
-                title: 'Node Added',
-                description: `Added new ${type} node to workflow`,
-            });
         },
         [screenToFlowPosition, type, setNodes]
     );
@@ -336,11 +330,6 @@ export const Editor = ({ workflowId }: EditorProps) => {
                 setEdges(parsedEdges);
 
                 setIsModified(false);
-
-                toast({
-                    title: 'Workflow Loaded',
-                    description: 'Workflow loaded successfully',
-                });
             } catch (error) {
                 console.error('Error loading workflow:', error);
                 toast({
