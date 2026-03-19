@@ -14,6 +14,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { isURL } from '@/lib/utils/validation-utils';
+import ky from 'ky';
+import Link from 'next/link';
 
 interface InterviewNodeBuilderProps {
     node: InterviewNode;
@@ -55,7 +57,7 @@ const InterviewNodeBuilderComponent = ({ node, onSubmit }: InterviewNodeBuilderP
 
     
     const [newNode, setNewNode] = useState(cpNode);
-    const [calendarConnected, setCalendarConnected] = useState<boolean>(false);
+    const [calendarConnected, setCalendarConnected] = useState<boolean | null>(null);
     const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
     const [validation, setValidation] = useState<ValidationState>({
         label: { valid: true, message: '' },
@@ -63,6 +65,18 @@ const InterviewNodeBuilderComponent = ({ node, onSubmit }: InterviewNodeBuilderP
         time: { valid: true, message: '' },
         description: { valid: true, message: '' },
     });
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const data = (await ky.get('/api/settings').json()) as { calendarConnected?: boolean };
+                setCalendarConnected(Boolean(data?.calendarConnected));
+            } catch {
+                setCalendarConnected(false);
+            }
+        };
+        fetchSettings();
+    }, []);
 
     
     const handleChange = (field: keyof InterviewNode, value: any) => {
@@ -95,13 +109,22 @@ const InterviewNodeBuilderComponent = ({ node, onSubmit }: InterviewNodeBuilderP
     };
 
     
-    const handleOAuthSuccess = (response: any) => {
-        console.log('OAuth successful:', response);
-        setCalendarConnected(true);
-        toast({
-            title: 'Calendar Connected',
-            description: 'You can now create a calendar event for this interview',
-        });
+    const handleOAuthSuccess = async (response: any) => {
+        try {
+            await ky.post('/api/connect-to-calendar', {
+                json: {
+                    authCode: response.code,
+                },
+            });
+            setCalendarConnected(true);
+            toast({
+                title: 'Calendar Connected',
+                description: 'You can now create a calendar event for this interview',
+            });
+        } catch (error) {
+            console.error('Error while connecting to calendar', error);
+            handleOAuthError('Error connecting to calendar');
+        }
     };
 
     const handleOAuthError = (error: string) => {
@@ -346,28 +369,37 @@ const InterviewNodeBuilderComponent = ({ node, onSubmit }: InterviewNodeBuilderP
                         </div>
                     </TooltipProvider>
 
-                    <div className='flex items-center gap-3 mb-2'>
-                        <OAuthHandler config={googleCalenderOAuthConfig} onSuccess={handleOAuthSuccess} onError={handleOAuthError}>
-                            <Button variant={calendarConnected ? 'outline' : 'default'} className='flex items-center'>
-                                {calendarConnected ? (
-                                    <>
-                                        <Check className='h-4 w-4 mr-2 text-green-500' />
-                                        Connected
-                                    </>
-                                ) : (
-                                    <>
+                    <div className='rounded-lg border bg-muted/30 p-4 space-y-3 mb-4'>
+                        <div className='flex items-center justify-between'>
+                            <span className='text-sm font-medium flex items-center gap-2'>
+                                <Calendar className='h-4 w-4' />
+                                Sync with Google Calendar
+                            </span>
+                            {calendarConnected === true && (
+                                <Badge variant='outline' className='bg-green-50 text-green-800 dark:bg-green-950 dark:text-green-300'>
+                                    <Check className='h-3.5 w-3.5 mr-1' />
+                                    Connected
+                                </Badge>
+                            )}
+                        </div>
+                        {calendarConnected === false && (
+                            <div className='text-sm'>
+                                <p className='flex items-start gap-2 text-amber-700 dark:text-amber-400'>
+                                    <AlertCircle className='h-4 w-4 shrink-0 mt-0.5' />
+                                    <span>
+                                        Important to connect Google Calendar before saving. Go to Profile for saving.
+                                    </span>
+                                </p>
+                                <Button asChild variant='outline' size='sm' className='mt-3'>
+                                    <Link href='/profile?tab=settings'>
                                         <Calendar className='h-4 w-4 mr-2' />
-                                        Connect Calendar
-                                    </>
-                                )}
-                            </Button>
-                        </OAuthHandler>
-
-                        {calendarConnected && (
-                            <Badge variant='outline' className='bg-green-50 text-green-800 dark:bg-green-950 dark:text-green-300'>
-                                <Check className='h-3.5 w-3.5 mr-1' />
-                                Google Calendar
-                            </Badge>
+                                        Connect your Calendar account
+                                    </Link>
+                                </Button>
+                            </div>
+                        )}
+                        {calendarConnected === null && (
+                            <p className='text-xs text-muted-foreground'>Checking connection…</p>
                         )}
                     </div>
                 </div>

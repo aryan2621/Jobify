@@ -9,9 +9,10 @@ import { Badge } from '@/components/ui/badge';
 import { Check, Mail } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Info } from 'lucide-react';
-import { gmailOAuthConfig } from '@/config/oauth';
+import { gmailOAuthConfig, googleCalenderOAuthConfig } from '@/config/oauth';
 import ky from 'ky';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Calendar } from 'lucide-react';
 
 interface ProfileSettingsTabProps {
     profile: Profile;
@@ -22,17 +23,20 @@ interface ProfileSettingsTabProps {
 
 export default function ProfileSettingsTab({ updateUser }: ProfileSettingsTabProps) {
     const [gmailConnected, setGmailConnected] = useState(false);
+    const [calendarConnected, setCalendarConnected] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchSettings = async () => {
             try {
                 setIsLoading(true);
-                const data = (await ky.get('/api/settings').json()) as { gmailConnected?: boolean };
+                const data = (await ky.get('/api/settings').json()) as { gmailConnected?: boolean; calendarConnected?: boolean };
                 setGmailConnected(Boolean(data?.gmailConnected));
+                setCalendarConnected(Boolean(data?.calendarConnected));
             } catch (error) {
                 console.error('Error fetching settings:', error);
                 setGmailConnected(false);
+                setCalendarConnected(false);
             } finally {
                 setIsLoading(false);
             }
@@ -62,10 +66,32 @@ export default function ProfileSettingsTab({ updateUser }: ProfileSettingsTabPro
         }
     };
 
-    const handleOAuthError = () => {
+    const handleCalendarOAuthSuccess = async (response: any) => {
+        try {
+            await ky.post('/api/connect-to-calendar', {
+                json: {
+                    authCode: response.code,
+                },
+            });
+            setCalendarConnected(true);
+            toast({
+                title: 'Calendar connected successfully',
+                description: 'You can now schedule interviews using your Google Calendar.',
+            });
+        } catch (error) {
+            console.error('Error while connecting to calendar', error);
+            toast({
+                title: 'Calendar connection failed',
+                description: 'Error connecting to Calendar. Please try again.',
+                variant: 'destructive',
+            });
+        }
+    };
+
+    const handleOAuthError = (service: string) => {
         toast({
-            title: 'Gmail Connection Failed',
-            description: 'Error connecting to Gmail, please try again',
+            title: `${service} Connection Failed`,
+            description: `Error connecting to ${service}, please try again`,
             variant: 'destructive',
         });
     };
@@ -127,7 +153,7 @@ export default function ProfileSettingsTab({ updateUser }: ProfileSettingsTabPro
 
                     <p className='text-sm text-muted-foreground mb-4'>Connect your Gmail account to send emails directly from your application</p>
 
-                    <OAuthHandler config={gmailOAuthConfig} onSuccess={handleOAuthSuccess} onError={handleOAuthError}>
+                    <OAuthHandler config={gmailOAuthConfig} onSuccess={handleOAuthSuccess} onError={() => handleOAuthError('Gmail')}>
                         <Button variant={gmailConnected ? 'outline' : 'default'} className='flex items-center'>
                             {gmailConnected ? (
                                 <>
@@ -138,6 +164,39 @@ export default function ProfileSettingsTab({ updateUser }: ProfileSettingsTabPro
                                 <>
                                     <Mail className='h-4 w-4 mr-2' />
                                     Connect Gmail
+                                </>
+                            )}
+                        </Button>
+                    </OAuthHandler>
+                </div>
+
+                <div className='bg-muted/50 p-4 rounded-md'>
+                    <div className='flex items-center justify-between mb-4'>
+                        <div className='flex items-center'>
+                            <Calendar className='h-5 w-5 mr-2 text-primary' />
+                            <h4 className='font-medium'>Calendar Integration</h4>
+                        </div>
+                        {calendarConnected && (
+                            <Badge variant='outline' className='bg-green-50 text-green-800 dark:bg-green-950 dark:text-green-300'>
+                                <Check className='h-3.5 w-3.5 mr-1' />
+                                Connected
+                            </Badge>
+                        )}
+                    </div>
+
+                    <p className='text-sm text-muted-foreground mb-4'>Connect your Google Calendar to schedule interviews directly from the application</p>
+
+                    <OAuthHandler config={googleCalenderOAuthConfig} onSuccess={handleCalendarOAuthSuccess} onError={() => handleOAuthError('Calendar')}>
+                        <Button variant={calendarConnected ? 'outline' : 'default'} className='flex items-center'>
+                            {calendarConnected ? (
+                                <>
+                                    <Check className='h-4 w-4 mr-2 text-green-500' />
+                                    Connected
+                                </>
+                            ) : (
+                                <>
+                                    <Calendar className='h-4 w-4 mr-2' />
+                                    Connect Calendar
                                 </>
                             )}
                         </Button>

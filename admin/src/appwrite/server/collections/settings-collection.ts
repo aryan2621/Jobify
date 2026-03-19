@@ -1,7 +1,7 @@
 import { IndexType, Permission, Role } from 'node-appwrite';
 import { DB_NAME, SETTINGS_COLLECTION } from '../../name';
 import { database } from '../config';
-import { Settings, EmailProvider } from '@/model/settings';
+import { Settings, ServiceProvider } from '@/model/settings';
 import { Query } from 'appwrite';
 
 function createSettingsCollection() {
@@ -16,7 +16,7 @@ function createSettingsCollection() {
             return Promise.all([
                 database.createStringAttribute(DB_NAME, SETTINGS_COLLECTION, 'id', 50, true),
                 database.createStringAttribute(DB_NAME, SETTINGS_COLLECTION, 'userId', 50, true),
-                database.createEnumAttribute(DB_NAME, SETTINGS_COLLECTION, 'provider', [EmailProvider.GMAIL], true),
+                database.createEnumAttribute(DB_NAME, SETTINGS_COLLECTION, 'provider', [ServiceProvider.GMAIL, ServiceProvider.GOOGLE_CALENDAR], true),
                 database.createStringAttribute(DB_NAME, SETTINGS_COLLECTION, 'accessToken', 500, false),
                 database.createStringAttribute(DB_NAME, SETTINGS_COLLECTION, 'email', 50, true),
                 database.createStringAttribute(DB_NAME, SETTINGS_COLLECTION, 'refreshToken', 500, false),
@@ -58,9 +58,12 @@ async function createSettingsDocument(settings: Settings) {
     }
 }
 
-async function fetchSettingsByUserId(userId: string) {
+async function fetchSettingsByUserId(userId: string, provider?: ServiceProvider) {
     try {
         const queries = [Query.equal('userId', userId)];
+        if (provider) {
+            queries.push(Query.equal('provider', provider));
+        }
         const records = await database.listDocuments(DB_NAME, SETTINGS_COLLECTION, queries);
         if (records.documents.length > 0) {
             const doc = records.documents[0];
@@ -80,9 +83,9 @@ async function fetchSettingsByUserId(userId: string) {
         throw error;
     }
 }
-async function fetchSettingsByUserIdPrivate(userId: string) {
+async function fetchSettingsByUserIdPrivate(userId: string, provider: ServiceProvider = ServiceProvider.GMAIL) {
     try {
-        const queries = [Query.equal('userId', userId)];
+        const queries = [Query.equal('userId', userId), Query.equal('provider', provider)];
         const records = await database.listDocuments(DB_NAME, SETTINGS_COLLECTION, queries);
         if (records.documents.length > 0) {
             return {

@@ -1,11 +1,13 @@
-export enum EmailProvider {
+export enum ServiceProvider {
     GMAIL = 'gmail',
+    /** Value must match Appwrite settings.provider enum (currently "calender" in DB). */
+    GOOGLE_CALENDAR = 'calender',
 }
 
 export class Settings {
     id: string;
     userId: string;
-    provider: EmailProvider;
+    provider: ServiceProvider;
     email: string;
     accessToken?: string;
     refreshToken?: string;
@@ -15,7 +17,7 @@ export class Settings {
     constructor(
         id: string,
         userId: string,
-        provider: EmailProvider,
+        provider: ServiceProvider,
         email: string,
         accessToken?: string,
         refreshToken?: string,

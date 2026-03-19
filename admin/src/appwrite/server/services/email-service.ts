@@ -1,8 +1,15 @@
-import { EmailProvider, Settings } from '@/model/settings';
+import { createHash } from 'crypto';
+import { ServiceProvider, Settings } from '@/model/settings';
 import { OAuth2Client } from 'google-auth-library';
 import * as googlePeople from '@googleapis/people';
 import * as googleGmail from '@googleapis/gmail';
 import { createSettingsDocument, fetchSettingsByUserId, fetchSettingsByUserIdPrivate, updateSettings } from '../collections/settings-collection';
+
+/** Appwrite documentId: max 36 chars, [a-zA-Z0-9._-], must not start with special char. */
+function gmailDocumentId(userId: string): string {
+    const hash = createHash('sha256').update(`${userId}_gmail`).digest('hex');
+    return hash.slice(0, 36);
+}
 
 function escapeHtml(s: string): string {
     return s
@@ -84,9 +91,9 @@ export class EmailService {
 
         const now = new Date().toISOString();
         const settings = new Settings(
+            gmailDocumentId(userId),
             userId,
-            userId,
-            EmailProvider.GMAIL,
+            ServiceProvider.GMAIL,
             primaryEmail,
             tokens.access_token ?? undefined,
             tokens.refresh_token,
@@ -95,12 +102,12 @@ export class EmailService {
         );
 
         try {
-            const existing = await fetchSettingsByUserId(userId);
+            const existing = await fetchSettingsByUserId(userId, ServiceProvider.GMAIL);
             await updateSettings(
                 new Settings(
                     existing.id,
                     userId,
-                    EmailProvider.GMAIL,
+                    ServiceProvider.GMAIL,
                     primaryEmail,
                     tokens.access_token ?? undefined,
                     tokens.refresh_token,
