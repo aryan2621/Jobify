@@ -723,7 +723,7 @@ export default function AdminApplicationsPage() {
                         jobsMap.set(
                             jobId,
                             new Job(
-                                jobData.id,
+                                jobData.id ?? (jobData as { $id?: string }).$id ?? '',
                                 jobData.profile,
                                 jobData.description,
                                 jobData.company,
@@ -737,7 +737,7 @@ export default function AdminApplicationsPage() {
                                 jobData.createdAt,
                                 jobData.state,
                                 jobData.createdBy,
-                                jobData.applications
+                                jobData.workflowId
                             )
                         );
                     } catch (error) {
@@ -854,7 +854,9 @@ export default function AdminApplicationsPage() {
                     <div>
                         <h1 className='text-2xl font-bold'>All Applications</h1>
                         <p className='text-muted-foreground'>
-                            {filteredApplications.length} {filteredApplications.length === 1 ? 'application' : 'applications'} found
+                            {loading
+                                ? 'Loading applications…'
+                                : `${filteredApplications.length} ${filteredApplications.length === 1 ? 'application' : 'applications'} found`}
                         </p>
                     </div>
 

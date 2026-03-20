@@ -123,7 +123,7 @@ const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
                                         label='Manage Jobs'
                                         isCollapsed={isCollapsed}
                                         isActive={pathname.startsWith('/posts')}
-                                        badge={user.jobs?.length}
+                                        badge={user.jobCount}
                                     />
                                     <NavItem
                                         href='/workflows'
@@ -131,6 +131,7 @@ const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
                                         label='Workflows'
                                         isCollapsed={isCollapsed}
                                         isActive={pathname.startsWith('/workflows')}
+                                        badge={user.workflowCount}
                                     />
 
                                     <NavItem
@@ -232,7 +233,7 @@ const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
                                                 label='Manage Jobs'
                                                 isCollapsed={false}
                                                 isActive={pathname.startsWith('/posts')}
-                                                badge={user.jobs?.length}
+                                                badge={user.jobCount}
                                             />
                                             <NavItem
                                                 href='/workflows'
@@ -240,6 +241,7 @@ const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
                                                 label='Workflows'
                                                 isCollapsed={false}
                                                 isActive={pathname.startsWith('/workflows')}
+                                                badge={user.workflowCount}
                                             />
 
                                             <NavItem

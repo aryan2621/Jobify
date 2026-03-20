@@ -20,30 +20,57 @@ export const JobDetail = ({ job }: {
 }) => {
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null);
+    const [hasApplied, setHasApplied] = useState(false);
     const [fetching, setFetching] = useState(false);
     const [currentTab, setCurrentTab] = useState('description');
     useEffect(() => {
         if (!job)
             return;
-        const fetchUser = async () => {
+        let cancelled = false;
+        const load = async () => {
             try {
-                const res = (await ky.get('/api/me').json()) as User;
-                setUser(new User(res.id, res.firstName, res.lastName, res.username, res.email, res.password, res.confirmPassword, res.createdAt, res.jobs, res.applications, res.tnC, res.workflows));
+                setFetching(true);
+                const res = (await ky.get('/api/me').json()) as {
+                    id: string;
+                    firstName: string;
+                    lastName: string;
+                    username: string;
+                    email: string;
+                    createdAt?: string;
+                };
+                if (cancelled)
+                    return;
+                setUser(
+                    new User(
+                        res.id,
+                        res.firstName,
+                        res.lastName,
+                        res.username,
+                        res.email,
+                        '',
+                        '',
+                        res.createdAt ?? ''
+                    )
+                );
+                const { applied } = await ky.get(`/api/applications/check?jobId=${encodeURIComponent(job.id)}`).json<{ applied: boolean }>();
+                if (!cancelled)
+                    setHasApplied(applied);
             }
-            catch (error) {
-                console.error('Error fetching user:', error);
-                toast({
-                    title: 'Error',
-                    description: 'Failed to load user information.',
-                    variant: 'destructive',
-                });
+            catch {
+                if (!cancelled) {
+                    setUser(null);
+                    setHasApplied(false);
+                }
             }
             finally {
-                setFetching(false);
+                if (!cancelled)
+                    setFetching(false);
             }
         };
-        setFetching(true);
-        fetchUser();
+        load();
+        return () => {
+            cancelled = true;
+        };
     }, [job]);
     if (!job) {
         return (<Card className='h-full flex items-center justify-center bg-muted/10'>
@@ -57,7 +84,7 @@ export const JobDetail = ({ job }: {
             </Card>);
     }
     const daysRemaining = getDaysRemaining(job.lastDateToApply);
-    const isAlreadyApplied = user?.applications.some((app) => job.applications.includes(app));
+    const isAlreadyApplied = hasApplied;
     const isOwner = job.createdBy === user?.id;
     const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/jobs?jobId=${job.id}` : '';
     const shareTitle = `${job.profile} at ${job.company ?? 'Company'}`;

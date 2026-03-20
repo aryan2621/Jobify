@@ -32,8 +32,6 @@ export class Job {
     createdAt: string;
     state: JobState;
     createdBy: string;
-    applications: string[];
-    
     workflowId?: string;
 
     constructor(
@@ -51,7 +49,6 @@ export class Job {
         createdAt: string,
         state: JobState,
         createdBy: string,
-        applications: string[],
         workflowId?: string
     ) {
         this.id = id;
@@ -68,7 +65,6 @@ export class Job {
         this.createdAt = createdAt;
         this.state = state;
         this.createdBy = createdBy;
-        this.applications = applications;
         this.workflowId = workflowId;
     }
 }

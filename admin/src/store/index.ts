@@ -29,11 +29,9 @@ export const userStore = create<Auth>()(
                             lastName: user.lastName,
                             username: user.username,
                             email: user.email,
-                            applications: user.applications,
-                            jobs: user.jobs ?? [],
-                            workflows: user.workflows ?? [],
+                            jobCount: user.jobCount ?? 0,
+                            workflowCount: user.workflowCount ?? 0,
                             createdAt: user.createdAt ?? '',
-                            tnC: user.tnC ?? false,
                             avatarUrl: user.avatarUrl ?? null,
                         },
                     });

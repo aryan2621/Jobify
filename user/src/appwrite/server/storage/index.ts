@@ -3,22 +3,7 @@ import { Permission, Role } from 'node-appwrite';
 import { createHash } from 'crypto';
 import { storage } from '../config';
 import { v4 as uuidv4 } from 'uuid';
-const RESUME_BUCKET_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'];
-async function getOrCreateStorage() {
-    try {
-        await Promise.all([storage.getBucket(RESUME_BUCKET)]);
-    }
-    catch (error) {
-        try {
-            await Promise.all([
-                storage.createBucket(RESUME_BUCKET, RESUME_BUCKET, [Permission.read(Role.any()), Permission.write(Role.any()), Permission.delete(Role.any()), Permission.update(Role.any())], false, undefined, undefined, RESUME_BUCKET_EXTENSIONS),
-            ]);
-        }
-        catch (error) {
-            console.log('Error creating storage buckets', error);
-        }
-    }
-}
+
 function getAvatarViewUrl(fileId: string): string {
     const endpoint = process.env.NEXT_PUBLIC_APPWRITE_URL?.replace(/\/v1$/, '') || '';
     const project = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || '';
@@ -106,4 +91,4 @@ async function getResumeFromBucket(fileId: string) {
         throw error;
     }
 }
-export { getOrCreateStorage, uploadResume, getResume, getResumeFromBucket, uploadResumeToBucket, uploadAvatar, getAvatarViewUrl };
+export { uploadResume, getResume, getResumeFromBucket, uploadResumeToBucket, uploadAvatar, getAvatarViewUrl };

@@ -1,44 +1,7 @@
-import { IndexType, Permission, Role } from 'node-appwrite';
 import { DB_NAME, SETTINGS_COLLECTION } from '../../name';
 import { database } from '../config';
 import { Settings, ServiceProvider } from '@/model/settings';
 import { Query } from 'appwrite';
-
-function createSettingsCollection() {
-    database
-        .createCollection(DB_NAME, SETTINGS_COLLECTION, SETTINGS_COLLECTION, [
-            Permission.read(Role.any()),
-            Permission.write(Role.any()),
-            Permission.delete(Role.any()),
-            Permission.update(Role.any()),
-        ])
-        .then(() => {
-            return Promise.all([
-                database.createStringAttribute(DB_NAME, SETTINGS_COLLECTION, 'id', 50, true),
-                database.createStringAttribute(DB_NAME, SETTINGS_COLLECTION, 'userId', 50, true),
-                database.createEnumAttribute(DB_NAME, SETTINGS_COLLECTION, 'provider', [ServiceProvider.GMAIL, ServiceProvider.GOOGLE_CALENDAR], true),
-                database.createStringAttribute(DB_NAME, SETTINGS_COLLECTION, 'accessToken', 500, false),
-                database.createStringAttribute(DB_NAME, SETTINGS_COLLECTION, 'email', 50, true),
-                database.createStringAttribute(DB_NAME, SETTINGS_COLLECTION, 'refreshToken', 500, false),
-                database.createDatetimeAttribute(DB_NAME, SETTINGS_COLLECTION, 'createdAt', true),
-                database.createDatetimeAttribute(DB_NAME, SETTINGS_COLLECTION, 'updatedAt', true),
-            ]);
-        })
-        .catch((error) => {
-            console.log('Error creating email settings attributes', error);
-            throw error;
-        })
-        .then(() => {
-            return Promise.all([
-                database.createIndex(DB_NAME, SETTINGS_COLLECTION, 'id', IndexType.Fulltext, ['id'], ['ASC']),
-                database.createIndex(DB_NAME, SETTINGS_COLLECTION, 'userId', IndexType.Fulltext, ['userId'], ['ASC']),
-            ]);
-        })
-        .catch((error) => {
-            console.log('Error creating indexes of email settings collection', error);
-            throw error;
-        });
-}
 
 async function createSettingsDocument(settings: Settings) {
     try {
@@ -61,7 +24,9 @@ async function createSettingsDocument(settings: Settings) {
 async function fetchSettingsByUserId(userId: string, provider?: ServiceProvider) {
     try {
         const queries = [Query.equal('userId', userId)];
-        if (provider) {
+        if (provider === ServiceProvider.GOOGLE_CALENDAR) {
+            queries.push(Query.equal('provider', ServiceProvider.GOOGLE_CALENDAR));
+        } else if (provider) {
             queries.push(Query.equal('provider', provider));
         }
         const records = await database.listDocuments(DB_NAME, SETTINGS_COLLECTION, queries);
@@ -85,7 +50,12 @@ async function fetchSettingsByUserId(userId: string, provider?: ServiceProvider)
 }
 async function fetchSettingsByUserIdPrivate(userId: string, provider: ServiceProvider = ServiceProvider.GMAIL) {
     try {
-        const queries = [Query.equal('userId', userId), Query.equal('provider', provider)];
+        const queries = [Query.equal('userId', userId)];
+        if (provider === ServiceProvider.GOOGLE_CALENDAR) {
+            queries.push(Query.equal('provider', ServiceProvider.GOOGLE_CALENDAR));
+        } else {
+            queries.push(Query.equal('provider', provider));
+        }
         const records = await database.listDocuments(DB_NAME, SETTINGS_COLLECTION, queries);
         if (records.documents.length > 0) {
             return {
@@ -115,4 +85,4 @@ async function updateSettings(settings: Settings) {
     }
 }
 
-export { createSettingsCollection, createSettingsDocument, fetchSettingsByUserId, updateSettings, fetchSettingsByUserIdPrivate };
+export { createSettingsDocument, fetchSettingsByUserId, updateSettings, fetchSettingsByUserIdPrivate };

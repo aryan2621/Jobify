@@ -1,65 +1,8 @@
-import { IndexType, Permission, Role } from 'node-appwrite';
-import { Job, JobState, JobType, WorkplaceTypes } from '@/model/job';
+import { Job } from '@/model/job';
 import { database } from '../config';
 import { DB_NAME, JOB_COLLECTION } from '@/appwrite/name';
 import { Query } from 'appwrite';
 
-function createJobCollection() {
-    database
-        .createCollection(DB_NAME, JOB_COLLECTION, JOB_COLLECTION, [
-            Permission.read(Role.any()),
-            Permission.write(Role.any()),
-            Permission.delete(Role.any()),
-            Permission.update(Role.any()),
-        ])
-        .then(() => {
-            return Promise.all([
-                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'id', 50, true),
-                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'profile', 50, true),
-                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'description', 200, false),
-                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'company', 20, true),
-                database.createEnumAttribute(DB_NAME, JOB_COLLECTION, 'state', [JobState.DRAFT, JobState.PUBLISHED, JobState.CLOSED], true),
-                database.createEnumAttribute(
-                    DB_NAME,
-                    JOB_COLLECTION,
-                    'type',
-                    [JobType.FULL_TIME, JobType.PART_TIME, JobType.INTERNSHIP, JobType.CONTRACT, JobType.FREELANCE, JobType.TEMPORARY],
-                    true
-                ),
-                database.createEnumAttribute(
-                    DB_NAME,
-                    JOB_COLLECTION,
-                    'workplaceType',
-                    [WorkplaceTypes.REMOTE, WorkplaceTypes.HYBRID, WorkplaceTypes.ONSITE],
-                    true
-                ),
-
-                database.createDatetimeAttribute(DB_NAME, JOB_COLLECTION, 'lastDateToApply', true),
-                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'location', 50, true),
-                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'skills', 200, true),
-                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'rejectionContent', 300, true),
-                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'selectionContent', 300, true),
-                database.createDatetimeAttribute(DB_NAME, JOB_COLLECTION, 'createdAt', true),
-                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'createdBy', 50, true),
-                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'applications', 200, false, undefined, true),
-                database.createStringAttribute(DB_NAME, JOB_COLLECTION, 'workflowId', 50, false),
-            ]);
-        })
-        .catch((error) => {
-            console.log('Error creating user attributes of job collection', error);
-            throw error;
-        })
-        .then(() => {
-            return Promise.all([
-                database.createIndex(DB_NAME, JOB_COLLECTION, 'id', IndexType.Fulltext, ['id'], ['ASC']),
-                database.createIndex(DB_NAME, JOB_COLLECTION, 'createdBy', IndexType.Fulltext, ['createdBy'], ['ASC']),
-            ]);
-        })
-        .catch((error) => {
-            console.log('Error creating indexes of job collection', error);
-            throw error;
-        });
-}
 async function createJobDocument(job: Job) {
     try {
         return await database.createDocument(DB_NAME, JOB_COLLECTION, job.id, {
@@ -77,7 +20,6 @@ async function createJobDocument(job: Job) {
             createdAt: job.createdAt,
             state: job.state,
             createdBy: job.createdBy,
-            applications: job.applications ?? [],
             workflowId: job.workflowId ?? undefined,
         });
     } catch (error) {
@@ -91,25 +33,6 @@ async function fetchJobById(id: string) {
         return await database.getDocument(DB_NAME, JOB_COLLECTION, id);
     } catch (error) {
         console.log('Error fetching job by id', error);
-        throw error;
-    }
-}
-async function fetchAllJobs(lastId?: string | null, limit?: number | null) {
-    try {
-        const queries = [];
-        if (lastId) {
-            queries.push(Query.cursorAfter(lastId));
-        }
-        if (limit) {
-            queries.push(Query.limit(limit));
-        }
-        const posts =
-            queries.length > 0
-                ? await database.listDocuments(DB_NAME, JOB_COLLECTION, queries)
-                : await database.listDocuments(DB_NAME, JOB_COLLECTION);
-        return posts.documents;
-    } catch (error) {
-        console.log('Error fetching all jobs', error);
         throw error;
     }
 }
@@ -139,15 +62,25 @@ async function fetchJobsByUserIdPaginated(userId: string, lastId?: string | null
         throw error;
     }
 }
-async function setApplicationIdToJob(jobId: string, applicationId: string) {
+
+async function countJobsByUserId(userId: string): Promise<number> {
     try {
-        const job = await fetchJobById(jobId);
-        job.applications.push(applicationId);
-        return await database.updateDocument(DB_NAME, JOB_COLLECTION, job.id, {
-            applications: Array.from(new Set(job.applications)),
-        });
+        const posts = await database.listDocuments(DB_NAME, JOB_COLLECTION, [
+            Query.equal('createdBy', userId),
+            Query.limit(1),
+        ]);
+        return typeof posts.total === 'number' ? posts.total : posts.documents.length;
     } catch (error) {
-        console.log('Error setting application id to job', error);
+        console.log('Error counting jobs by user', error);
+        throw error;
+    }
+}
+
+async function deleteJobDocument(jobId: string) {
+    try {
+        return await database.deleteDocument(DB_NAME, JOB_COLLECTION, jobId);
+    } catch (error) {
+        console.log('Error deleting job document', error);
         throw error;
     }
 }
@@ -166,7 +99,6 @@ async function updateJobDocument(job: Job) {
             rejectionContent: job.rejectionContent,
             selectionContent: job.selectionContent,
             state: job.state,
-            applications: job.applications ?? [],
             workflowId: job.workflowId ?? undefined,
         });
     } catch (error) {
@@ -176,12 +108,11 @@ async function updateJobDocument(job: Job) {
 }
 
 export {
-    createJobCollection,
+    countJobsByUserId,
     createJobDocument,
+    deleteJobDocument,
     fetchJobById,
-    fetchAllJobs,
     fetchJobsByUserId,
     fetchJobsByUserIdPaginated,
-    setApplicationIdToJob,
     updateJobDocument,
 };

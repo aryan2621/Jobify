@@ -2,7 +2,6 @@ import { isRecognisedError, UnauthorizedError } from '@/model/error';
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { createWorkflow } from '@/appwrite/server/collections/workflow-collection';
-import { addWorkflowToUser } from '@/appwrite/server/collections/user-collection';
 import { Workflow } from '@/model/workflow';
 
 export async function POST(req: NextRequest) {
@@ -25,20 +24,16 @@ export async function POST(req: NextRequest) {
             createdAt: workflowData.createdAt || new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             createdBy: userId,
-            isTemplate: workflowData.isTemplate || false,
-            templateCategory: workflowData.templateCategory || '',
             status: workflowData.status || 'draft',
-            tags: workflowData.tags || [],
         };
 
-        const promises = [createWorkflow(workflow), addWorkflowToUser(userId, workflow.id)];
-        const result = await Promise.all(promises);
-
-        return NextResponse.json(result, { status: 200 });
+        const created = await createWorkflow(workflow);
+        return NextResponse.json(created, { status: 200 });
     } catch (error) {
         console.log('Error while saving workflow', error);
-        if (isRecognisedError(error)) {
-            return NextResponse.json({ message: error.message }, { status: error.statusCode });
+        const err = error as any;
+        if (isRecognisedError(err)) {
+            return NextResponse.json({ message: err.message }, { status: err.statusCode });
         }
         return NextResponse.json({ message: 'Error while saving workflow' }, { status: 500 });
     }

@@ -59,7 +59,6 @@ const JobTableRow = ({
 }) => {
     const daysRemaining = getDaysRemaining(job.lastDateToApply);
     const isExpired = daysRemaining <= 0;
-    const applicationsCount = job.applications.length;
 
     return (
         <TableRow>
@@ -69,9 +68,6 @@ const JobTableRow = ({
                     <div className='text-xs text-muted-foreground flex items-center mt-0.5'>
                         <Briefcase className='h-3 w-3 mr-1 flex-shrink-0' />
                         {job.company || 'Company'} • {job.location}
-                        <span className='tabular-nums ml-1'>
-                            • {applicationsCount} {applicationsCount === 1 ? 'app' : 'apps'}
-                        </span>
                     </div>
                 </div>
             </TableCell>
@@ -171,7 +167,7 @@ export default function AdminPostsPage() {
         if (!deleteJob) return;
 
         try {
-            await ky.delete(`/api/post/${deleteJob.id}`);
+            await ky.delete(`/api/post?id=${deleteJob.id}`);
 
             setJobs(jobs.filter((job) => job.id !== deleteJob.id));
 

@@ -163,9 +163,27 @@ const ApplicationDetail = memo(({ application }: {
                 createdAt: string;
                 state: string;
                 createdBy: string;
-                applications: string[];
+                workflowId?: string;
             };
-            setJob(new Job(j.id, j.profile, j.description, j.company, j.type as Job['type'], j.workplaceType as Job['workplaceType'], j.lastDateToApply, j.location, Array.isArray(j.skills) ? j.skills : [], j.rejectionContent ?? '', j.selectionContent ?? '', j.createdAt, j.state as Job['state'], j.createdBy, Array.isArray(j.applications) ? j.applications : []));
+            setJob(
+                new Job(
+                    j.id,
+                    j.profile,
+                    j.description,
+                    j.company,
+                    j.type as Job['type'],
+                    j.workplaceType as Job['workplaceType'],
+                    j.lastDateToApply,
+                    j.location,
+                    Array.isArray(j.skills) ? j.skills : [],
+                    j.rejectionContent ?? '',
+                    j.selectionContent ?? '',
+                    j.createdAt,
+                    j.state as Job['state'],
+                    j.createdBy,
+                    j.workflowId
+                )
+            );
         })
             .catch(() => {
             if (!cancelled)
@@ -484,6 +502,7 @@ export default function ApplicationsPage() {
         searchQuery: '',
     });
     const [error, setError] = useState<string | null>(null);
+    const [applicationsFetchCompleted, setApplicationsFetchCompleted] = useState(false);
     const fetchApplications = useCallback(async () => {
         if (loadingRef.current || !hasMore)
             return;
@@ -496,7 +515,33 @@ export default function ApplicationsPage() {
             if (!Array.isArray(res)) {
                 throw new Error('Invalid response format');
             }
-            const fetchedApplications = (res ?? []).map((application: any) => new Application(application.id, application.firstName, application.lastName, application.email, application.phone, application.currentLocation, application.gender, JSON.parse(application.education), JSON.parse(application.experience), JSON.parse(application.skills), application.source, application.resume, JSON.parse(application.socialLinks), application.coverLetter, application.status, application.jobId, application.createdAt, application.createdBy));
+            const fetchedApplications = (res ?? []).map(
+                (application: any) =>
+                    new Application(
+                        application.id,
+                        application.firstName,
+                        application.lastName,
+                        application.email,
+                        application.phone,
+                        application.currentLocation,
+                        application.gender,
+                        JSON.parse(application.education),
+                        JSON.parse(application.experience),
+                        JSON.parse(application.skills),
+                        application.source,
+                        application.resume,
+                        JSON.parse(application.socialLinks),
+                        application.coverLetter,
+                        application.status,
+                        application.jobId,
+                        application.createdAt,
+                        application.createdBy,
+                        application.workflowId,
+                        application.stage,
+                        application.currentNodeId,
+                        application.workflowState ? JSON.parse(application.workflowState as string) : undefined
+                    )
+            );
             setApplications((prevApplications) => [...prevApplications, ...fetchedApplications]);
             setLastId(fetchedApplications.length ? fetchedApplications[fetchedApplications.length - 1].id : null);
             setHasMore(fetchedApplications.length === limit);
@@ -509,6 +554,7 @@ export default function ApplicationsPage() {
             setError('Failed to fetch applications. Please try again.');
         }
         finally {
+            setApplicationsFetchCompleted(true);
             setLoading(false);
             loadingRef.current = false;
         }
@@ -686,13 +732,19 @@ export default function ApplicationsPage() {
                                 <CardHeader className='py-3 px-4 border-b'>
                                     <div className='flex items-center justify-between'>
                                         <CardTitle className='text-base'>
-                                            {filterOptions.status !== 'all'
-            ? `${filterOptions.status} Applications (${filteredAndSortedApplications.length})`
-            : `All Applications (${filteredAndSortedApplications.length})`}
+                                            {applicationsFetchCompleted
+                                                ? filterOptions.status !== 'all'
+                                                    ? `${filterOptions.status} Applications (${filteredAndSortedApplications.length})`
+                                                    : `All Applications (${filteredAndSortedApplications.length})`
+                                                : filterOptions.status !== 'all'
+                                                  ? `${filterOptions.status} Applications`
+                                                  : 'All Applications'}
                                         </CardTitle>
-                                        {applications.length > 0 && (<Badge variant='outline'>
+                                        {applicationsFetchCompleted && applications.length > 0 && (
+                                            <Badge variant='outline'>
                                                 {filteredAndSortedApplications.length} of {applications.length}
-                                            </Badge>)}
+                                            </Badge>
+                                        )}
                                     </div>
                                 </CardHeader>
 

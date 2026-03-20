@@ -128,7 +128,7 @@ export default function JobPostForm({ initialData, isEditMode = false, onSuccess
             new Date().toISOString(),
             JobState.DRAFT,
             '',
-            []
+            undefined
         );
     });
 

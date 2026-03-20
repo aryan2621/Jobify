@@ -23,7 +23,7 @@ import ProfileSettingsTab from './components/profile-settings-tab';
 import AdminDashboard from './components/admin-dashboard';
 
 export default function ProfilePage() {
-    const [profile, setProfile] = useState<Profile>(new Profile('', '', '', '', '', '', [], []));
+    const [profile, setProfile] = useState<Profile>(new Profile('', '', '', '', '', ''));
     const [submitting, setSubmitting] = useState(false);
     const [loading, setLoading] = useState(false);
     const [uploadingImage, setUploadingImage] = useState(false);
@@ -57,8 +57,6 @@ export default function ProfilePage() {
                     ...prev,
                     firstName: res.firstName,
                     lastName: res.lastName,
-                    jobs: res.jobs,
-                    applications: res.applications,
                     email: res.email,
                     username: res.username,
                 }));
@@ -87,25 +85,24 @@ export default function ProfilePage() {
             setLoadingJobs(true);
             const url = '/api/posts?limit=10';
             const res = (await ky.get(url).json()) as Job[];
-            const fetchedJobs = (res ?? []).map(
-                (job: Job) =>
-                    new Job(
-                        job.id,
-                        job.profile,
-                        job.description,
-                        job.company,
-                        job.type,
-                        job.workplaceType,
-                        job.lastDateToApply,
-                        job.location,
-                        job.skills,
-                        job.rejectionContent,
-                        job.selectionContent,
-                        job.createdAt,
-                        job.state,
-                        job.createdBy,
-                        job.applications
-                    )
+            const fetchedJobs = (res ?? []).map((job: Job & { $id?: string }) =>
+                new Job(
+                    job.id ?? job.$id ?? '',
+                    job.profile,
+                    job.description,
+                    job.company,
+                    job.type,
+                    job.workplaceType,
+                    job.lastDateToApply,
+                    job.location,
+                    job.skills,
+                    job.rejectionContent,
+                    job.selectionContent,
+                    job.createdAt,
+                    job.state,
+                    job.createdBy,
+                    job.workflowId
+                )
             );
             setPostedJobs(fetchedJobs);
         } catch (error) {

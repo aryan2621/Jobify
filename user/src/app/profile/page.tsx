@@ -14,22 +14,19 @@ import { LoadingProfileSkeleton } from '@/components/elements/profile-skeleton';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { userStore } from '@/store';
 import { LogOut, Camera, Loader2 } from 'lucide-react';
-import { Job } from '@/model/job';
 import { Application } from '@/model/application';
 import { UserSummary } from './components/summary';
 import ProfilePersonalTab from './components/profile-personal-tab';
 import ProfileSecurityTab from './components/profile-security-tab';
 import UserDashboard from './components/user-dashboard';
 function ProfilePageContent() {
-    const [profile, setProfile] = useState<Profile>(new Profile('', '', '', '', '', '', [], []));
+    const [profile, setProfile] = useState<Profile>(new Profile('', '', '', '', '', ''));
     const [submitting, setSubmitting] = useState(false);
     const [loading, setLoading] = useState(false);
     const [uploadingImage, setUploadingImage] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState('personal');
-    const [postedJobs, setPostedJobs] = useState<Job[]>([]);
     const [applications, setApplications] = useState<Application[]>([]);
-    const [loadingJobs, setLoadingJobs] = useState(false);
     const [loadingApplications, setLoadingApplications] = useState(false);
     const avatarInputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
@@ -39,13 +36,11 @@ function ProfilePageContent() {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const res = (await ky.get('/api/me').json()) as User;
+                const res = (await ky.get('/api/me').json()) as Pick<User, 'firstName' | 'lastName' | 'email' | 'username'>;
                 setProfile((prev) => ({
                     ...prev,
                     firstName: res.firstName,
                     lastName: res.lastName,
-                    jobs: res.jobs,
-                    applications: res.applications,
                     email: res.email,
                     username: res.username,
                 }));
@@ -74,32 +69,38 @@ function ProfilePageContent() {
             setActiveTab(tab);
         }
     }, [searchParams]);
-    const fetchJobs = async () => {
-        try {
-            setLoadingJobs(true);
-            const url = '/api/posts?limit=10';
-            const res = (await ky.get(url).json()) as Job[];
-            const fetchedJobs = (res ?? []).map((job: Job) => new Job(job.id, job.profile, job.description, job.company, job.type, job.workplaceType, job.lastDateToApply, job.location, job.skills, job.rejectionContent, job.selectionContent, job.createdAt, job.state, job.createdBy, job.applications));
-            setPostedJobs(fetchedJobs);
-        }
-        catch (error) {
-            console.error('Error fetching jobs:', error);
-            toast({
-                title: 'Error',
-                description: 'Failed to load job listings',
-                variant: 'destructive',
-            });
-        }
-        finally {
-            setLoadingJobs(false);
-        }
-    };
     const fetchApplications = async () => {
         try {
             setLoadingApplications(true);
             const url = '/api/user-applications?limit=10';
             const res = (await ky.get(url).json()) as any[];
-            const fetchedApplications = (res ?? []).map((application: any) => new Application(application.id, application.firstName, application.lastName, application.email, application.phone, application.currentLocation, application.gender, JSON.parse(application.education), JSON.parse(application.experience), JSON.parse(application.skills), application.source, application.resume, JSON.parse(application.socialLinks), application.coverLetter, application.status, application.jobId, application.createdAt, application.createdBy));
+            const fetchedApplications = (res ?? []).map(
+                (application: any) =>
+                    new Application(
+                        application.id,
+                        application.firstName,
+                        application.lastName,
+                        application.email,
+                        application.phone,
+                        application.currentLocation,
+                        application.gender,
+                        JSON.parse(application.education),
+                        JSON.parse(application.experience),
+                        JSON.parse(application.skills),
+                        application.source,
+                        application.resume,
+                        JSON.parse(application.socialLinks),
+                        application.coverLetter,
+                        application.status,
+                        application.jobId,
+                        application.createdAt,
+                        application.createdBy,
+                        application.workflowId,
+                        application.stage,
+                        application.currentNodeId,
+                        application.workflowState ? JSON.parse(application.workflowState as string) : undefined
+                    )
+            );
             setApplications(fetchedApplications);
         }
         catch (error) {
@@ -256,7 +257,7 @@ function ProfilePageContent() {
                                         <CardTitle>Account Summary</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <UserSummary applications={applications}/>
+                                        <UserSummary applications={applications} loading={loadingApplications}/>
                                     </CardContent>
                                 </Card>
                             </div>

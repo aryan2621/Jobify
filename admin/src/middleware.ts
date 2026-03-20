@@ -1,11 +1,9 @@
-import getOrCreateDatabase from '@/appwrite/server/database';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
 export async function middleware(request: NextRequest) {
     const path = request.nextUrl.pathname?.toLowerCase();
-    await Promise.all([getOrCreateDatabase()]);
 
     const publicPaths = ['/login', '/signup', '/forgot-password', '/reset-password'];
     const isPublicPath = publicPaths.includes(path);

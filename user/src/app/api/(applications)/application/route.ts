@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-import { setApplicationToUser } from '@/appwrite/server/collections/user-collection';
 import { Application } from '@/model/application';
-import { fetchJobById, setApplicationIdToJob } from '@/appwrite/server/collections/job-collection';
+import { fetchJobById } from '@/appwrite/server/collections/job-collection';
 import { createApplicationDocument, fetchApplicationById, updateApplicationStatus, hasApplicationByUserAndJob } from '@/appwrite/server/collections/application-collection';
 import { isRecognisedError, NotFoundError, UnauthorizedError, ForbiddenError } from '@/model/error';
 export async function POST(req: NextRequest) {
@@ -29,7 +28,12 @@ export async function POST(req: NextRequest) {
         if (alreadyApplied) {
             throw new UnauthorizedError('You have already applied to this job');
         }
-        await Promise.all([setApplicationToUser(id, body.id), setApplicationIdToJob(body.jobId, body.id), createApplicationDocument(body)]);
+        const workflowId = (job as { workflowId?: string }).workflowId;
+        if (workflowId) {
+            body.workflowId = workflowId;
+            body.stage = 'applied';
+        }
+        await createApplicationDocument(body);
         return NextResponse.json({ message: 'Application posted successfully' }, { status: 201 });
     }
     catch (error: any) {

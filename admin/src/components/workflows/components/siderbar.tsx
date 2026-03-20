@@ -242,9 +242,6 @@ export default function Sidebar({ nodes, edges, workflowId }: SidebarProps) {
             nodes,
             edges,
             status: 'draft' as const,
-            isTemplate: false,
-            templateCategory: '',
-            tags: [] as string[],
         };
         try {
             if (workflowId) {

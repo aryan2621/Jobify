@@ -1,7 +1,6 @@
 export enum ServiceProvider {
     GMAIL = 'gmail',
-    /** Value must match Appwrite settings.provider enum (currently "calender" in DB). */
-    GOOGLE_CALENDAR = 'calender',
+    GOOGLE_CALENDAR = 'calendar',
 }
 
 export class Settings {

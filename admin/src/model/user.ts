@@ -7,12 +7,10 @@ export class User {
     password: string;
     confirmPassword: string;
     createdAt: string;
-    jobs: string[];
-    applications: string[];
-    tnC: boolean;
-    workflows: string[];
+    jobCount: number;
+    workflowCount: number;
     avatarFileId?: string;
-    
+
     avatarUrl?: string | null;
     constructor(
         id: string,
@@ -23,10 +21,8 @@ export class User {
         password: string,
         confirmPassword: string,
         createdAt: string,
-        jobs: string[],
-        applications: string[],
-        tnC: boolean,
-        workflows: string[]
+        jobCount = 0,
+        workflowCount = 0
     ) {
         this.id = id;
         this.firstName = firstName;
@@ -35,11 +31,9 @@ export class User {
         this.email = email;
         this.password = password;
         this.createdAt = createdAt;
-        this.jobs = jobs;
-        this.applications = applications;
         this.confirmPassword = confirmPassword;
-        this.tnC = tnC;
-        this.workflows = workflows;
+        this.jobCount = jobCount;
+        this.workflowCount = workflowCount;
     }
 }
 
@@ -50,8 +44,6 @@ export class Profile {
     confirmPassword: string;
     email: string;
     username: string;
-    jobs: string[] = [];
-    applications: string[] = [];
 
     constructor(
         firstName: string,
@@ -59,9 +51,7 @@ export class Profile {
         password: string,
         confirmPassword: string,
         email: string,
-        username: string,
-        jobs: string[],
-        applications: string[]
+        username: string
     ) {
         this.firstName = firstName;
         this.lastName = lastName;
@@ -69,7 +59,5 @@ export class Profile {
         this.confirmPassword = confirmPassword;
         this.email = email;
         this.username = username;
-        this.jobs = jobs;
-        this.applications = applications;
     }
 }

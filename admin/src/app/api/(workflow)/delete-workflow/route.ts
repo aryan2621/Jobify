@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { deleteWorkflow } from '@/appwrite/server/collections/workflow-collection';
-import { deleteWorkflowFromUser, fetchUserByUserId, updateUser } from '@/appwrite/server/collections/user-collection';
+import { deleteWorkflow, getWorkflowById } from '@/appwrite/server/collections/workflow-collection';
 import { NotFoundError, UnauthorizedError } from '@/model/error';
 import jwt from 'jsonwebtoken';
 
@@ -12,22 +11,22 @@ export async function GET(req: NextRequest) {
         }
 
         const details = jwt.verify(token.value, process.env.JWT_SECRET!);
-        const userId = (details as any).id;
+        const userId = (details as { id: string }).id;
 
         const workflowId = req.nextUrl.searchParams.get('workflowId');
 
         if (!workflowId) {
             return NextResponse.json({ error: 'Workflow ID is required' }, { status: 400 });
         }
-        const user = await fetchUserByUserId(userId);
-        if (!user) {
-            throw new NotFoundError('User not found');
+        const workflow = await getWorkflowById(workflowId);
+        if (!workflow) {
+            throw new NotFoundError('Workflow not found');
         }
-        if (!user.workflows || !user.workflows.includes(workflowId)) {
+        const ownerId = (workflow as { createdBy?: string }).createdBy;
+        if (ownerId !== userId) {
             throw new UnauthorizedError('Unauthorized to delete this workflow');
         }
-        const promises = [deleteWorkflow(workflowId), deleteWorkflowFromUser(userId, workflowId)];
-        await Promise.all(promises);
+        await deleteWorkflow(workflowId);
         return NextResponse.json({ message: 'Workflow deleted successfully' }, { status: 200 });
     } catch (error) {
         console.error('Error deleting workflow:', error);

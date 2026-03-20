@@ -28,9 +28,10 @@ export const useDebounce = (cb: () => void, delay: number) => {
     return debouncedFunction;
 };
 
-export const mapJobResponse = (job: Job) =>
-    new Job(
-        job.id,
+export const mapJobResponse = (job: Job & { $id?: string }) => {
+    const id = job.id ?? job.$id ?? '';
+    return new Job(
+        id,
         job.profile,
         job.description,
         job.company,
@@ -44,5 +45,6 @@ export const mapJobResponse = (job: Job) =>
         job.createdAt,
         job.state,
         job.createdBy,
-        job.applications
+        job.workflowId
     );
+};

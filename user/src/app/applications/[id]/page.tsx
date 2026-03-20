@@ -31,7 +31,30 @@ export default function UserApplicationDetailPage({ params }: {
         try {
             setLoading(true);
             const response = (await ky.get(`/api/application?id=${id}`).json()) as any;
-            const app = new Application(response.id, response.firstName, response.lastName, response.email, response.phone, response.currentLocation, response.gender, JSON.parse(response.education), JSON.parse(response.experience), JSON.parse(response.skills), response.source, response.resume, JSON.parse(response.socialLinks), response.coverLetter, response.status, response.jobId, response.createdAt, response.createdBy);
+            const app = new Application(
+                response.id,
+                response.firstName,
+                response.lastName,
+                response.email,
+                response.phone,
+                response.currentLocation,
+                response.gender,
+                JSON.parse(response.education),
+                JSON.parse(response.experience),
+                JSON.parse(response.skills),
+                response.source,
+                response.resume,
+                JSON.parse(response.socialLinks),
+                response.coverLetter,
+                response.status,
+                response.jobId,
+                response.createdAt,
+                response.createdBy,
+                response.workflowId,
+                response.stage,
+                response.currentNodeId,
+                response.workflowState ? JSON.parse(response.workflowState as string) : undefined
+            );
             setApplication(app);
             fetchJob(response.jobId);
         }
@@ -44,7 +67,25 @@ export default function UserApplicationDetailPage({ params }: {
     const fetchJob = async (jobId: string) => {
         try {
             const response = (await ky.get(`/api/post?id=${jobId}`).json()) as Job;
-            setJob(new Job(response.id, response.profile, response.description, response.company, response.type, response.workplaceType, response.lastDateToApply, response.location, response.skills, response.rejectionContent, response.selectionContent, response.createdAt, response.state, response.createdBy, response.applications));
+            setJob(
+                new Job(
+                    response.id,
+                    response.profile,
+                    response.description,
+                    response.company,
+                    response.type,
+                    response.workplaceType,
+                    response.lastDateToApply,
+                    response.location,
+                    response.skills,
+                    response.rejectionContent,
+                    response.selectionContent,
+                    response.createdAt,
+                    response.state,
+                    response.createdBy,
+                    response.workflowId
+                )
+            );
         }
         catch (error) {
             console.error('Error fetching job:', error);

@@ -23,7 +23,8 @@ export async function GET(req: NextRequest) {
         }
 
         const jobs = await fetchJobsByUserIdPaginated(userId, lastId, parsedLimit);
-        return NextResponse.json(jobs, { status: 200 });
+        const normalized = jobs.map((doc) => ({ ...doc, id: (doc.$id ?? doc.id) as string }));
+        return NextResponse.json(normalized, { status: 200 });
     } catch (error) {
         console.log('Error while fetching jobs', error);
         if (isRecognisedError(error)) {

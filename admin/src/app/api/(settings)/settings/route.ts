@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
         const records = await database.listDocuments(DB_NAME, SETTINGS_COLLECTION, queries);
         
         const gmailConnected = records.documents.some(doc => doc.provider === ServiceProvider.GMAIL);
-        const calendarConnected = records.documents.some(doc => doc.provider === ServiceProvider.GOOGLE_CALENDAR);
+        const calendarConnected = records.documents.some((doc) => doc.provider === ServiceProvider.GOOGLE_CALENDAR);
         
         return NextResponse.json(
             { 

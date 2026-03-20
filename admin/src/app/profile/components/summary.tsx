@@ -12,7 +12,6 @@ interface AdminSummaryProps {
 
 export function AdminSummary({ jobs }: AdminSummaryProps) {
     const activeJobs = jobs.filter((job) => new Date(job.lastDateToApply) > new Date()).length;
-    const totalApplicants = jobs.reduce((total, job) => total + job.applications.length, 0);
 
     return (
         <>
@@ -20,13 +19,6 @@ export function AdminSummary({ jobs }: AdminSummaryProps) {
                 <div className='flex justify-between'>
                     <span className='text-sm text-muted-foreground'>Jobs Posted</span>
                     <span className='text-sm font-medium'>{jobs.length}</span>
-                </div>
-
-                <Separator />
-
-                <div className='flex justify-between'>
-                    <span className='text-sm text-muted-foreground'>Total Applicants</span>
-                    <span className='text-sm font-medium'>{totalApplicants}</span>
                 </div>
 
                 <Separator />
@@ -48,9 +40,10 @@ export function AdminSummary({ jobs }: AdminSummaryProps) {
 
 interface UserSummaryProps {
     applications: Application[];
+    loading?: boolean;
 }
 
-export function UserSummary({ applications }: UserSummaryProps) {
+export function UserSummary({ applications, loading = false }: UserSummaryProps) {
     const inProgressCount = applications.filter((app) => app.status === ApplicationStatus.APPLIED).length;
     const successRate =
         applications.length > 0
@@ -62,21 +55,21 @@ export function UserSummary({ applications }: UserSummaryProps) {
             <div className='space-y-4'>
                 <div className='flex justify-between'>
                     <span className='text-sm text-muted-foreground'>Applications Submitted</span>
-                    <span className='text-sm font-medium'>{applications.length}</span>
+                    <span className='text-sm font-medium'>{loading ? '—' : applications.length}</span>
                 </div>
 
                 <Separator />
 
                 <div className='flex justify-between'>
                     <span className='text-sm text-muted-foreground'>In Progress</span>
-                    <span className='text-sm font-medium'>{inProgressCount}</span>
+                    <span className='text-sm font-medium'>{loading ? '—' : inProgressCount}</span>
                 </div>
 
                 <Separator />
 
                 <div className='flex justify-between'>
                     <span className='text-sm text-muted-foreground'>Success Rate</span>
-                    <span className='text-sm font-medium'>{successRate}%</span>
+                    <span className='text-sm font-medium'>{loading ? '—' : `${successRate}%`}</span>
                 </div>
             </div>
 

@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchApplicationById } from '@/appwrite/server/collections/application-collection';
-import { updateApplicationWorkflowState } from '@/appwrite/server/collections/application-collection';
-
+import { fetchApplicationById, updateApplicationWorkflowState } from '@/appwrite/server/collections/application-collection';
 
 export async function POST(req: NextRequest) {
     try {
+        if (!process.env.WEBHOOK_SECRET) {
+            return NextResponse.json({ error: 'Webhook not configured' }, { status: 503 });
+        }
+        const secret = req.headers.get('x-webhook-secret');
+        if (secret !== process.env.WEBHOOK_SECRET) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const body = await req.json();
         const applicationId = body.applicationId as string | undefined;
         const assignmentNodeId = body.assignmentNodeId as string | undefined;
 
         if (!applicationId?.trim()) {
             return NextResponse.json({ error: 'applicationId is required' }, { status: 400 });
-        }
-
-        const secret = req.headers.get('x-webhook-secret');
-        if (process.env.WEBHOOK_SECRET && secret !== process.env.WEBHOOK_SECRET) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         const application = await fetchApplicationById(applicationId);

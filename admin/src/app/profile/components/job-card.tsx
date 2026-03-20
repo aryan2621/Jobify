@@ -4,8 +4,6 @@ import { Job } from "@/model/job";
 import { MapPin, Calendar, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-
     
 interface JobCardProps {
     job: Job;
@@ -44,18 +42,6 @@ const JobCard = ({ job, isPosted = false }: JobCardProps) => {
                         </Button>
                     </Link>
                 </div>
-
-                {isPosted && (
-                    <div className='mt-3 pt-3 border-t'>
-                        <div className='flex justify-between items-center text-xs'>
-                            <span>Applications</span>
-                            <span className='font-medium'>
-                                {job.applications?.length || 12}/{50}
-                            </span>
-                        </div>
-                        <Progress value={((job.applications?.length || 12) / 50) * 100} className='h-1.5 mt-1' />
-                    </div>
-                )}
             </CardContent>
         </Card>
     );

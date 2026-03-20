@@ -11,7 +11,8 @@ export async function POST(req: NextRequest) {
             throw new UnauthorizedError('You are not authorized to perform this action');
         }
 
-        jwt.verify(token.value, process.env.JWT_SECRET!);
+        const payload = jwt.verify(token.value, process.env.JWT_SECRET!) as { id: string };
+        const userId = payload.id;
         const workflowData = await req.json();
 
         if (!workflowData.id) {
@@ -21,6 +22,10 @@ export async function POST(req: NextRequest) {
         const existing = await getWorkflowById(workflowData.id);
         if (!existing) {
             return NextResponse.json({ message: 'Workflow not found' }, { status: 404 });
+        }
+        const ownerId = (existing as { createdBy?: string }).createdBy;
+        if (ownerId !== userId) {
+            throw new UnauthorizedError('You do not have access to update this workflow');
         }
 
         const workflow: Workflow = {
@@ -32,10 +37,7 @@ export async function POST(req: NextRequest) {
             createdAt: existing.createdAt,
             updatedAt: new Date().toISOString(),
             createdBy: existing.createdBy,
-            isTemplate: workflowData.isTemplate ?? existing.isTemplate ?? false,
-            templateCategory: workflowData.templateCategory ?? existing.templateCategory ?? '',
             status: workflowData.status ?? existing.status ?? 'draft',
-            tags: workflowData.tags ?? existing.tags ?? [],
         };
 
         await updateWorkflow(workflow);

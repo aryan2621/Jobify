@@ -1,6 +1,0 @@
-src/app/api/resume-score/route.ts(61,38): error TS2339: Property 'invoke' does not exist on type 'ChatOpenAI<ChatOpenAICallOptions>'.
-src/app/user/posts/page.tsx(155,33): error TS2322: Type '{ searchQuery: string; setSearchQuery: Dispatch<SetStateAction<string>>; jobType: string; setJobType: Dispatch<SetStateAction<string>>; ... 4 more ...; compact: true; }' is not assignable to type 'IntrinsicAttributes & FilterBarProps'.
-  Property 'isAdmin' does not exist on type 'IntrinsicAttributes & FilterBarProps'.
-src/appwrite/server/collections/workflow-collection.ts(2,26): error TS2307: Cannot find module '@/model/workflow' or its corresponding type declarations.
-src/lib/utils/node-factory-utils.ts(1,112): error TS2307: Cannot find module '@/model/workflow' or its corresponding type declarations.
-src/lib/utils/node-factory-utils.ts(4,47): error TS2307: Cannot find module '@/model/workflow' or its corresponding type declarations.

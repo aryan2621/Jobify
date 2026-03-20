@@ -71,25 +71,24 @@ export default function JobAnalyticsComponent() {
 
     const fetchJobs = async () => {
         const res = await ky.get('/api/posts-analytics').json();
-        const fetchedJobs = ((res as any[]) ?? []).map(
-            (job) =>
-                new Job(
-                    job.id,
-                    job.profile,
-                    job.description,
-                    job.company,
-                    job.type,
-                    job.workplaceType,
-                    job.lastDateToApply,
-                    job.location,
-                    job.skills,
-                    job.rejectionContent,
-                    job.selectionContent,
-                    job.createdAt,
-                    job.state,
-                    job.createdBy,
-                    job.applications
-                )
+        const fetchedJobs = ((res as any[]) ?? []).map((job: any) =>
+            new Job(
+                job.id ?? job.$id ?? '',
+                job.profile,
+                job.description,
+                job.company,
+                job.type,
+                job.workplaceType,
+                job.lastDateToApply,
+                job.location,
+                job.skills,
+                job.rejectionContent,
+                job.selectionContent,
+                job.createdAt,
+                job.state,
+                job.createdBy,
+                job.workflowId
+            )
         );
         setJobs(fetchedJobs);
         setFetching(false);

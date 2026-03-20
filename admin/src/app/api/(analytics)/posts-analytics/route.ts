@@ -12,7 +12,8 @@ export async function GET(req: NextRequest) {
         const user = jwt.verify(token.value, process.env.JWT_SECRET!);
         const userId = (user as { id: string }).id;
         const jobs = await fetchJobsByUserId(userId);
-        return NextResponse.json(jobs, { status: 200 });
+        const normalized = jobs.map((doc) => ({ ...doc, id: (doc.$id ?? doc.id) as string }));
+        return NextResponse.json(normalized, { status: 200 });
     } catch (error) {
         console.log('Error while fetching jobs', error);
         if (isRecognisedError(error)) {

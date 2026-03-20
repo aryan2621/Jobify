@@ -160,8 +160,6 @@ export const FilterBar = ({
                         <SelectContent>
                             <SelectItem value='newest'>Newest First</SelectItem>
                             <SelectItem value='oldest'>Oldest First</SelectItem>
-                            <SelectItem value='applicationsHigh'>Most Applications</SelectItem>
-                            <SelectItem value='applicationsLow'>Least Applications</SelectItem>
                             <SelectItem value='closing'>Closing Soon</SelectItem>
                         </SelectContent>
                     </Select>

@@ -95,16 +95,11 @@ const PricingPage = () => {
             setIsLoading(true);
             setSelectedPlan(plan);
 
-            const price = isYearly ? yearlySubscriptionPrices[plan] : subscriptionPrices[plan];
-            const planName = plan.charAt(0).toUpperCase() + plan.slice(1);
             const stripe = await stripePromise;
             const response = await ky.post('/api/checkout-session', {
                 json: {
-                    image: 'https://img.etimg.com/thumb/width-1600,height-900,imgsize-6770,resizemode-75,msid-116547755/news/international/us/solo-leveling-season-2-new-trailer-release-date-and-plot-revealed.jpg',
-                    name: planName,
-                    price,
-                    description: `${planName} Plan - ${isYearly ? 'Yearly' : 'Monthly'} Subscription`,
-                    quantity: 1,
+                    plan,
+                    billing: isYearly ? 'yearly' : 'monthly',
                 },
             });
 

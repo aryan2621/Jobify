@@ -40,7 +40,7 @@ export default function WorkflowList() {
         const loadWorkflows = async () => {
             setIsLoading(true);
             try {
-                const response = await ky.get(`/api/get-workflows?type=user`).json<any[]>();
+                const response = await ky.get('/api/get-workflows').json<any[]>();
                 setWorkflows(
                     response.map((workflow) => ({
                         id: workflow.id,
@@ -52,9 +52,6 @@ export default function WorkflowList() {
                         createdBy: workflow.createdBy,
                         nodes: JSON.parse(workflow.nodes),
                         edges: JSON.parse(workflow.edges),
-                        isTemplate: workflow.isTemplate,
-                        templateCategory: workflow.templateCategory,
-                        tags: workflow.tags,
                     }))
                 );
             } catch (error) {
@@ -274,17 +271,6 @@ export default function WorkflowList() {
                                     </p>
                                     <div className='flex flex-wrap gap-2'>
                                         <StatusBadge status={workflow.status || 'draft'} />
-                                        {workflow.isTemplate && (
-                                            <Badge variant='outline' className='bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'>
-                                                Template
-                                            </Badge>
-                                        )}
-                                        {workflow.tags &&
-                                            workflow.tags.slice(0, 2).map((tag) => (
-                                                <Badge key={tag} variant='outline' className='text-xs'>
-                                                    {tag}
-                                                </Badge>
-                                            ))}
                                     </div>
                                 </CardContent>
                                 <CardFooter className='flex justify-between pt-2'>

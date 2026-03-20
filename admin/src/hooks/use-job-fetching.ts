@@ -81,10 +81,6 @@ export const useJobFetching = (initialLimit = 10) => {
                     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
                 case 'oldest':
                     return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-                case 'applicationsHigh':
-                    return b.applications.length - a.applications.length;
-                case 'applicationsLow':
-                    return a.applications.length - b.applications.length;
                 case 'closing':
                     const getDaysRemaining = (deadline: string) => {
                         const today = new Date();

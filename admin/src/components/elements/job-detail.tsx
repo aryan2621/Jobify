@@ -1,5 +1,4 @@
 import { Job } from '@/model/job';
-import { User } from '@/model/user';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ky from 'ky';
@@ -35,7 +34,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 type JobDetailProps = { job: Job | null; applicationsHref?: string };
 
 export const JobDetail = ({ job, applicationsHref }: JobDetailProps) => {
-    const [user, setUser] = useState<User | null>(null);
+    const [sessionUserId, setSessionUserId] = useState<string | null>(null);
     const [fetching, setFetching] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
     const [currentTab, setCurrentTab] = useState('description');
@@ -44,23 +43,8 @@ export const JobDetail = ({ job, applicationsHref }: JobDetailProps) => {
         if (!job) return;
         const fetchUser = async () => {
             try {
-                const res = (await ky.get('/api/me').json()) as User;
-                setUser(
-                    new User(
-                        res.id,
-                        res.firstName,
-                        res.lastName,
-                        res.username,
-                        res.email,
-                        res.password ?? '',
-                        res.confirmPassword ?? '',
-                        res.createdAt,
-                        res.jobs,
-                        res.applications,
-                        res.tnC,
-                        res.workflows
-                    )
-                );
+                const res = (await ky.get('/api/me').json()) as { id: string };
+                setSessionUserId(res.id);
             } catch (error) {
                 console.error('Error fetching user:', error);
                 toast({
@@ -91,8 +75,7 @@ export const JobDetail = ({ job, applicationsHref }: JobDetailProps) => {
     }
 
     const daysRemaining = getDaysRemaining(job.lastDateToApply);
-    const isAlreadyApplied = user?.applications.some((app) => job.applications.includes(app));
-    const isOwner = job.createdBy === user?.id;
+    const isOwner = job.createdBy === sessionUserId;
 
     const handleSaveJob = () => {
         setIsSaved(!isSaved);
@@ -388,7 +371,7 @@ export const JobDetail = ({ job, applicationsHref }: JobDetailProps) => {
                             <Button className='w-full' asChild>
                                 <Link href={applicationsHref} className='w-full flex items-center justify-center'>
                                     <Users className='h-5 w-5 mr-2' />
-                                    Go to applications ({job.applications.length})
+                                    Go to applications
                                 </Link>
                             </Button>
                         ) : (
@@ -396,7 +379,7 @@ export const JobDetail = ({ job, applicationsHref }: JobDetailProps) => {
                                 {isOwner ? (
                                     <Link href={`/applications/${job.id}`} className='w-full flex items-center justify-center'>
                                         <Users className='h-5 w-5 mr-2' />
-                                        View Applications ({job.applications.length})
+                                        View Applications
                                     </Link>
                                 ) : (
                                     <div className='flex items-center justify-center'>

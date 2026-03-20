@@ -29,7 +29,6 @@ export async function POST(request: NextRequest) {
             lastName: user.lastName,
             username: user.username,
             email: user.email,
-            applications: user.applications,
         };
         const response = NextResponse.json(responseUser, { status: 200 });
         response.cookies.set('token', token, {

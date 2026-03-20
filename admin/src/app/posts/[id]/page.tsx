@@ -31,23 +31,24 @@ export default function EditJobPostPage({ params }: { params: { id: string } }) 
             setLoading(true);
             const response = (await ky.get(`/api/post?id=${id}`).json()) as Job;
 
+            const r = response as Job & { $id?: string };
             setJob(
                 new Job(
-                    response.id,
-                    response.profile,
-                    response.description,
-                    response.company,
-                    response.type,
-                    response.workplaceType,
-                    response.lastDateToApply,
-                    response.location,
-                    response.skills,
-                    response.rejectionContent,
-                    response.selectionContent,
-                    response.createdAt,
-                    response.state,
-                    response.createdBy,
-                    response.applications
+                    r.id ?? r.$id ?? '',
+                    r.profile,
+                    r.description,
+                    r.company,
+                    r.type,
+                    r.workplaceType,
+                    r.lastDateToApply,
+                    r.location,
+                    r.skills,
+                    r.rejectionContent,
+                    r.selectionContent,
+                    r.createdAt,
+                    r.state,
+                    r.createdBy,
+                    r.workflowId
                 )
             );
         } catch (error) {
@@ -185,15 +186,10 @@ export default function EditJobPostPage({ params }: { params: { id: string } }) 
                         <Card>
                             <CardHeader>
                                 <CardTitle>Job Statistics</CardTitle>
-                                <CardDescription>Current application status</CardDescription>
+                                <CardDescription>Posting details</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div className='space-y-4'>
-                                    <div className='flex justify-between items-center'>
-                                        <span className='text-sm'>Total Applications</span>
-                                        <Badge variant='secondary'>{job.applications.length}</Badge>
-                                    </div>
-                                    <Separator />
                                     <div className='flex justify-between items-center'>
                                         <span className='text-sm'>Status</span>
                                         <Badge

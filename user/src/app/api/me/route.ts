@@ -17,8 +17,19 @@ export async function GET(req: NextRequest) {
             throw new Error('You are not authorized to perform this action');
         }
         const avatarUrl = dbUser.avatarFileId ? getAvatarViewUrl(dbUser.avatarFileId) : null;
-        const { ...rest } = dbUser as Record<string, unknown>;
-        return NextResponse.json({ ...rest, avatarUrl }, { status: 200 });
+        return NextResponse.json(
+            {
+                id: dbUser.id,
+                firstName: dbUser.firstName,
+                lastName: dbUser.lastName,
+                username: dbUser.username,
+                email: dbUser.email,
+                createdAt: dbUser.createdAt,
+                avatarFileId: dbUser.avatarFileId,
+                avatarUrl,
+            },
+            { status: 200 }
+        );
     }
     catch (error) {
         console.log('Error while fetching user', error);

@@ -2,40 +2,45 @@ import { createUserDocument } from '@/appwrite/server/collections/user-collectio
 import { User } from '@/model/user';
 import { NextRequest, NextResponse } from 'next/server';
 import bcryptjs from 'bcryptjs';
-import { isRecognisedError } from '@/model/error';
+import { BadRequestError, isRecognisedError } from '@/model/error';
+import { randomUUID } from 'crypto';
 
 export async function POST(req: NextRequest) {
     try {
         const body = (await req.json()) as Record<string, unknown>;
-        const password = body.password as string;
+        const firstName = typeof body.firstName === 'string' ? body.firstName.trim() : '';
+        const lastName = typeof body.lastName === 'string' ? body.lastName.trim() : '';
+        const username = typeof body.username === 'string' ? body.username.trim() : '';
+        const email = typeof body.email === 'string' ? body.email.trim() : '';
+        const password = typeof body.password === 'string' ? body.password : '';
+
+        if (!firstName || !lastName || !username || !email || !password) {
+            throw new BadRequestError('firstName, lastName, username, email, and password are required');
+        }
         const salt = bcryptjs.genSaltSync(10);
         const hashedPassword = bcryptjs.hashSync(password, salt);
         const user = new User(
-            body.id as string,
-            body.firstName as string,
-            body.lastName as string,
-            body.username as string,
-            body.email as string,
+            randomUUID(),
+            firstName,
+            lastName,
+            username,
+            email,
             hashedPassword,
             hashedPassword,
-            (body.createdAt as string) ?? new Date().toISOString(),
-            (body.jobs as string[]) ?? [],
-            (body.applications as string[]) ?? [],
-            (body.tnC as boolean) ?? false,
-            (body.workflows as string[]) ?? []
+            new Date().toISOString(),
+            0,
+            0
         );
-        const created = (await createUserDocument(user, 'admin')) as Record<string, unknown>;
+        const created = (await createUserDocument(user)) as Record<string, unknown>;
         const responseUser = {
             id: (created.id ?? created.$id) as string,
             firstName: created.firstName,
             lastName: created.lastName,
             username: created.username,
             email: created.email,
-            applications: created.applications ?? [],
-            jobs: created.jobs ?? [],
-            workflows: created.workflows ?? [],
+            jobCount: 0,
+            workflowCount: 0,
             createdAt: created.createdAt ?? '',
-            tnC: created.tnC ?? false,
         };
         return NextResponse.json(responseUser, { status: 201 });
     } catch (error) {

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchUserByUserId, updateUser } from '@/appwrite/server/collections/user-collection';
+import { countJobsByUserId } from '@/appwrite/server/collections/job-collection';
+import { countWorkflowsByUserId } from '@/appwrite/server/collections/workflow-collection';
 import { getAvatarViewUrl } from '@/appwrite/server/storage';
 import { BadRequestError, isRecognisedError } from '@/model/error';
 import bcryptjs from 'bcryptjs';
@@ -18,17 +20,17 @@ export async function GET(req: NextRequest) {
         }
         const u = dbUser as Record<string, unknown>;
         const avatarUrl = u.avatarFileId ? getAvatarViewUrl(u.avatarFileId as string) : null;
+        const uid = (u.id ?? u.$id) as string;
+        const [jobCount, workflowCount] = await Promise.all([countJobsByUserId(uid), countWorkflowsByUserId(uid)]);
         const responseUser = {
-            id: (u.id ?? u.$id) as string,
+            id: uid,
             firstName: u.firstName,
             lastName: u.lastName,
             username: u.username,
             email: u.email,
-            applications: u.applications ?? [],
-            jobs: u.jobs ?? [],
-            workflows: u.workflows ?? [],
+            jobCount,
+            workflowCount,
             createdAt: u.createdAt ?? '',
-            tnC: u.tnC ?? false,
             avatarUrl,
         };
         return NextResponse.json(responseUser, { status: 200 });

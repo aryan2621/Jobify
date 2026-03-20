@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-    ensureAvatarFileIdAttribute,
-    fetchUserByUserId,
-    updateUser,
-} from '@/appwrite/server/collections/user-collection';
+import { fetchUserByUserId, updateUser } from '@/appwrite/server/collections/user-collection';
 import { getAvatarViewUrl, uploadAvatar } from '@/appwrite/server/storage';
 import { isRecognisedError } from '@/model/error';
 import jwt from 'jsonwebtoken';
@@ -35,17 +31,7 @@ export async function POST(req: NextRequest) {
 
         await fetchUserByUserId(userId);
         const fileId = await uploadAvatar(file, userId);
-        try {
-            await updateUser(userId, { avatarFileId: fileId });
-        } catch (err: unknown) {
-            const res = (err as { response?: { type?: string; message?: string } })?.response;
-            if (res?.type === 'document_invalid_structure' && res?.message?.includes('avatarFileId')) {
-                await ensureAvatarFileIdAttribute();
-                await updateUser(userId, { avatarFileId: fileId });
-            } else {
-                throw err;
-            }
-        }
+        await updateUser(userId, { avatarFileId: fileId });
         const avatarUrl = getAvatarViewUrl(fileId);
 
         return NextResponse.json({ avatarUrl }, { status: 200 });

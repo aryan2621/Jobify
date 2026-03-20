@@ -23,16 +23,13 @@ export const NOTIFY_TEMPLATE_VARS = ['candidate.name', 'candidate.email', 'job.t
 export interface Workflow {
     id: string;
     name: string;
-    description?: string; 
+    description?: string;
     nodes: WorkflowNode[];
-    edges: any[]; 
+    edges: any[];
     createdAt: string;
     updatedAt: string;
     createdBy: string;
-    isTemplate?: boolean;
-    templateCategory?: string;
     status?: 'draft' | 'active' | 'archived';
-    tags?: string[];
 }
 
 

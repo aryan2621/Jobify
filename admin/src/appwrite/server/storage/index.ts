@@ -4,9 +4,6 @@ import { createHash } from 'crypto';
 import { storage } from '../config';
 import { v4 as uuidv4 } from 'uuid';
 
-
-const RESUME_BUCKET_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'];
-
 function getAvatarViewUrl(fileId: string): string {
     const endpoint = process.env.NEXT_PUBLIC_APPWRITE_URL?.replace(/\/v1$/, '') || '';
     const project = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || '';
@@ -40,37 +37,6 @@ async function uploadAvatar(file: File, userId: string): Promise<string> {
     } catch (error) {
         console.log('Error uploading avatar', error);
         throw error;
-    }
-}
-
-async function getOrCreateStorage() {
-    try {
-        await Promise.all([storage.getBucket(RESUME_STORAGE), storage.getBucket(RESUME_BUCKET)]);
-    } catch (error) {
-        try {
-            await Promise.all([
-                storage.createBucket(
-                    RESUME_STORAGE,
-                    RESUME_STORAGE,
-                    [Permission.read(Role.any()), Permission.write(Role.any()), Permission.delete(Role.any()), Permission.update(Role.any())],
-                    false,
-                    undefined,
-                    undefined,
-                    ['pdf']
-                ),
-                storage.createBucket(
-                    RESUME_BUCKET,
-                    RESUME_BUCKET,
-                    [Permission.read(Role.any()), Permission.write(Role.any()), Permission.delete(Role.any()), Permission.update(Role.any())],
-                    false,
-                    undefined,
-                    undefined,
-                    RESUME_BUCKET_EXTENSIONS
-                ),
-            ]);
-        } catch (error) {
-            console.log('Error creating storage collection', error);
-        }
     }
 }
 
@@ -124,4 +90,4 @@ async function getResumeFromBucket(fileId: string) {
     }
 }
 
-export { getOrCreateStorage, uploadResume, getResume, getResumeFromBucket, uploadResumeToBucket, uploadAvatar, getAvatarViewUrl };
+export { uploadResume, getResume, getResumeFromBucket, uploadResumeToBucket, uploadAvatar, getAvatarViewUrl };

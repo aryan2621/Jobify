@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Job, JobState } from '@/model/job';
 import { createJobDocument, fetchJobById, deleteJobDocument } from '@/appwrite/server/collections/job-collection';
 import jwt from 'jsonwebtoken';
-import { setJobToUser, removeJobFromUser } from '@/appwrite/server/collections/user-collection';
 import { isRecognisedError, NotFoundError, UnauthorizedError } from '@/model/error';
 export async function POST(req: NextRequest) {
     const token = req.cookies.get('token');
@@ -13,8 +12,24 @@ export async function POST(req: NextRequest) {
         const user = jwt.verify(token.value, process.env.JWT_SECRET!);
         const id = (user as any).id;
         const body = (await req.json()) as Job;
-        const job = new Job(body.id, body.profile, body.description, body.company, body.type, body.workplaceType, body.lastDateToApply, body.location, body.skills, body.rejectionContent, body.selectionContent, body.createdAt, body.state, id, body.applications ?? []);
-        await Promise.all([createJobDocument(job), setJobToUser(id, job.id)]);
+        const job = new Job(
+            body.id,
+            body.profile,
+            body.description,
+            body.company,
+            body.type,
+            body.workplaceType,
+            body.lastDateToApply,
+            body.location,
+            body.skills,
+            body.rejectionContent,
+            body.selectionContent,
+            body.createdAt,
+            body.state,
+            id,
+            body.workflowId
+        );
+        await createJobDocument(job);
         return NextResponse.json({ message: 'Job created' }, { status: 201 });
     }
     catch (error) {
@@ -76,7 +91,7 @@ export async function DELETE(req: NextRequest) {
         if (job.createdBy !== userId) {
             throw new UnauthorizedError('You are not the owner of this job');
         }
-        await Promise.all([deleteJobDocument(jobId), removeJobFromUser(userId, jobId)]);
+        await deleteJobDocument(jobId);
         return NextResponse.json({ message: 'Job deleted successfully' }, { status: 200 });
     }
     catch (error) {

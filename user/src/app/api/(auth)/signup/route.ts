@@ -2,14 +2,34 @@ import { createUserDocument } from '@/appwrite/server/collections/user-collectio
 import { User } from '@/model/user';
 import { NextRequest, NextResponse } from 'next/server';
 import bcryptjs from 'bcryptjs';
-import { isRecognisedError } from '@/model/error';
+import { BadRequestError, isRecognisedError } from '@/model/error';
+import { randomUUID } from 'crypto';
+
 export async function POST(req: NextRequest) {
     try {
         const body = (await req.json()) as Record<string, unknown>;
-        const password = body.password as string;
+        const firstName = typeof body.firstName === 'string' ? body.firstName.trim() : '';
+        const lastName = typeof body.lastName === 'string' ? body.lastName.trim() : '';
+        const username = typeof body.username === 'string' ? body.username.trim() : '';
+        const email = typeof body.email === 'string' ? body.email.trim() : '';
+        const password = typeof body.password === 'string' ? body.password : '';
+
+        if (!firstName || !lastName || !username || !email || !password) {
+            throw new BadRequestError('firstName, lastName, username, email, and password are required');
+        }
+
         const salt = bcryptjs.genSaltSync(10);
         const hashedPassword = bcryptjs.hashSync(password, salt);
-        const user = new User(body.id as string, body.firstName as string, body.lastName as string, body.username as string, body.email as string, hashedPassword, hashedPassword, (body.createdAt as string) ?? new Date().toISOString(), (body.jobs as string[]) ?? [], (body.applications as string[]) ?? [], (body.tnC as boolean) ?? false, (body.workflows as string[]) ?? []);
+        const user = new User(
+            randomUUID(),
+            firstName,
+            lastName,
+            username,
+            email,
+            hashedPassword,
+            hashedPassword,
+            new Date().toISOString()
+        );
         await createUserDocument(user);
         const responseUser = {
             id: user.id,
@@ -17,15 +37,13 @@ export async function POST(req: NextRequest) {
             lastName: user.lastName,
             username: user.username,
             email: user.email,
-            applications: user.applications,
         };
         return NextResponse.json(responseUser, { status: 201 });
-    }
-    catch (error) {
+    } catch (error) {
         console.log('Error while creating user', error);
         if (isRecognisedError(error)) {
-            const err = error as any;
-            return NextResponse.json({ message: err.message }, { status: err.statusCode });
+            const err = error as { message?: string; statusCode?: number };
+            return NextResponse.json({ message: err.message }, { status: err.statusCode ?? 500 });
         }
         return NextResponse.json({ message: 'Error while creating user' }, { status: 500 });
     }

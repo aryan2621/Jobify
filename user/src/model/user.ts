@@ -7,12 +7,18 @@ export class User {
     password: string;
     confirmPassword: string;
     createdAt: string;
-    jobs: string[];
-    applications: string[];
-    tnC: boolean;
-    workflows: string[];
     avatarFileId?: string;
-    constructor(id: string, firstName: string, lastName: string, username: string, email: string, password: string, confirmPassword: string, createdAt: string, jobs: string[], applications: string[], tnC: boolean, workflows: string[]) {
+
+    constructor(
+        id: string,
+        firstName: string,
+        lastName: string,
+        username: string,
+        email: string,
+        password: string,
+        confirmPassword: string,
+        createdAt: string
+    ) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -20,13 +26,10 @@ export class User {
         this.email = email;
         this.password = password;
         this.createdAt = createdAt;
-        this.jobs = jobs;
-        this.applications = applications;
         this.confirmPassword = confirmPassword;
-        this.tnC = tnC;
-        this.workflows = workflows;
     }
 }
+
 export class Profile {
     firstName: string;
     lastName: string;
@@ -34,16 +37,20 @@ export class Profile {
     confirmPassword: string;
     email: string;
     username: string;
-    jobs: string[] = [];
-    applications: string[] = [];
-    constructor(firstName: string, lastName: string, password: string, confirmPassword: string, email: string, username: string, jobs: string[], applications: string[]) {
+
+    constructor(
+        firstName: string,
+        lastName: string,
+        password: string,
+        confirmPassword: string,
+        email: string,
+        username: string
+    ) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.password = password;
         this.confirmPassword = confirmPassword;
         this.email = email;
         this.username = username;
-        this.jobs = jobs;
-        this.applications = applications;
     }
 }

@@ -1,7 +1,7 @@
 import { isRecognisedError, UnauthorizedError } from '@/model/error';
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-import { getWorkflowsByUserId, getAllWorkflows, getWorkflowTemplates } from '@/appwrite/server/collections/workflow-collection';
+import { getWorkflowsByUserId } from '@/appwrite/server/collections/workflow-collection';
 
 export async function GET(req: NextRequest) {
     const token = req.cookies.get('token');
@@ -10,39 +10,15 @@ export async function GET(req: NextRequest) {
             throw new UnauthorizedError('You are not authorized to perform this action');
         }
 
-        const user = jwt.verify(token.value, process.env.JWT_SECRET!);
-        const userId = (user as any).id;
-
-        const type = req.nextUrl.searchParams.get('type') || 'user';
-        const limit = req.nextUrl.searchParams.get('limit');
-        const lastId = req.nextUrl.searchParams.get('lastId');
-
-        let workflows;
-
-        
-        switch (type) {
-            case 'user':
-                workflows = await getWorkflowsByUserId(userId);
-                break;
-            case 'templates':
-                workflows = await getWorkflowTemplates();
-                break;
-            case 'all':
-                
-                if ((user as any).role !== 'admin') {
-                    throw new UnauthorizedError('You are not authorized to access all workflows');
-                }
-                workflows = await getAllWorkflows(lastId || null, limit ? parseInt(limit) : null);
-                break;
-            default:
-                return NextResponse.json({ message: 'Invalid workflow type' }, { status: 400 });
-        }
+        const payload = jwt.verify(token.value, process.env.JWT_SECRET!) as { id: string };
+        const workflows = await getWorkflowsByUserId(payload.id);
 
         return NextResponse.json(workflows, { status: 200 });
     } catch (error) {
         console.log('Error while fetching workflows', error);
-        if (isRecognisedError(error)) {
-            return NextResponse.json({ message: error.message }, { status: error.statusCode });
+        const err = error as any;
+        if (isRecognisedError(err)) {
+            return NextResponse.json({ message: err.message }, { status: err.statusCode });
         }
         return NextResponse.json({ message: 'Error while fetching workflows' }, { status: 500 });
     }

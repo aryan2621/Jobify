@@ -54,11 +54,7 @@ const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
               rawUser.email,
               rawUser.password,
               rawUser.confirmPassword,
-              rawUser.createdAt,
-              rawUser.jobs ?? [],
-              rawUser.applications ?? [],
-              rawUser.tnC ?? false,
-              rawUser.workflows ?? []
+              rawUser.createdAt
           )
         : null;
     const userInitials =
@@ -108,7 +104,7 @@ const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
                                     <NavItem href='/' icon={<HouseIcon className='h-5 w-5'/>} label='Home' isCollapsed={isCollapsed} isActive={pathname === '/'}/>
 
                                     <NavItem href='/jobs' icon={<BookCopyIcon className='h-5 w-5'/>} label='Jobs' isCollapsed={isCollapsed} isActive={pathname.startsWith('/jobs')}/>
-                                    <NavItem href='/applications' icon={<ScrollTextIcon className='h-5 w-5'/>} label='My Applications' isCollapsed={isCollapsed} isActive={pathname.startsWith('/applications')} badge={user.applications?.length}/>
+                                    <NavItem href='/applications' icon={<ScrollTextIcon className='h-5 w-5'/>} label='My Applications' isCollapsed={isCollapsed} isActive={pathname.startsWith('/applications')}/>
                                     <NavItem href='/analytics' icon={<BarChart className='h-5 w-5'/>} label='Analytics' isCollapsed={isCollapsed} isActive={pathname.startsWith('/analytics')}/>
 
                                     <NavItem href='/billing' icon={<HandCoins className='h-5 w-5'/>} label='Billing' isCollapsed={isCollapsed} isActive={pathname === '/billing'}/>
@@ -166,7 +162,7 @@ const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
                                             <NavItem href='/' icon={<HouseIcon className='h-5 w-5'/>} label='Home' isCollapsed={false} isActive={pathname === '/'}/>
 
                                             <NavItem href='/jobs' icon={<BookCopyIcon className='h-5 w-5'/>} label='Jobs' isCollapsed={false} isActive={pathname.startsWith('/jobs')}/>
-                                            <NavItem href='/applications' icon={<ScrollTextIcon className='h-5 w-5'/>} label='My Applications' isCollapsed={false} isActive={pathname.startsWith('/applications')} badge={user.applications?.length}/>
+                                            <NavItem href='/applications' icon={<ScrollTextIcon className='h-5 w-5'/>} label='My Applications' isCollapsed={false} isActive={pathname.startsWith('/applications')}/>
                                             <NavItem href='/analytics' icon={<BarChart className='h-5 w-5'/>} label='Analytics' isCollapsed={false} isActive={pathname.startsWith('/analytics')}/>
 
                                             <NavItem href='/billing' icon={<HandCoins className='h-5 w-5'/>} label='Billing' isCollapsed={false} isActive={pathname === '/billing'}/>

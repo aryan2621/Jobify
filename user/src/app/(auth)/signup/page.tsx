@@ -1,5 +1,5 @@
 'use client';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -11,12 +11,18 @@ import { toast } from '@/components/ui/use-toast';
 import { Eye, EyeOff, Briefcase, User as UserIcon, Loader2, Lock, Mail } from 'lucide-react';
 import { userStore } from '@/store';
 export default function SignupPage() {
-    const [formData, setFormData] = useState<User>(new User(uuidv4(), '', '', '', '', '', '', new Date().toISOString(), [], [], false, []));
+    const [formData, setFormData] = useState<User>(new User(uuidv4(), '', '', '', '', '', '', new Date().toISOString()));
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const signUp = userStore((state) => state.signup);
     const validateForm = () => {
+        if (!formData.firstName?.trim()) {
+            throw new Error('First name cannot be empty.');
+        }
+        if (!formData.lastName?.trim()) {
+            throw new Error('Last name cannot be empty.');
+        }
         if (!formData.username) {
             throw new Error('Username cannot be empty.');
         }
@@ -42,7 +48,14 @@ export default function SignupPage() {
         try {
             validateForm();
             setLoading(true);
-            await signUp(formData);
+            await signUp({
+                firstName: formData.firstName.trim(),
+                lastName: formData.lastName.trim(),
+                username: formData.username.trim(),
+                email: formData.email.trim(),
+                password: formData.password,
+                confirmPassword: formData.confirmPassword,
+            });
             toast({
                 title: 'Account Created Successfully',
                 description: 'Your account has been created. Redirecting to sign in...',
@@ -91,6 +104,32 @@ export default function SignupPage() {
                 <Card className='border-muted/60 shadow-lg'>
                     <CardContent className='pt-6'>
                         <form className='space-y-4' onSubmit={handleSubmit}>
+                            <div className='grid grid-cols-2 gap-3'>
+                                <div>
+                                    <Label htmlFor='firstName'>First name</Label>
+                                    <Input
+                                        id='firstName'
+                                        name='firstName'
+                                        value={formData.firstName}
+                                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                                        placeholder='First name'
+                                        className='mt-1.5 bg-background'
+                                        autoComplete='given-name'
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor='lastName'>Last name</Label>
+                                    <Input
+                                        id='lastName'
+                                        name='lastName'
+                                        value={formData.lastName}
+                                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                                        placeholder='Last name'
+                                        className='mt-1.5 bg-background'
+                                        autoComplete='family-name'
+                                    />
+                                </div>
+                            </div>
                             <div>
                                 <Label htmlFor='username' className='flex items-center gap-1.5'>
                                     <UserIcon className='h-3.5 w-3.5'/>

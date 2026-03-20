@@ -14,7 +14,7 @@ import { userStore } from '@/store';
 
 export default function SignupPage() {
     const [formData, setFormData] = useState<User>(
-        new User(uuidv4(), '', '', '', '', '', '', new Date().toISOString(), [], [], false, [])
+        new User(uuidv4(), '', '', '', '', '', '', new Date().toISOString(), 0, 0)
     );
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);

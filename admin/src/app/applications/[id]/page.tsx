@@ -185,11 +185,13 @@ const ApplicationCard = ({ application, isSelected, onClick }: { application: Ap
 
 const ApplicationDetail = ({
     application,
-    applicationCount,
+    applicationsLoadedCount,
+    isApplicationsLoading,
     onStatusChange,
 }: {
     application: Application | null;
-    applicationCount: number;
+    applicationsLoadedCount: number;
+    isApplicationsLoading: boolean;
     onStatusChange: (status: ApplicationStatus) => Promise<void>;
 }) => {
     const [activeTab, setActiveTab] = useState('profile');
@@ -203,9 +205,11 @@ const ApplicationDetail = ({
             <Card className='flex items-center justify-center min-h-[200px]'>
                 <CardContent className='py-12'>
                     <p className='text-center text-muted-foreground'>
-                        {applicationCount === 0
-                            ? 'This job has not received any applications yet.'
-                            : 'Select an application to see details'}
+                        {isApplicationsLoading
+                            ? 'Loading applications…'
+                            : applicationsLoadedCount === 0
+                              ? 'This job has not received any applications yet.'
+                              : 'Select an application to see details'}
                     </p>
                 </CardContent>
             </Card>
@@ -843,8 +847,8 @@ export default function JobApplicationsPage({ params }: { params: { id: string }
                             </Button>
                             <h1 className='text-2xl font-bold'>Applications</h1>
                             <p className='text-muted-foreground'>
-                                {!loading && applications.length > 0
-                                    ? `Manage and review applications for this job (${applications.length})`
+                                {loading
+                                    ? 'Loading applications…'
                                     : 'Manage and review applications for this job'}
                             </p>
                         </div>
@@ -922,11 +926,15 @@ export default function JobApplicationsPage({ params }: { params: { id: string }
                                     <CardHeader className='py-3 px-4 border-b'>
                                         <div className='flex items-center justify-between'>
                                             <CardTitle className='text-base'>
-                                                {statusFilter !== 'all'
-                                                    ? `${statusFilter} (${filteredApplications.length})`
-                                                    : `All Applications (${filteredApplications.length})`}
+                                                {loading
+                                                    ? statusFilter !== 'all'
+                                                        ? `${statusFilter}`
+                                                        : 'All Applications'
+                                                    : statusFilter !== 'all'
+                                                      ? `${statusFilter} (${filteredApplications.length})`
+                                                      : `All Applications (${filteredApplications.length})`}
                                             </CardTitle>
-                                            {applications.length > 0 && (
+                                            {!loading && applications.length > 0 && (
                                                 <Badge variant='outline'>
                                                     {filteredApplications.length} of {applications.length}
                                                 </Badge>
@@ -981,7 +989,8 @@ export default function JobApplicationsPage({ params }: { params: { id: string }
                                 <TooltipProvider>
                                     <ApplicationDetail
                                         application={selectedApplication}
-                                        applicationCount={applications.length}
+                                        applicationsLoadedCount={applications.length}
+                                        isApplicationsLoading={loading}
                                         onStatusChange={handleStatusChange}
                                     />
                                 </TooltipProvider>

@@ -31,7 +31,7 @@ export const fetchPaginatedJobs = async (
 
 export const deleteJob = async (jobId: string) => {
     try {
-        await ky.delete(`/api/post/${jobId}`);
+        await ky.delete(`/api/post?id=${jobId}`);
         toast({
             title: 'Job Deleted',
             description: 'The job posting has been successfully deleted',

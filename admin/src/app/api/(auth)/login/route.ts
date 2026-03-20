@@ -1,4 +1,6 @@
 import { fetchUserByUsername } from '@/appwrite/server/collections/user-collection';
+import { countJobsByUserId } from '@/appwrite/server/collections/job-collection';
+import { countWorkflowsByUserId } from '@/appwrite/server/collections/workflow-collection';
 import { getAvatarViewUrl } from '@/appwrite/server/storage';
 import { isRecognisedError, UnauthorizedError } from '@/model/error';
 import { LoginUserRequest } from '@/model/request';
@@ -28,17 +30,17 @@ export async function POST(request: NextRequest) {
             { expiresIn: '1d' }
         );
         const avatarUrl = user.avatarFileId ? getAvatarViewUrl(user.avatarFileId as string) : null;
+        const uid = (user.id ?? user.$id) as string;
+        const [jobCount, workflowCount] = await Promise.all([countJobsByUserId(uid), countWorkflowsByUserId(uid)]);
         const responseUser = {
-            id: (user.id ?? user.$id) as string,
+            id: uid,
             firstName: user.firstName,
             lastName: user.lastName,
             username: user.username,
             email: user.email,
-            applications: user.applications ?? [],
-            jobs: user.jobs ?? [],
-            workflows: user.workflows ?? [],
+            jobCount,
+            workflowCount,
             createdAt: user.createdAt ?? '',
-            tnC: user.tnC ?? false,
             avatarUrl,
         };
         const response = NextResponse.json(responseUser, { status: 200 });

@@ -1,5 +1,3 @@
-import getOrCreateDatabase from '@/appwrite/server/database';
-import { getOrCreateStorage } from '@/appwrite/server/storage';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
@@ -10,7 +8,6 @@ export async function middleware(request: NextRequest) {
         return NextResponse.json({ message: 'Server configuration error' }, { status: 500 });
     }
     const path = request.nextUrl.pathname?.toLowerCase();
-    await Promise.all([getOrCreateDatabase(), getOrCreateStorage()]);
     const publicPaths = ['/login', '/signup', '/forgot-password', '/reset-password'];
     const isPublicPath = publicPaths.includes(path);
     const token = request.cookies?.get('token');
