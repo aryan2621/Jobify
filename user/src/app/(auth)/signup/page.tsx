@@ -8,11 +8,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { FormEvent, useState } from 'react';
 import { User } from '@/model/user';
 import { toast } from '@/components/ui/use-toast';
-import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Briefcase, User as UserIcon, Loader2, Lock, Mail } from 'lucide-react';
 import { userStore } from '@/store';
 export default function SignupPage() {
-    const router = useRouter();
     const [formData, setFormData] = useState<User>(new User(uuidv4(), '', '', '', '', '', '', new Date().toISOString(), [], [], false, []));
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -47,11 +45,9 @@ export default function SignupPage() {
             await signUp(formData);
             toast({
                 title: 'Account Created Successfully',
-                description: 'Your account has been created. Redirecting to login...',
+                description: 'Your account has been created. Redirecting to sign in...',
             });
-            setTimeout(() => {
-                router.push('/login');
-            }, 1500);
+            window.location.assign('/login');
         }
         catch (error: any) {
             let errorMessage = 'Error creating account. Please try again.';

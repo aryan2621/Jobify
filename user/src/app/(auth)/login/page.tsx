@@ -7,14 +7,12 @@ import Link from 'next/link';
 import { FormEvent, useState } from 'react';
 import { LoginUserRequest } from '@/model/request';
 import { toast } from '@/components/ui/use-toast';
-import { useRouter } from 'next/navigation';
 import { userStore } from '@/store';
 import { Eye, EyeOff, Briefcase, Lock, User as UserIcon, Loader2, ArrowRight } from 'lucide-react';
 export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [req, setReq] = useState<LoginUserRequest>(new LoginUserRequest('', ''));
-    const router = useRouter();
     const login = userStore((state) => state.login);
     const validateReq = (req: LoginUserRequest) => {
         if (!req.username) {
@@ -34,7 +32,7 @@ export default function LoginPage() {
                 title: 'Welcome back!',
                 description: 'You have successfully signed in.',
             });
-            router.push('/');
+            window.location.assign('/');
         }
         catch (error: any) {
             let errorMessage = 'Invalid username or password. Please try again.';

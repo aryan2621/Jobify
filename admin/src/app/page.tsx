@@ -601,13 +601,15 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ user }) => {
             });
         }
     };
-    const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`;
+    const initials =
+        `${user.firstName?.trim().charAt(0) ?? ''}${user.lastName?.trim().charAt(0) ?? ''}`.toUpperCase() ||
+        (user.username?.trim().charAt(0) ?? user.email?.trim().charAt(0) ?? '?').toUpperCase();
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant='ghost' className='relative h-8 w-8 rounded-full'>
                     <Avatar className='h-8 w-8'>
-                        <AvatarImage src='/avatars/01.png' alt={user.firstName} />
+                        <AvatarImage src={user.avatarUrl ?? undefined} alt={`${user.firstName} ${user.lastName}`} />
                         <AvatarFallback>{initials}</AvatarFallback>
                     </Avatar>
                 </Button>

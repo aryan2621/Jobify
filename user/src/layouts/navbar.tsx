@@ -7,6 +7,7 @@ import { BarChart, BookCopyIcon, HouseIcon, ScrollTextIcon, PanelLeftClose, Pane
 import Link from 'next/link';
 import { userStore } from '@/store';
 import { User } from '@/model/user';
+import ky from 'ky';
 import { usePathname } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -32,7 +33,37 @@ const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
         setIsCollapsed(newState);
         localStorage.setItem('sidebarCollapsed', String(newState));
     };
-    const user = userStore((state) => new User(state.user?.id ?? '', state.user?.firstName ?? '', state.user?.lastName ?? '', state.user?.username ?? '', state.user?.email ?? '', state.user?.password ?? '', state.user?.confirmPassword ?? '', state.user?.createdAt ?? '', state.user?.jobs ?? [], state.user?.applications ?? [], state.user?.tnC ?? false, state.user?.workflows ?? []));
+    const rawUser = userStore((state) => state.user);
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    useEffect(() => {
+        if (!rawUser?.id) {
+            setAvatarUrl(null);
+            return;
+        }
+        ky.get('/api/me')
+            .json<{ avatarUrl?: string | null }>()
+            .then((res) => setAvatarUrl(res.avatarUrl ?? null))
+            .catch(() => {});
+    }, [rawUser?.id]);
+    const user = rawUser
+        ? new User(
+              rawUser.id,
+              rawUser.firstName,
+              rawUser.lastName,
+              rawUser.username,
+              rawUser.email,
+              rawUser.password,
+              rawUser.confirmPassword,
+              rawUser.createdAt,
+              rawUser.jobs ?? [],
+              rawUser.applications ?? [],
+              rawUser.tnC ?? false,
+              rawUser.workflows ?? []
+          )
+        : null;
+    const userInitials =
+        `${user?.firstName?.trim().charAt(0) ?? ''}${user?.lastName?.trim().charAt(0) ?? ''}`.toUpperCase() ||
+        (user?.username?.trim().charAt(0) ?? user?.email?.trim().charAt(0) ?? '?').toUpperCase();
     const sidebarVariants = {
         expanded: { width: '240px' },
         collapsed: { width: '72px' },
@@ -59,11 +90,8 @@ const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
                             {!isCollapsed && (<motion.div variants={labelVariants} initial='expanded' animate={isCollapsed ? 'collapsed' : 'expanded'} className='px-3 py-2'>
                                     <div className='flex items-center gap-3 mb-2'>
                                         <Avatar className='h-10 w-10'>
-                                            <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.firstName} ${user.lastName}`}/>
-                                            <AvatarFallback>
-                                                {user.firstName.charAt(0)}
-                                                {user.lastName.charAt(0)}
-                                            </AvatarFallback>
+                                            <AvatarImage src={avatarUrl ?? undefined} alt={`${user.firstName} ${user.lastName}`} />
+                                            <AvatarFallback>{userInitials}</AvatarFallback>
                                         </Avatar>
                                         <div>
                                             <p className='text-sm font-medium'>
@@ -120,11 +148,8 @@ const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
                                     <div className='px-4 py-3'>
                                         <div className='flex items-center gap-3 mb-2'>
                                             <Avatar className='h-10 w-10'>
-                                                <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.firstName} ${user.lastName}`}/>
-                                                <AvatarFallback>
-                                                    {user.firstName.charAt(0)}
-                                                    {user.lastName.charAt(0)}
-                                                </AvatarFallback>
+                                                <AvatarImage src={avatarUrl ?? undefined} alt={`${user.firstName} ${user.lastName}`} />
+                                                <AvatarFallback>{userInitials}</AvatarFallback>
                                             </Avatar>
                                             <div>
                                                 <p className='text-sm font-medium'>

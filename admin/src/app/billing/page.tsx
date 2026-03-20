@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Check, X, MessageSquare, BarChart, Shield, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 import Link from 'next/link';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -112,7 +112,11 @@ const PricingPage = () => {
             stripe?.redirectToCheckout({ sessionId });
         } catch (error) {
             console.error('Error while processing subscription:', error);
-            toast.error('Unable to process your subscription. Please try again.');
+            toast({
+                title: 'Subscription failed',
+                description: 'Unable to process your subscription. Please try again.',
+                variant: 'destructive',
+            });
         } finally {
             setIsLoading(false);
         }

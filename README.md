@@ -1,4 +1,4 @@
-# Jobify
+# JobConnect
 
 A one and only solution for hiring people.
 
@@ -24,13 +24,13 @@ A one and only solution for hiring people.
 Clone the project
 
 ```bash
-  git clone https://github.com/aryan2621/Jobify/
+  git clone https://github.com/aryan2621/JobConnect/
 ```
 
 Go to the project directory
 
 ```bash
-  cd Jobify
+  cd JobConnect
 ```
 
 Install dependencies

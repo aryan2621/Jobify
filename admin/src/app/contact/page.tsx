@@ -147,8 +147,8 @@ export default function ContactPage() {
                                                 <Mail className='h-5 w-5 text-primary mt-0.5' />
                                                 <div>
                                                     <p className='font-medium'>Email</p>
-                                                    <a href='mailto:support@jobify.com' className='text-sm text-primary hover:underline'>
-                                                        support@jobify.com
+                                                    <a href='mailto:support@jobconnect.com' className='text-sm text-primary hover:underline'>
+                                                        support@jobconnect.com
                                                     </a>
                                                 </div>
                                             </div>
@@ -174,7 +174,7 @@ export default function ContactPage() {
                                             <div>
                                                 <CardTitle>Send Us a Message</CardTitle>
                                                 <CardDescription>
-                                                    Describe your question or issue. This form is not yet connected to a backend; for immediate help, email support@jobify.com.
+                                                    Describe your question or issue. This form is not yet connected to a backend; for immediate help, email support@jobconnect.com.
                                                 </CardDescription>
                                             </div>
                                             <Badge variant='outline' className='text-xs'>
@@ -190,7 +190,7 @@ export default function ContactPage() {
                                                 </div>
                                                 <h3 className='text-xl font-semibold mb-2'>Demo submitted</h3>
                                                 <p className='text-muted-foreground max-w-md'>
-                                                    This form is not yet wired to our support system. For real requests, please email support@jobify.com.
+                                                    This form is not yet wired to our support system. For real requests, please email support@jobconnect.com.
                                                 </p>
                                             </div>
                                         ) : (

@@ -14,7 +14,7 @@ const MOCK_ASSIGNMENT = {
     id: 'node_123',
     label: 'Technical Coding Challenge',
     description: 'Please implement a responsive dashboard using Next.js and Tailwind CSS. Focus on clean code, performance, and accessibility. You should include at least three charts and a detailed project overview.',
-    url: 'https://github.com/jobify-samples/technical-challenge-brief',
+    url: 'https://github.com/jobconnect-samples/technical-challenge-brief',
     deadline: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
 };
 export default function AssignmentSubmissionPage() {
@@ -165,7 +165,7 @@ export default function AssignmentSubmissionPage() {
                                 {[
             'Ensure your code is properly documented',
             'Include a README file with setup instructions',
-            'Link should be publicly accessible or shared with review@jobify.com',
+            'Link should be publicly accessible or shared with review@jobconnect.com',
             'Submit before the deadline to be considered'
         ].map((step, i) => (<li key={i} className="flex items-start gap-3 text-sm text-foreground/70 leading-normal">
                                         <div className="h-1.5 w-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0"/>
