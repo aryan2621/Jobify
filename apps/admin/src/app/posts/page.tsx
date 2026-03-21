@@ -46,6 +46,8 @@ import { FilterBar } from '@/components/elements/filter-bar';
 import { JobDetail } from '@/components/elements/job-detail';
 import { getDaysRemaining } from '@/lib/job-utils/utils';
 
+const pillBadge = 'whitespace-nowrap shrink-0';
+
 const JobTableRow = ({
     job,
     onEdit,
@@ -62,42 +64,44 @@ const JobTableRow = ({
 
     return (
         <TableRow>
-            <TableCell>
-                <div>
-                    <div className='font-medium'>{job.profile}</div>
-                    <div className='text-xs text-muted-foreground flex items-center mt-0.5'>
-                        <Briefcase className='h-3 w-3 mr-1 flex-shrink-0' />
-                        {job.company || 'Company'} • {job.location}
+            <TableCell className='min-w-[200px] max-w-[280px]'>
+                <div className='min-w-0'>
+                    <div className='font-medium break-words'>{job.profile}</div>
+                    <div className='text-xs text-muted-foreground flex items-start gap-1 mt-0.5 min-w-0'>
+                        <Briefcase className='h-3 w-3 mt-0.5 flex-shrink-0' />
+                        <span className='break-words'>{job.company || 'Company'} • {job.location}</span>
                     </div>
                 </div>
             </TableCell>
-            <TableCell>
-                <Badge variant='outline' className='text-xs'>
+            <TableCell className='whitespace-nowrap w-px align-middle'>
+                <Badge variant='outline' className={pillBadge}>
                     {job.type}
                 </Badge>
             </TableCell>
-            <TableCell>
-                <Badge variant='outline' className='text-xs'>
+            <TableCell className='whitespace-nowrap w-px align-middle'>
+                <Badge variant='outline' className={pillBadge}>
                     {job.workplaceType}
                 </Badge>
             </TableCell>
-            <TableCell>
-                <Badge variant={isExpired ? 'outline' : 'secondary'} className='text-xs'>
-                    {isExpired ? 'Expired' : `${daysRemaining}d left`}
-                </Badge>
-                {job.state && (
-                    <Badge
-                        variant={job.state === JobState.PUBLISHED ? 'default' : job.state === JobState.DRAFT ? 'outline' : 'secondary'}
-                        className='text-xs ml-1'
-                    >
-                        {job.state}
+            <TableCell className='whitespace-nowrap align-middle'>
+                <div className='inline-flex flex-nowrap items-center gap-1.5'>
+                    <Badge variant={isExpired ? 'outline' : 'secondary'} className={pillBadge}>
+                        {isExpired ? 'Expired' : `${daysRemaining}d left`}
                     </Badge>
-                )}
+                    {job.state && (
+                        <Badge
+                            variant={job.state === JobState.PUBLISHED ? 'default' : job.state === JobState.DRAFT ? 'outline' : 'secondary'}
+                            className={pillBadge}
+                        >
+                            {job.state}
+                        </Badge>
+                    )}
+                </div>
             </TableCell>
-            <TableCell>
-                <div className='flex items-center gap-2'>
-                    <Button variant='ghost' size='sm' onClick={onView} className='h-8 text-xs'>
-                        <Eye className='h-3.5 w-3.5 mr-1' />
+            <TableCell className='whitespace-nowrap w-[1%] align-middle'>
+                <div className='flex flex-nowrap items-center gap-2'>
+                    <Button variant='ghost' size='sm' onClick={onView} className='h-8 text-xs whitespace-nowrap shrink-0'>
+                        <Eye className='h-3.5 w-3.5 mr-1 shrink-0' />
                         View
                     </Button>
                     <Button variant='ghost' size='icon' className='h-8 w-8' asChild title='Go to applications'>
@@ -226,14 +230,14 @@ export default function AdminPostsPage() {
 
                 {loading && jobs.length === 0 ? (
                     <Card>
-                        <Table>
+                        <Table className='min-w-full w-max'>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Role</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Workplace</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className='w-[280px]'>Actions</TableHead>
+                                    <TableHead className='min-w-[200px]'>Role</TableHead>
+                                    <TableHead className='whitespace-nowrap'>Type</TableHead>
+                                    <TableHead className='whitespace-nowrap'>Workplace</TableHead>
+                                    <TableHead className='whitespace-nowrap'>Status</TableHead>
+                                    <TableHead className='whitespace-nowrap w-[1%] min-w-[200px]'>Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -261,9 +265,8 @@ export default function AdminPostsPage() {
                             </p>
 
                             {searchQuery || jobType !== 'all' || workplaceType !== 'all' || jobState !== 'all' ? (
-                                <Button variant='outline' onClick={resetFilters}>
-                                    <RefreshCw className='h-4 w-4 mr-2' />
-                                    Reset Filters
+                                <Button variant='outline' size='icon' className='h-10 w-10' onClick={resetFilters} aria-label='Reset filters' title='Reset filters'>
+                                    <RefreshCw className='h-4 w-4' />
                                 </Button>
                             ) : (
                                 <Button asChild>
@@ -277,14 +280,14 @@ export default function AdminPostsPage() {
                     </Card>
                 ) : (
                     <Card>
-                        <Table>
+                        <Table className='min-w-full w-max'>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Role</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Workplace</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className='w-[280px]'>Actions</TableHead>
+                                    <TableHead className='min-w-[200px]'>Role</TableHead>
+                                    <TableHead className='whitespace-nowrap'>Type</TableHead>
+                                    <TableHead className='whitespace-nowrap'>Workplace</TableHead>
+                                    <TableHead className='whitespace-nowrap'>Status</TableHead>
+                                    <TableHead className='whitespace-nowrap w-[1%] min-w-[200px]'>Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>

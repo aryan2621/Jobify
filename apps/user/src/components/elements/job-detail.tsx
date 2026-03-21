@@ -3,9 +3,8 @@ import { User } from '@jobify/domain/user';
 import { useState, useEffect } from 'react';
 import ky from 'ky';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@jobify/ui/card';
-import { Inbox, MoreHorizontal, Share2, MessageSquare, Building, MapPin, Clock3, CheckCircle2, Calendar, Briefcase, Clock, SendIcon, Building2, } from 'lucide-react';
+import { Inbox, Share2, Building, MapPin, Clock3, CheckCircle2, Calendar, Briefcase, Clock, SendIcon, Building2, } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Separator } from '@jobify/ui/separator';
 import { Badge } from '@jobify/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@jobify/ui/tabs';
@@ -14,11 +13,9 @@ import { toast } from '@jobify/ui/use-toast';
 import { formatDate, getDaysRemaining } from '@/lib/job-utils/utils';
 import { LoadingApplicationSkeleton } from './application-skeleton';
 import { Button } from '@jobify/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@jobify/ui/dropdown-menu';
 export const JobDetail = ({ job }: {
     job: Job | null;
 }) => {
-    const router = useRouter();
     const [user, setUser] = useState<User | null>(null);
     const [hasApplied, setHasApplied] = useState(false);
     const [fetching, setFetching] = useState(false);
@@ -116,13 +113,6 @@ export const JobDetail = ({ job }: {
             }
         }
     };
-    const handleContactRecruiter = () => {
-        const params = new URLSearchParams({
-            inquiryType: 'Job Application',
-            message: `I'm interested in the ${job.profile} position at ${job.company ?? 'your company'}.\n\nI would like to learn more about the role and application process.`,
-        });
-        router.push(`/contact?${params.toString()}`);
-    };
     return (<>
             {fetching ? (<LoadingApplicationSkeleton />) : (<Card className='w-full'>
                     <CardHeader className='pb-0 pt-5'>
@@ -156,24 +146,16 @@ export const JobDetail = ({ job }: {
                                             Apply Now
                                         </Link>)}
                                 </Button>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant='outline' size='sm' className='gap-1'>
-                                            <MoreHorizontal className='h-4 w-4'/>
-                                            More
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align='end'>
-                                        <DropdownMenuItem className='flex items-center cursor-pointer' onSelect={handleShareJob}>
-                                            <Share2 className='mr-2 h-4 w-4'/>
-                                            Share Job
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem className='flex items-center cursor-pointer' onSelect={handleContactRecruiter}>
-                                            <MessageSquare className='mr-2 h-4 w-4'/>
-                                            Contact Recruiter
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                                <Button
+                                    type='button'
+                                    variant='outline'
+                                    size='sm'
+                                    className='gap-1.5'
+                                    onClick={() => void handleShareJob()}
+                                >
+                                    <Share2 className='h-4 w-4' />
+                                    Share
+                                </Button>
                             </div>
                         </div>
                     </CardHeader>

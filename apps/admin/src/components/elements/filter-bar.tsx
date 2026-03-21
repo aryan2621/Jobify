@@ -78,7 +78,7 @@ export const FilterBar = ({
                             </SelectContent>
                         </Select>
 
-                        <Button variant='ghost' size='icon' className='h-8 w-8' onClick={resetFilters} title='Reset filters'>
+                        <Button variant='ghost' size='icon' className='h-8 w-8 shrink-0' onClick={resetFilters} aria-label='Reset filters' title='Reset filters'>
                             <RefreshCw className='h-3.5 w-3.5' />
                         </Button>
                     </div>
@@ -88,7 +88,7 @@ export const FilterBar = ({
     }
 
     return (
-        <div className='space-y-4'>
+        <div className='space-y-4 mb-8'>
             <div className='relative'>
                 <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
                 <Input
@@ -166,10 +166,17 @@ export const FilterBar = ({
                 )}
             </div>
 
-            <div className='flex justify-end'>
-                <Button variant='outline' size='sm' onClick={resetFilters}>
-                    <RefreshCw className='h-4 w-4 mr-2' />
-                    Reset Filters
+            <div className='flex justify-end pt-1'>
+                <Button
+                    type='button'
+                    variant='outline'
+                    size='icon'
+                    className='h-9 w-9 shrink-0'
+                    onClick={resetFilters}
+                    aria-label='Reset filters'
+                    title='Reset filters'
+                >
+                    <RefreshCw className='h-4 w-4' />
                 </Button>
             </div>
         </div>

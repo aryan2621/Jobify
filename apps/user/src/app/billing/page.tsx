@@ -132,26 +132,26 @@ const PricingPage = () => {
             </div>
 
             <div className='flex flex-col items-center mb-12'>
-                <div className='flex items-center justify-center space-x-3 mb-4'>
+                <div className='flex flex-wrap items-center justify-center gap-x-3 gap-y-2 mb-4 px-1'>
                     <span className={`text-sm ${!isYearly ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>Monthly</span>
                     <Switch checked={isYearly} onCheckedChange={setIsYearly} className='data-[state=checked]:bg-primary'/>
                     <span className={`text-sm ${isYearly ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>Yearly</span>
-                    {isYearly && (<Badge variant='secondary' className='ml-1 bg-green-100 text-green-800 hover:bg-green-100'>
+                    {isYearly && (<Badge variant='secondary' className='bg-green-100 text-green-800 hover:bg-green-100'>
                             Save 17%
                         </Badge>)}
                 </div>
             </div>
 
-            <div id='pricing-plans' className='grid md:grid-cols-3 gap-6 mb-16'>
+            <div id='pricing-plans' className='grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 mb-16 max-w-full'>
                 
-                <Card className='relative flex flex-col border-border hover:border-primary/30 hover:shadow-md transition-all duration-300'>
+                <Card className='relative flex flex-col min-w-0 border-border hover:border-primary/30 hover:shadow-md transition-all duration-300'>
                     <CardHeader className='pb-4'>
-                        <CardTitle className='flex justify-between items-start'>
-                            <div>
+                        <CardTitle className='flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start'>
+                            <div className='min-w-0'>
                                 <div className='text-2xl font-bold'>BASIC</div>
                                 <CardDescription className='mt-1.5'>For casual job seekers</CardDescription>
                             </div>
-                            <Badge variant='outline' className='bg-muted/80'>
+                            <Badge variant='outline' className='bg-muted/80 w-fit shrink-0'>
                                 STARTER
                             </Badge>
                         </CardTitle>
@@ -162,11 +162,11 @@ const PricingPage = () => {
                     </CardHeader>
 
                     <CardContent className='flex-grow'>
-                        <div className='flex items-center mb-4 pb-4 border-b'>
-                            <div className='p-2 rounded-full bg-primary/10 mr-2'>
+                        <div className='flex items-start gap-2 mb-4 pb-4 border-b'>
+                            <div className='p-2 rounded-full bg-primary/10 shrink-0'>
                                 <Zap className='h-5 w-5 text-primary'/>
                             </div>
-                            <p className='text-sm'>Great when you’re exploring and applying to a few roles</p>
+                            <p className='text-sm min-w-0'>Great when you’re exploring and applying to a few roles</p>
                         </div>
 
                         {renderFeatureList(basicFeatures)}
@@ -186,10 +186,10 @@ const PricingPage = () => {
                 </Card>
 
                 
-                <Card className='relative flex flex-col border-primary shadow-lg scale-[1.02] z-10'>
+                <Card className='relative flex flex-col min-w-0 border-primary shadow-lg lg:scale-[1.02] lg:z-10'>
                     <CardHeader className='pb-4'>
-                        <CardTitle className='flex justify-between items-start'>
-                            <div>
+                        <CardTitle className='flex flex-col gap-1 sm:gap-0'>
+                            <div className='min-w-0'>
                                 <div className='text-2xl font-bold'>PRO</div>
                                 <CardDescription className='mt-1.5'>For serious job seekers</CardDescription>
                             </div>
@@ -201,11 +201,11 @@ const PricingPage = () => {
                     </CardHeader>
 
                     <CardContent className='flex-grow'>
-                        <div className='flex items-center mb-4 pb-4 border-b'>
-                            <div className='p-2 rounded-full bg-primary/10 mr-2'>
+                        <div className='flex items-start gap-2 mb-4 pb-4 border-b'>
+                            <div className='p-2 rounded-full bg-primary/10 shrink-0'>
                                 <BarChart className='h-5 w-5 text-primary'/>
                             </div>
-                            <p className='text-sm'>Best when you’re applying often and want to stand out</p>
+                            <p className='text-sm min-w-0'>Best when you’re applying often and want to stand out</p>
                         </div>
 
                         {renderFeatureList(proFeatures)}
@@ -225,14 +225,14 @@ const PricingPage = () => {
                 </Card>
 
                 
-                <Card className='relative flex flex-col border-border hover:border-primary/30 hover:shadow-md transition-all duration-300'>
+                <Card className='relative flex flex-col min-w-0 border-border hover:border-primary/30 hover:shadow-md transition-all duration-300'>
                     <CardHeader className='pb-4'>
-                        <CardTitle className='flex justify-between items-start'>
-                            <div>
+                        <CardTitle className='flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start'>
+                            <div className='min-w-0'>
                                 <div className='text-2xl font-bold'>ENTERPRISE</div>
                                 <CardDescription className='mt-1.5'>For maximum support and visibility</CardDescription>
                             </div>
-                            <Badge variant='outline' className='bg-muted/80'>
+                            <Badge variant='outline' className='bg-muted/80 w-fit shrink-0'>
                                 CUSTOM
                             </Badge>
                         </CardTitle>
@@ -242,11 +242,11 @@ const PricingPage = () => {
                     </CardHeader>
 
                     <CardContent className='flex-grow'>
-                        <div className='flex items-center mb-4 pb-4 border-b'>
-                            <div className='p-2 rounded-full bg-primary/10 mr-2'>
+                        <div className='flex items-start gap-2 mb-4 pb-4 border-b'>
+                            <div className='p-2 rounded-full bg-primary/10 shrink-0'>
                                 <Shield className='h-5 w-5 text-primary'/>
                             </div>
-                            <p className='text-sm'>Full support and visibility for your career move</p>
+                            <p className='text-sm min-w-0'>Full support and visibility for your career move</p>
                         </div>
 
                         {renderFeatureList(enterpriseFeatures)}
@@ -354,7 +354,7 @@ const PricingPage = () => {
             </div>
 
             
-            <div className='grid md:grid-cols-3 gap-8 mb-16'>
+            <div className='grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16'>
                 <Card className='bg-muted/30 hover:shadow-md transition-all duration-300'>
                     <CardContent className='pt-6'>
                         <div className='flex flex-col items-center text-center'>
@@ -425,13 +425,13 @@ const PricingPage = () => {
                                 Get more visibility and better tools to land your next role. Start your 14-day free trial — no credit card
                                 required.
                             </p>
-                            <div className='flex flex-col sm:flex-row justify-center gap-4'>
-                                <Button size='lg' className='px-8' asChild>
+                            <div className='flex flex-col sm:flex-row justify-center items-stretch sm:items-center gap-3 sm:gap-4'>
+                                <Button size='lg' className='px-8 w-full sm:w-auto' asChild>
                                     <Link href='#pricing-plans'>Start Free Trial</Link>
                                 </Button>
-                                <Button variant='outline' size='lg' className='px-8' asChild>
-                                    <Link href='/contact'>
-                                        <MessageSquare className='mr-2 h-4 w-4'/>
+                                <Button variant='outline' size='lg' className='px-8 w-full sm:w-auto' asChild>
+                                    <Link href='/contact' className='inline-flex items-center justify-center'>
+                                        <MessageSquare className='mr-2 h-4 w-4 shrink-0'/>
                                         Contact Us
                                     </Link>
                                 </Button>

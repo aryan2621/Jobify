@@ -10,12 +10,16 @@ import { Avatar, AvatarFallback, AvatarImage } from '@jobify/ui/avatar';
 import { useRouter } from 'next/navigation';
 import { toast } from '@jobify/ui/use-toast';
 import { Badge } from '@jobify/ui/badge';
-import { BarChart, BookCopy, CheckCircle, FileText, Globe, LogOut, UserIcon, Workflow, Zap } from 'lucide-react';
+import { BarChart, BookCopy, CheckCircle, FileText, Globe, LogOut, MessageCircle, Send, UserIcon, Workflow, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@jobify/ui/carousel';
 import { Star } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@jobify/ui/dialog';
 import { useState, useEffect, useRef } from 'react';
+import { Input } from '@jobify/ui/input';
+import { Label } from '@jobify/ui/label';
+import { Textarea } from '@jobify/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@jobify/ui/select';
 
 const HeaderSection = () => {
     const [scrolled, setScrolled] = useState(false);
@@ -84,43 +88,53 @@ const HeroSection = () => {
                     <div className='flex flex-col gap-6'>
                         <div>
                             <Badge variant='outline' className='mb-4 px-3 py-1 text-sm bg-primary/10 text-primary border-primary/30'>
-                                Hiring Platform
+                                Post · review · automate
                             </Badge>
                             <h1 className='text-4xl md:text-6xl font-bold leading-tight tracking-tighter mb-4'>
-                                Find Top <span className='text-transparent bg-gradient-to-r from-[#D247BF] to-primary bg-clip-text'>Talent</span>{' '}
-                                Faster
+                                Hire with <span className='text-transparent bg-gradient-to-r from-[#D247BF] to-primary bg-clip-text'>clarity</span>, not chaos
                             </h1>
-                            <p className='text-xl text-muted-foreground max-w-md'>
-                                Post jobs, manage applications, and hire with workflows and analytics built for recruiters and hiring managers.
+                            <p className='text-lg md:text-xl text-muted-foreground max-w-lg'>
+                                One workspace for listings, applicants, and workflows—so your team spends time on people, not spreadsheets.
                             </p>
                         </div>
 
-                        <div className='flex flex-wrap gap-4 mt-2'>
+                        <div className='flex flex-wrap gap-3 mt-2'>
                             {user && user.id ? (
-                                <Button asChild variant='outline'>
+                                <Button asChild>
                                     <Link href='/posts/new' prefetch={false}>
-                                        Post a Job
+                                        Post a job
                                     </Link>
                                 </Button>
                             ) : (
-                                <></>
+                                <>
+                                    <Button asChild>
+                                        <Link href='/signup' prefetch={false}>
+                                            Create account
+                                        </Link>
+                                    </Button>
+                                    <Button variant='outline' asChild>
+                                        <Link href='/login' prefetch={false}>
+                                            Log in
+                                        </Link>
+                                    </Button>
+                                </>
                             )}
                         </div>
                     </div>
 
-                    <div className='relative group hidden lg:block'>
+                    <div className='relative group mt-8 lg:mt-0 max-w-lg mx-auto lg:max-w-none'>
                         <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[90%] h-[90%] bg-primary/30 rounded-full blur-3xl opacity-60'></div>
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
+                            initial={{ opacity: 0, scale: 0.96 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.5, delay: 0.2 }}
+                            transition={{ duration: 0.5, delay: 0.15 }}
                         >
                             <Image
                                 width={800}
                                 height={600}
-                                className='w-full rounded-lg shadow-2xl border border-border/50 transform translate-y-0 hover:-translate-y-2 transition-transform duration-500'
+                                className='w-full rounded-xl shadow-2xl border border-border/50 transform translate-y-0 hover:-translate-y-1 transition-transform duration-500'
                                 src='/posts.png'
-                                alt='Job board dashboard'
+                                alt='Employer hiring dashboard'
                             />
                         </motion.div>
                     </div>
@@ -131,10 +145,10 @@ const HeroSection = () => {
 };
 
 const STATS = [
-    { label: 'Active Jobs', target: 10000 },
-    { label: 'Companies', target: 2500 },
-    { label: 'Candidates', target: 1000000 },
-    { label: 'Successful Hires', target: 500000 },
+    { label: 'Open roles', target: 3200 },
+    { label: 'Teams hiring', target: 520 },
+    { label: 'Candidates', target: 24000 },
+    { label: 'Roles filled', target: 6100 },
 ] as const;
 
 function formatStatValue(current: number, target: number): string {
@@ -204,6 +218,7 @@ const StatsSection = () => {
     return (
         <section ref={sectionRef} className='w-full py-16 bg-muted/40'>
             <div className='container'>
+                <p className='text-center text-xs text-muted-foreground mb-8 uppercase tracking-widest'>Activity across JobConnect</p>
                 <div className='grid grid-cols-2 md:grid-cols-4 gap-8'>
                     {STATS.map((stat) => (
                         <StatCard key={stat.label} label={stat.label} target={stat.target} inView={inView} />
@@ -213,27 +228,25 @@ const StatsSection = () => {
         </section>
     );
 };
+
 const reviewList = [
     {
-        name: 'John Doe',
-        userName: 'Product Manager',
-        comment:
-            'JobConnect transformed our hiring process completely. The AI matching feature saved us countless hours by connecting us with candidates who truly fit our requirements.',
-        rating: 5.0,
+        name: 'Jordan Lee',
+        userName: 'Head of Talent',
+        comment: 'We finally stopped bouncing between inboxes. One pipeline, clear owners, fewer “did anyone see this?” moments.',
+        rating: 5,
     },
     {
-        name: 'Adam Johnson',
-        userName: 'Chief Technology Officer',
-        comment:
-            'The analytics insights provided by JobConnect helped us optimize our job descriptions and improve our application rates by 45%. Outstanding platform!',
+        name: 'Marcus Chen',
+        userName: 'CTO',
+        comment: 'Posting is fast; the analytics page actually gets used in our weekly hiring sync—simple charts, no fluff.',
         rating: 4.9,
     },
     {
-        name: 'Ava Mitchell',
-        userName: 'IT Project Manager',
-        comment:
-            'JobConnect streamlined our entire recruitment workflow. The automated screening process reduced our time-to-hire by 60%. Absolutely worth every penny!',
-        rating: 5.0,
+        name: 'Priya Nair',
+        userName: 'People Ops',
+        comment: 'Workflows took the manual follow-ups off our plate. The team talks to candidates more, not spreadsheets.',
+        rating: 5,
     },
 ];
 
@@ -245,10 +258,8 @@ const TestimonialSection = () => {
                     <Badge variant='outline' className='mb-4 px-3 py-1 text-sm bg-primary/10 text-primary border-primary/30'>
                         Success Stories
                     </Badge>
-                    <h2 className='text-3xl md:text-4xl font-bold mb-4'>What Hiring Managers Say</h2>
-                    <p className='text-muted-foreground max-w-2xl mx-auto'>
-                        Join thousands of recruiters and hiring managers who streamline hiring with JobConnect
-                    </p>
+                    <h2 className='text-3xl md:text-4xl font-bold mb-4'>Teams who like a calmer hiring week</h2>
+                    <p className='text-muted-foreground max-w-2xl mx-auto'>Less coordination tax, more time with candidates</p>
                 </div>
 
                 <Carousel
@@ -266,7 +277,7 @@ const TestimonialSection = () => {
                                             {[...Array(5)].map((_, i) => (
                                                 <Star
                                                     key={i}
-                                                    className={`size-4 ${i < Math.floor(review.rating) ? 'fill-primary text-primary' : 'fill-muted text-muted'}`}
+                                                    className={`size-4 ${i < Math.round(review.rating) ? 'fill-primary text-primary' : 'fill-muted text-muted'}`}
                                                 />
                                             ))}
                                             <span className='text-xs text-muted-foreground ml-2'>{review.rating.toFixed(1)}</span>
@@ -277,7 +288,13 @@ const TestimonialSection = () => {
                                     <CardHeader className='pt-0'>
                                         <div className='flex flex-row items-center gap-4'>
                                             <Avatar>
-                                                <AvatarFallback>{review.name.charAt(0)}</AvatarFallback>
+                                                <AvatarFallback className='bg-primary/15 text-primary font-medium'>
+                                                    {review.name
+                                                        .split(' ')
+                                                        .map((n) => n.charAt(0))
+                                                        .join('')
+                                                        .slice(0, 2)}
+                                                </AvatarFallback>
                                             </Avatar>
 
                                             <div className='flex flex-col'>
@@ -305,28 +322,28 @@ const FooterSection = () => {
     return (
         <footer className='border-t bg-card'>
             <div className='container py-12'>
-                <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
-                    <div className='md:col-span-2'>
+                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8'>
+                    <div className='sm:col-span-2 lg:col-span-2'>
                         <Link href='/' className='flex items-center gap-2 mb-4' prefetch={false}>
                             <BriefcaseIcon className='h-6 w-6 text-primary' />
                             <span className='font-bold text-xl'>JobConnect</span>
                         </Link>
                         <p className='text-muted-foreground mb-4 max-w-md'>
-                            Hire smarter. Post jobs, manage applications, and run recruitment workflows in one place.
+                            Hiring ops that stay out of the way—post, review, and automate without losing the human touch.
                         </p>
                     </div>
 
                     <div>
-                        <h3 className='font-semibold mb-4'>For Employers</h3>
+                        <h3 className='font-semibold mb-4'>For employers</h3>
                         <ul className='space-y-2'>
                             <li>
                                 <Link href='/posts/new' className='text-sm text-muted-foreground hover:text-foreground transition-colors' prefetch={false}>
-                                    Post a Job
+                                    Post a job
                                 </Link>
                             </li>
                             <li>
                                 <Link href='/posts' className='text-sm text-muted-foreground hover:text-foreground transition-colors' prefetch={false}>
-                                    Manage Jobs
+                                    Manage jobs
                                 </Link>
                             </li>
                             <li>
@@ -339,10 +356,21 @@ const FooterSection = () => {
                                     Pricing
                                 </Link>
                             </li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 className='font-semibold mb-4'>Contact</h3>
+                        <ul className='space-y-2'>
                             <li>
                                 <Link href='/contact' className='text-sm text-muted-foreground hover:text-foreground transition-colors' prefetch={false}>
-                                    Contact
+                                    Contact us
                                 </Link>
+                            </li>
+                            <li>
+                                <p className='text-xs text-muted-foreground leading-relaxed'>
+                                    Questions about billing, jobs, or workflows? Reach out—we typically reply within a day.
+                                </p>
                             </li>
                         </ul>
                     </div>
@@ -350,8 +378,8 @@ const FooterSection = () => {
             </div>
 
             <div className='border-t py-6'>
-                <div className='container flex flex-col sm:flex-row justify-between items-center gap-4'>
-                    <p className='text-xs text-muted-foreground'>&copy; {currentYear} JobConnect. All rights reserved.</p>
+                <div className='container'>
+                    <p className='text-xs text-muted-foreground text-center'>&copy; {currentYear} JobConnect. All rights reserved.</p>
                 </div>
             </div>
         </footer>
@@ -360,20 +388,20 @@ const FooterSection = () => {
 
 const employerFeatures = [
     {
-        title: 'Streamlined Applications',
-        description: 'Review and manage candidate applications in one place. Track status and move candidates through your pipeline.',
+        title: 'Applications in one lane',
+        description: 'Every candidate, same view—status, notes, and next steps without digging through email.',
         icon: <CheckCircle className='w-8 h-8 text-purple-500' />,
         image: '/applications.png',
     },
     {
-        title: 'Comprehensive Analytics',
-        description: 'Gain insights into application rates, pipeline health, and hiring performance with detailed analytics.',
+        title: 'Analytics you’ll open',
+        description: 'Funnel health at a glance: volume, pace, and where applicants stall—no six-tab dashboard.',
         icon: <BarChart className='w-8 h-8 text-indigo-500' />,
         image: '/analytic.png',
     },
     {
-        title: 'Automated Workflows',
-        description: 'Save time with automation that streamlines screening, interviews, and notifications for recruiters.',
+        title: 'Workflows that nudge',
+        description: 'Automate the repetitive bits—reminders, stages, handoffs—so humans handle the real conversations.',
         icon: <Workflow className='w-8 h-8 text-red-500' />,
         image: '/workflows.png',
     },
@@ -387,12 +415,10 @@ const FeatureSection = () => {
             <div className='container'>
                 <div className='text-center mb-12'>
                     <Badge variant='outline' className='mb-4 px-3 py-1 text-sm bg-primary/10 text-primary border-primary/30'>
-                        Platform Features
+                        Employer toolkit
                     </Badge>
-                    <h2 className='text-3xl md:text-4xl font-bold mb-4'>Powerful Tools for Employers</h2>
-                    <p className='text-muted-foreground max-w-2xl mx-auto'>
-                        Our comprehensive platform offers specialized features to streamline your hiring process
-                    </p>
+                    <h2 className='text-3xl md:text-4xl font-bold mb-4'>Less ops noise, more hiring</h2>
+                    <p className='text-muted-foreground max-w-2xl mx-auto'>Tap a card for detail—then open the product when you’re ready to ship a role</p>
                 </div>
 
                 <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
@@ -404,8 +430,17 @@ const FeatureSection = () => {
                             transition={{ duration: 0.4 }}
                         >
                             <Card
-                                className='cursor-pointer hover:shadow-lg transition-all duration-300 h-full border border-border/50 hover:border-primary/20'
+                                role='button'
+                                tabIndex={0}
+                                aria-label={`${feature.title}: view details`}
+                                className='cursor-pointer hover:shadow-lg transition-all duration-300 h-full border border-border/50 hover:border-primary/20 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2'
                                 onClick={() => setSelectedFeature(feature)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        setSelectedFeature(feature);
+                                    }
+                                }}
                             >
                                 <CardHeader className='space-y-4'>
                                     <div className='p-3 rounded-lg bg-muted w-fit'>{feature.icon}</div>
@@ -432,7 +467,7 @@ const FeatureSection = () => {
                 <div className='flex justify-center mt-8'>
                     <Button size='lg' className='font-medium' asChild>
                         <Link href='/posts/new' prefetch={false}>
-                            Post a Job
+                            Post a job
                         </Link>
                     </Button>
                 </div>
@@ -456,19 +491,26 @@ const FeatureSection = () => {
                     >
                         <div className='space-y-6'>
                             <div className='space-y-4'>
-                                <h3 className='font-semibold text-lg'>Key Benefits</h3>
+                                <h3 className='font-semibold text-lg'>Why teams stick with it</h3>
                                 <div className='flex items-start gap-3'>
                                     <CheckCircle className='w-5 h-5 text-primary mt-0.5 flex-shrink-0' />
-                                    <p>Save time and effort with smart automation and intelligent matching.</p>
+                                    <p>Single source of truth for roles and applicants—onboarding new hiring managers is painless.</p>
                                 </div>
                                 <div className='flex items-start gap-3'>
                                     <CheckCircle className='w-5 h-5 text-primary mt-0.5 flex-shrink-0' />
-                                    <p>Increase efficiency with personalized recommendations and insights.</p>
+                                    <p>Lightweight analytics that support decisions, not slide decks.</p>
                                 </div>
                                 <div className='flex items-start gap-3'>
                                     <CheckCircle className='w-5 h-5 text-primary mt-0.5 flex-shrink-0' />
-                                    <p>Improve outcomes with data-driven decision making and analytics.</p>
+                                    <p>Workflows reduce ping-pong; your brand still sounds human.</p>
                                 </div>
+                            </div>
+                            <div className='pt-2'>
+                                <Button size='sm' asChild>
+                                    <Link href='/posts/new' prefetch={false}>
+                                        Post a job
+                                    </Link>
+                                </Button>
                             </div>
                         </div>
 
@@ -487,12 +529,12 @@ const FeatureSection = () => {
 
 const JobCategoriesSection = () => {
     const categories = [
-        { name: 'Technology', count: 1450, icon: <Zap className='h-5 w-5' /> },
-        { name: 'Marketing', count: 873, icon: <Globe className='h-5 w-5' /> },
-        { name: 'Finance', count: 645, icon: <BarChart className='h-5 w-5' /> },
-        { name: 'Healthcare', count: 921, icon: <CheckCircle className='h-5 w-5' /> },
-        { name: 'Education', count: 432, icon: <BookCopy className='h-5 w-5' /> },
-        { name: 'Design', count: 518, icon: <Workflow className='h-5 w-5' /> },
+        { name: 'Technology', tag: 'Engineering & product', icon: <Zap className='h-5 w-5' /> },
+        { name: 'Marketing', tag: 'Growth & brand', icon: <Globe className='h-5 w-5' /> },
+        { name: 'Finance', tag: 'Ops & analysis', icon: <BarChart className='h-5 w-5' /> },
+        { name: 'Healthcare', tag: 'Clinical & support', icon: <CheckCircle className='h-5 w-5' /> },
+        { name: 'Education', tag: 'Teaching & training', icon: <BookCopy className='h-5 w-5' /> },
+        { name: 'Design', tag: 'Product & creative', icon: <Workflow className='h-5 w-5' /> },
     ];
 
     return (
@@ -500,11 +542,11 @@ const JobCategoriesSection = () => {
             <div className='container'>
                 <div className='text-center mb-12'>
                     <Badge variant='outline' className='mb-4 px-3 py-1 text-sm bg-primary/10 text-primary border-primary/30'>
-                        Hire by Category
+                        Where teams hire
                     </Badge>
-                    <h2 className='text-3xl md:text-4xl font-bold mb-4'>Job Categories</h2>
+                    <h2 className='text-3xl md:text-4xl font-bold mb-4'>Popular lanes</h2>
                     <p className='text-muted-foreground max-w-2xl mx-auto'>
-                        Post roles across industries and reach qualified candidates in Technology, Marketing, and more
+                        Jump to a category when you manage or post roles—keep your pipeline organized by function
                     </p>
                 </div>
 
@@ -522,7 +564,7 @@ const JobCategoriesSection = () => {
                                             <div className='p-3 rounded-lg bg-background'>{category.icon}</div>
                                             <div>
                                                 <h3 className='font-semibold text-lg'>{category.name}</h3>
-                                                <p className='text-sm text-muted-foreground'>{category.count} open positions</p>
+                                                <p className='text-sm text-muted-foreground'>{category.tag}</p>
                                             </div>
                                         </div>
                                         <div className='text-muted-foreground hover:text-primary transition-colors'>→</div>
@@ -546,6 +588,7 @@ const JobCategoriesSection = () => {
 };
 
 const CTASection = () => {
+    const user = userStore((state) => state.user);
     return (
         <section className='py-20 w-full'>
             <div className='container'>
@@ -554,17 +597,28 @@ const CTASection = () => {
 
                     <div className='grid md:grid-cols-2 gap-10 items-center relative z-10'>
                         <div>
-                            <h2 className='text-3xl md:text-4xl font-bold mb-4'>Ready to Find Top Talent?</h2>
-                            <p className='text-lg mb-6'>
-                                Join thousands of employers who have found their perfect candidates through JobConnect. 
-                                Post your job today and start receiving applications from qualified professionals.
+                            <h2 className='text-3xl md:text-4xl font-bold mb-4'>Ship your next role this week</h2>
+                            <p className='text-lg mb-6 text-muted-foreground'>
+                                Free to explore—post when you&apos;re ready and keep every applicant in one pipeline.
                             </p>
                             <div className='flex flex-wrap gap-4'>
-                                <Button variant='outline' size='lg' asChild>
-                                    <Link href='/posts' prefetch={false}>
-                                        Manage Jobs
+                                <Button size='lg' asChild>
+                                    <Link href='/posts/new' prefetch={false}>
+                                        Post a job
                                     </Link>
                                 </Button>
+                                <Button variant='outline' size='lg' asChild>
+                                    <Link href='/posts' prefetch={false}>
+                                        Manage jobs
+                                    </Link>
+                                </Button>
+                                {!user?.id && (
+                                    <Button variant='ghost' size='lg' className='md:w-auto w-full' asChild>
+                                        <Link href='/signup' prefetch={false}>
+                                            Create employer account
+                                        </Link>
+                                    </Button>
+                                )}
                             </div>
                         </div>
 
@@ -576,6 +630,132 @@ const CTASection = () => {
                 </div>
             </div>
         </section>
+    );
+};
+
+const ContactChatbot = () => {
+    const user = userStore((state) => state.user);
+    const router = useRouter();
+    const [open, setOpen] = useState(false);
+    const [formData, setFormData] = useState({ name: '', email: '', inquiryType: '', message: '' });
+    useEffect(() => {
+        if (user && open) {
+            setFormData((prev) => ({
+                ...prev,
+                name: [user.firstName, user.lastName].filter(Boolean).join(' ').trim(),
+                email: user.email || '',
+            }));
+        }
+    }, [user, open]);
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        const params = new URLSearchParams();
+        if (formData.inquiryType) params.set('inquiryType', formData.inquiryType);
+        if (formData.message) params.set('message', formData.message);
+        setOpen(false);
+        setFormData({ name: '', email: '', inquiryType: '', message: '' });
+        router.push(`/contact?${params.toString()}`);
+    };
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { id, value } = e.target;
+        setFormData((prev) => ({ ...prev, [id]: value }));
+    };
+    return (
+        <>
+            <Button
+                onClick={() => setOpen(true)}
+                className='fixed bottom-4 right-4 h-14 w-14 rounded-full p-0 shadow-lg z-40'
+                aria-label='Contact us'
+            >
+                <MessageCircle className='h-6 w-6' />
+            </Button>
+
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className='fixed left-auto top-auto right-4 bottom-20 translate-x-0 translate-y-0 w-full max-w-[380px] max-h-[calc(100vh-6rem)] overflow-y-auto p-4 rounded-lg shadow-xl data-[state=open]:slide-in-from-bottom-4 data-[state=open]:slide-in-from-right-0 data-[state=closed]:slide-out-to-bottom-4 data-[state=closed]:slide-out-to-right-0'>
+                    <DialogHeader className='space-y-1'>
+                        <DialogTitle className='text-lg flex items-center gap-2'>
+                            <MessageCircle className='h-5 w-5' />
+                            Contact
+                        </DialogTitle>
+                        <DialogDescription>Send a quick message. We&apos;ll respond within 24 hours.</DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={handleSubmit} className='space-y-3'>
+                        <div className='space-y-1.5'>
+                            <Label htmlFor='name' className='text-xs'>
+                                Name
+                            </Label>
+                            <Input
+                                id='name'
+                                placeholder='Your name'
+                                required
+                                value={formData.name}
+                                onChange={handleChange}
+                                disabled={!!user}
+                                className='h-9 text-sm'
+                            />
+                        </div>
+                        <div className='space-y-1.5'>
+                            <Label htmlFor='email' className='text-xs'>
+                                Email
+                            </Label>
+                            <Input
+                                id='email'
+                                type='email'
+                                placeholder='you@example.com'
+                                required
+                                value={formData.email}
+                                onChange={handleChange}
+                                disabled={!!user}
+                                className='h-9 text-sm'
+                            />
+                        </div>
+                        <div className='space-y-1.5'>
+                            <Label className='text-xs'>Inquiry</Label>
+                            <Select value={formData.inquiryType} onValueChange={(v) => setFormData((p) => ({ ...p, inquiryType: v }))}>
+                                <SelectTrigger className='h-9 text-sm'>
+                                    <SelectValue placeholder='Select type' />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value='general'>General</SelectItem>
+                                    <SelectItem value='account'>Account / profile</SelectItem>
+                                    <SelectItem value='billing'>Billing / plan</SelectItem>
+                                    <SelectItem value='posting'>Posting jobs</SelectItem>
+                                    <SelectItem value='applications'>Applications / pipeline</SelectItem>
+                                    <SelectItem value='workflows'>Workflows</SelectItem>
+                                    <SelectItem value='technical'>Technical issue</SelectItem>
+                                    <SelectItem value='feedback'>Feedback</SelectItem>
+                                    <SelectItem value='other'>Other</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className='space-y-1.5'>
+                            <Label htmlFor='message' className='text-xs'>
+                                Message
+                            </Label>
+                            <Textarea
+                                id='message'
+                                placeholder='Your message...'
+                                rows={3}
+                                required
+                                value={formData.message}
+                                onChange={handleChange}
+                                className='text-sm resize-none'
+                            />
+                        </div>
+                        <Button type='submit' size='sm' className='w-full'>
+                            <Send className='mr-2 h-4 w-4' />
+                            Continue to contact form
+                        </Button>
+                        <p className='text-center'>
+                            <Link href='/contact' className='text-xs text-muted-foreground hover:text-foreground' prefetch={false}>
+                                Full contact page →
+                            </Link>
+                        </p>
+                    </form>
+                </DialogContent>
+            </Dialog>
+        </>
     );
 };
 
@@ -685,6 +865,7 @@ export default function Component() {
                 <CTASection />
             </main>
             <FooterSection />
+            <ContactChatbot />
         </div>
     );
 }

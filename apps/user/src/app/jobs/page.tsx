@@ -14,6 +14,7 @@ import { getDaysRemaining } from '@/lib/job-utils/utils';
 import { FilterBar } from '@/components/elements/filter-bar';
 import { useJobFetching } from '@/hooks/use-job-fetching';
 import { JobDetail } from '@/components/elements/job-detail';
+const pillBadge = 'whitespace-nowrap shrink-0';
 const JobTableRow = ({ job, onView }: {
     job: Job;
     onView: () => void;
@@ -21,33 +22,33 @@ const JobTableRow = ({ job, onView }: {
     const daysRemaining = getDaysRemaining(job.lastDateToApply);
     const isExpired = daysRemaining <= 0;
     return (<TableRow>
-            <TableCell>
-                <div>
-                    <div className='font-medium'>{job.profile}</div>
-                    <div className='text-xs text-muted-foreground flex items-center mt-0.5'>
-                        <Building2 className='h-3 w-3 mr-1 flex-shrink-0'/>
-                        {job.company || 'Company'} • {job.location}
+            <TableCell className='min-w-[200px] max-w-[280px]'>
+                <div className='min-w-0'>
+                    <div className='font-medium break-words'>{job.profile}</div>
+                    <div className='text-xs text-muted-foreground flex items-start gap-1 mt-0.5 min-w-0'>
+                        <Building2 className='h-3 w-3 mt-0.5 flex-shrink-0'/>
+                        <span className='break-words'>{job.company || 'Company'} • {job.location}</span>
                     </div>
                 </div>
             </TableCell>
-            <TableCell>
-                <Badge variant='outline' className='text-xs'>
+            <TableCell className='whitespace-nowrap w-px align-middle'>
+                <Badge variant='outline' className={pillBadge}>
                     {job.type}
                 </Badge>
             </TableCell>
-            <TableCell>
-                <Badge variant='outline' className='text-xs'>
+            <TableCell className='whitespace-nowrap w-px align-middle'>
+                <Badge variant='outline' className={pillBadge}>
                     {job.workplaceType}
                 </Badge>
             </TableCell>
-            <TableCell>
-                <Badge variant={isExpired ? 'outline' : 'secondary'} className='text-xs'>
+            <TableCell className='whitespace-nowrap w-px align-middle'>
+                <Badge variant={isExpired ? 'outline' : 'secondary'} className={pillBadge}>
                     {isExpired ? 'Expired' : `${daysRemaining}d left`}
                 </Badge>
             </TableCell>
-            <TableCell>
-                <Button variant='ghost' size='sm' onClick={onView} className='h-8 text-xs'>
-                    <Eye className='h-3.5 w-3.5 mr-1'/>
+            <TableCell className='whitespace-nowrap w-[1%] align-middle'>
+                <Button variant='ghost' size='sm' onClick={onView} className='h-8 text-xs whitespace-nowrap'>
+                    <Eye className='h-3.5 w-3.5 mr-1 shrink-0'/>
                     View
                 </Button>
             </TableCell>
@@ -70,14 +71,14 @@ export default function JobListings() {
                 <FilterBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} jobType={jobType} setJobType={setJobType} workplaceType={workplaceType} setWorkplaceType={setWorkplaceType} sortBy={sortBy} setSortBy={setSortBy} resetFilters={resetFilters} compact={false}/>
 
                 {loading && filteredJobs.length === 0 ? (<Card>
-                        <Table>
+                        <Table className='min-w-full w-max'>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Role</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Workplace</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className='w-[120px]'>Actions</TableHead>
+                                    <TableHead className='min-w-[200px]'>Role</TableHead>
+                                    <TableHead className='whitespace-nowrap'>Type</TableHead>
+                                    <TableHead className='whitespace-nowrap'>Workplace</TableHead>
+                                    <TableHead className='whitespace-nowrap'>Status</TableHead>
+                                    <TableHead className='whitespace-nowrap w-[1%]'>Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -110,20 +111,19 @@ export default function JobListings() {
                 ? 'No jobs match your current filters. Try adjusting your search criteria.'
                 : 'There are no job listings available at the moment.'}
                             </p>
-                            {(searchQuery || jobType !== 'all' || workplaceType !== 'all') && (<Button variant='outline' onClick={resetFilters}>
-                                    <RefreshCw className='h-4 w-4 mr-2'/>
-                                    Reset Filters
+                            {(searchQuery || jobType !== 'all' || workplaceType !== 'all') && (<Button variant='outline' size='icon' className='h-10 w-10' onClick={resetFilters} aria-label='Reset filters' title='Reset filters'>
+                                    <RefreshCw className='h-4 w-4'/>
                                 </Button>)}
                         </CardContent>
                     </Card>) : (<Card>
-                        <Table>
+                        <Table className='min-w-full w-max'>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Role</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Workplace</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className='w-[120px]'>Actions</TableHead>
+                                    <TableHead className='min-w-[200px]'>Role</TableHead>
+                                    <TableHead className='whitespace-nowrap'>Type</TableHead>
+                                    <TableHead className='whitespace-nowrap'>Workplace</TableHead>
+                                    <TableHead className='whitespace-nowrap'>Status</TableHead>
+                                    <TableHead className='whitespace-nowrap w-[1%]'>Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>

@@ -43,7 +43,7 @@ const StatusBadge = memo(({ status }: {
         },
     };
     const { variant, icon } = variants[status];
-    return (<Badge variant={variant as 'default' | 'secondary' | 'destructive' | 'outline' | null} className='flex items-center'>
+    return (<Badge variant={variant as 'default' | 'secondary' | 'destructive' | 'outline' | null} className='inline-flex shrink-0 items-center whitespace-nowrap'>
             {icon}
             {status}
         </Badge>);
@@ -60,44 +60,46 @@ const ApplicationCard = memo(({ application, isSelected, onClick, }: {
         const years = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 365);
         return total + years;
     }, 0);
-    return (<motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}>
-                <Card onClick={onClick} className={`cursor-pointer mb-3 transition-all hover:shadow-md ${isSelected ? 'border-2 border-primary shadow-md' : ''}`} tabIndex={0} onKeyDown={(e) => {
+    return (<motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }} className='min-w-0 max-w-full'>
+                <Card onClick={onClick} className={`mb-3 min-w-0 max-w-full cursor-pointer overflow-hidden transition-all hover:shadow-md ${isSelected ? 'border-2 border-primary shadow-md' : ''}`} tabIndex={0} onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
                 onClick();
                 e.preventDefault();
             }
         }} role='button' aria-pressed={isSelected}>
-                    <CardHeader className='flex flex-row items-center justify-between py-3 px-4'>
-                        <div className='flex items-center space-x-3'>
-                            <Avatar className='border'>
+                    <CardHeader className='flex min-w-0 flex-col gap-2 py-3 px-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3'>
+                        <div className='flex min-w-0 flex-1 items-center gap-3'>
+                            <Avatar className='shrink-0 border'>
                                 <AvatarFallback>{`${application.firstName[0]}${application.lastName[0]}`}</AvatarFallback>
                             </Avatar>
-                            <div>
-                                <CardTitle className='text-base'>{`${application.firstName} ${application.lastName}`}</CardTitle>
-                                <p className='text-xs text-muted-foreground'>{application.email}</p>
+                            <div className='min-w-0'>
+                                <CardTitle className='truncate text-base'>{`${application.firstName} ${application.lastName}`}</CardTitle>
+                                <p className='truncate text-xs text-muted-foreground' title={application.email}>
+                                    {application.email}
+                                </p>
                             </div>
                         </div>
-                        <div className='flex items-center space-x-1'>
+                        <div className='flex shrink-0 justify-end sm:justify-start'>
                             <StatusBadge status={application.status}/>
                         </div>
                     </CardHeader>
-                    <CardContent className='pt-0 pb-3 px-4'>
-                        <div className='grid grid-cols-2 gap-1 text-xs'>
-                            <div className='flex items-center space-x-1'>
-                                <Briefcase className='w-3 h-3 text-muted-foreground'/>
-                                <span>{application.experience[0]?.profile || 'Not specified'}</span>
+                    <CardContent className='px-4 pb-3 pt-0'>
+                        <div className='grid grid-cols-2 gap-x-2 gap-y-1 text-xs'>
+                            <div className='flex min-w-0 items-center gap-1'>
+                                <Briefcase className='h-3 w-3 shrink-0 text-muted-foreground'/>
+                                <span className='truncate'>{application.experience[0]?.profile || 'Not specified'}</span>
                             </div>
-                            <div className='flex items-center space-x-1'>
-                                <MapPin className='w-3 h-3 text-muted-foreground'/>
-                                <span>{application.currentLocation}</span>
+                            <div className='flex min-w-0 items-center gap-1'>
+                                <MapPin className='h-3 w-3 shrink-0 text-muted-foreground'/>
+                                <span className='truncate'>{application.currentLocation}</span>
                             </div>
-                            <div className='flex items-center space-x-1'>
-                                <GraduationCap className='w-3 h-3 text-muted-foreground'/>
-                                <span>{application.education[0]?.degree || 'Not specified'}</span>
+                            <div className='flex min-w-0 items-center gap-1'>
+                                <GraduationCap className='h-3 w-3 shrink-0 text-muted-foreground'/>
+                                <span className='truncate'>{application.education[0]?.degree || 'Not specified'}</span>
                             </div>
-                            <div className='flex items-center space-x-1'>
-                                <Clock className='w-3 h-3 text-muted-foreground'/>
-                                <span>{yearsOfExperience.toFixed(1)} years</span>
+                            <div className='flex min-w-0 items-center gap-1'>
+                                <Clock className='h-3 w-3 shrink-0 text-muted-foreground'/>
+                                <span className='shrink-0'>{yearsOfExperience.toFixed(1)} years</span>
                             </div>
                         </div>
                         <div className='mt-2 flex flex-wrap gap-1'>
@@ -198,7 +200,7 @@ const ApplicationDetail = memo(({ application }: {
         };
     }, [application?.jobId]);
     if (!application) {
-        return (<Card className='flex items-center justify-center min-h-[200px]'>
+        return (<Card className='flex min-h-[200px] min-w-0 items-center justify-center'>
                 <CardContent className='py-12'>
                     <p className='text-center text-muted-foreground'>Select an application to see details</p>
                 </CardContent>
@@ -224,22 +226,22 @@ const ApplicationDetail = memo(({ application }: {
             setFetchingResume(false);
         }
     };
-    return (<Card className='overflow-auto'>
-            <CardHeader className='sticky top-0 z-10 bg-card pb-2 border-b'>
-                <div className='flex items-center justify-between gap-4 flex-wrap'>
-                    <div className='flex items-center space-x-4 min-w-0'>
-                        <Avatar className='w-16 h-16 border flex-shrink-0'>
+    return (<Card className='min-w-0 overflow-auto'>
+            <CardHeader className='sticky top-0 z-10 border-b bg-card pb-2'>
+                <div className='flex min-w-0 flex-wrap items-center justify-between gap-4'>
+                    <div className='flex min-w-0 items-center gap-4'>
+                        <Avatar className='h-16 w-16 shrink-0 border'>
                             <AvatarFallback className='text-2xl'>{`${application.firstName[0]}${application.lastName[0]}`}</AvatarFallback>
                         </Avatar>
                         <div className='min-w-0'>
                             <CardTitle className='text-2xl'>{`${application.firstName} ${application.lastName}`}</CardTitle>
-                            <div className='flex items-center space-x-2 mt-1 flex-wrap'>
+                            <div className='mt-1 flex flex-wrap items-center gap-2'>
                                 <StatusBadge status={application.status}/>
                                 <span className='text-sm text-muted-foreground'>Applied {formatDate(application.createdAt)}</span>
                             </div>
                         </div>
                     </div>
-                    <div className='flex items-center flex-shrink-0'>
+                    <div className='flex shrink-0 flex-wrap items-center gap-2'>
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
@@ -256,9 +258,9 @@ const ApplicationDetail = memo(({ application }: {
                     </div>
                 </div>
             </CardHeader>
-            <CardContent className='p-6'>
-                <Tabs value={activeTab} onValueChange={setActiveTab} className='mt-4'>
-                    <TabsList className='flex flex-wrap justify-start'>
+            <CardContent className='min-w-0 p-6'>
+                <Tabs value={activeTab} onValueChange={setActiveTab} className='mt-4 min-w-0'>
+                    <TabsList className='flex w-full min-w-0 flex-wrap justify-start gap-1'>
                         <TabsTrigger value='profile'>Profile</TabsTrigger>
                         <TabsTrigger value='experience'>Experience</TabsTrigger>
                         <TabsTrigger value='education'>Education</TabsTrigger>
@@ -266,7 +268,7 @@ const ApplicationDetail = memo(({ application }: {
                         <TabsTrigger value='documents'>Documents</TabsTrigger>
                     </TabsList>
                     <TabsContent value='profile' className='mt-4'>
-                        <div className='grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-4 text-sm mb-6'>
+                        <div className='mb-6 grid min-w-0 grid-cols-2 gap-x-4 gap-y-4 text-sm sm:grid-cols-4 sm:gap-x-6'>
                             {[
             { icon: <Phone className='w-4 h-4 text-muted-foreground'/>, label: 'Phone', value: application.phone },
             {
@@ -276,12 +278,12 @@ const ApplicationDetail = memo(({ application }: {
             },
             { icon: <UserIcon className='w-4 h-4 text-muted-foreground'/>, label: 'Gender', value: application.gender },
             { icon: <Building className='w-4 h-4 text-muted-foreground'/>, label: 'Source', value: application.source },
-        ].map((item, index) => (<div key={index} className='flex flex-col'>
-                                    <span className='text-xs text-muted-foreground flex items-center mb-1'>
+        ].map((item, index) => (<div key={index} className='min-w-0 flex flex-col'>
+                                    <span className='mb-1 flex items-center text-xs text-muted-foreground'>
                                         {item.icon}
                                         <span className='ml-2'>{item.label}</span>
                                     </span>
-                                    <span className='font-medium'>{item.value}</span>
+                                    <span className='break-words font-medium'>{item.value}</span>
                                 </div>))}
                         </div>
 
@@ -295,8 +297,8 @@ const ApplicationDetail = memo(({ application }: {
 
                         <DetailSection title='Social Links' icon={<Globe className='w-5 h-5 text-primary'/>}>
                             <div className='grid grid-cols-1 gap-2'>
-                                {application.socialLinks.length > 0 ? (application.socialLinks.map((link, index) => (<a key={index} href={link} target='_blank' rel='noopener noreferrer' className='text-primary hover:underline flex items-center'>
-                                            <Globe className='w-4 h-4 mr-2'/>
+                                {application.socialLinks.length > 0 ? (application.socialLinks.map((link, index) => (<a key={index} href={link} target='_blank' rel='noopener noreferrer' className='flex min-w-0 items-center break-all text-primary hover:underline'>
+                                            <Globe className='mr-2 h-4 w-4 shrink-0'/>
                                             {link.replace(/^https?:\/\/(www\.)?/, '')}
                                         </a>))) : (<p className='text-sm text-muted-foreground'>No social links provided</p>)}
                             </div>
@@ -360,12 +362,12 @@ const ApplicationDetail = memo(({ application }: {
                             </div>) : (<div className='space-y-4'>
                                 <div>
                                     <h3 className='font-semibold text-lg'>{job.profile}</h3>
-                                    <p className='text-sm text-muted-foreground flex items-center gap-2 mt-1'>
-                                        <Building className='w-4 h-4'/>
-                                        {job.company || '—'}
-                                        <Separator orientation='vertical' className='h-4'/>
-                                        <MapPin className='w-4 h-4'/>
-                                        {job.location}
+                                    <p className='mt-1 flex min-w-0 flex-wrap items-center gap-2 text-sm text-muted-foreground'>
+                                        <Building className='h-4 w-4 shrink-0'/>
+                                        <span className='break-words'>{job.company || '—'}</span>
+                                        <Separator orientation='vertical' className='h-4 shrink-0'/>
+                                        <MapPin className='h-4 w-4 shrink-0'/>
+                                        <span className='break-words'>{job.location}</span>
                                     </p>
                                     <div className='flex flex-wrap gap-2 mt-2'>
                                         <Badge variant='outline' className='text-xs'>
@@ -630,15 +632,17 @@ export default function ApplicationsPage() {
         }
     }, [filteredAndSortedApplications, selectedApplication]);
     return (<NavbarLayout>
-            <div className='px-4 sm:px-6 py-6'>
-                <div className='flex flex-col space-y-6'>
-                    <div className='flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0'>
-                        <div>
+            <div className='mx-auto max-w-full px-4 py-6 sm:px-6'>
+                <div className='flex min-w-0 flex-col space-y-6'>
+                    <div className='flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
+                        <div className='min-w-0 max-w-full lg:max-w-2xl lg:pr-4'>
                             <h1 className='text-2xl font-bold'>Applications</h1>
-                            <p className='text-muted-foreground'>Manage and review candidate applications</p>
+                            <p className='text-pretty break-words text-muted-foreground'>
+                                Track your submitted applications and their status
+                            </p>
                         </div>
 
-                        <div className='flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2'>
+                        <div className='flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center'>
                             <div className='relative w-full sm:w-64'>
                                 <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground'/>
                                 <input type='text' placeholder='Search applications...' className='w-full rounded-md border border-input bg-background py-2 pl-8 pr-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2' onChange={(e) => handleSearchChange(e.target.value)}/>
@@ -719,8 +723,8 @@ export default function ApplicationsPage() {
                                 Clear all
                             </Button>
                         </div>)}
-                    <div className='grid grid-cols-1 lg:grid-cols-3 gap-6 items-start'>
-                        <div className='lg:col-span-1 h-[calc(100vh-220px)] overflow-hidden flex flex-col'>
+                    <div className='grid min-w-0 grid-cols-1 gap-6 items-start lg:grid-cols-3'>
+                        <div className='flex h-[calc(100vh-220px)] min-h-0 min-w-0 flex-col overflow-hidden lg:col-span-1'>
                             {error && (<Card className='mb-4 border-destructive'>
                                     <CardContent className='p-4 flex items-center text-destructive'>
                                         <AlertCircle className='w-5 h-5 mr-2'/>
@@ -728,10 +732,10 @@ export default function ApplicationsPage() {
                                     </CardContent>
                                 </Card>)}
 
-                            <Card className='flex-1 overflow-hidden'>
-                                <CardHeader className='py-3 px-4 border-b'>
-                                    <div className='flex items-center justify-between'>
-                                        <CardTitle className='text-base'>
+                            <Card className='flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden'>
+                                <CardHeader className='border-b px-4 py-3'>
+                                    <div className='flex min-w-0 items-center justify-between gap-2'>
+                                        <CardTitle className='min-w-0 truncate text-base'>
                                             {applicationsFetchCompleted
                                                 ? filterOptions.status !== 'all'
                                                     ? `${filterOptions.status} Applications (${filteredAndSortedApplications.length})`
@@ -741,14 +745,14 @@ export default function ApplicationsPage() {
                                                   : 'All Applications'}
                                         </CardTitle>
                                         {applicationsFetchCompleted && applications.length > 0 && (
-                                            <Badge variant='outline'>
+                                            <Badge variant='outline' className='shrink-0 whitespace-nowrap'>
                                                 {filteredAndSortedApplications.length} of {applications.length}
                                             </Badge>
                                         )}
                                     </div>
                                 </CardHeader>
 
-                                <div ref={parentRef} className='h-[calc(100%-57px)] overflow-auto p-3' tabIndex={0} onKeyDown={(e) => {
+                                <div ref={parentRef} className='min-h-0 min-w-0 flex-1 overflow-auto p-3' tabIndex={0} onKeyDown={(e) => {
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                 e.preventDefault();
                 const currentIndex = filteredAndSortedApplications.findIndex((app) => app.id === selectedApplication?.id);
@@ -763,7 +767,7 @@ export default function ApplicationsPage() {
         }}>
                                     {loading && applications.length === 0 ? ([...Array(5)].map((_, index) => <ApplicationCardSkeleton key={index}/>)) : filteredAndSortedApplications.length === 0 ? (<EmptyState message={filterOptions.status !== 'all' || filterOptions.searchQuery
                 ? 'No applications match your filters'
-                : 'No applications found'}/>) : (<div style={{
+                : 'No applications found'}/>) : (<div className='min-w-0' style={{
                 height: `${rowVirtualizer.getTotalSize()}px`,
                 width: '100%',
                 position: 'relative',
@@ -771,7 +775,7 @@ export default function ApplicationsPage() {
                                             <AnimatePresence>
                                                 {rowVirtualizer.getVirtualItems().map((virtualRow) => {
                 const application = filteredAndSortedApplications[virtualRow.index];
-                return (<div key={application.id} style={{
+                return (<div key={application.id} className='min-w-0 max-w-full' style={{
                         position: 'absolute',
                         top: 0,
                         left: 0,

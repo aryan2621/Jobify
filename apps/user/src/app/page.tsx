@@ -11,11 +11,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@jobify/ui/avatar';
 import { useRouter } from 'next/navigation';
 import { toast } from '@jobify/ui/use-toast';
 import { Badge } from '@jobify/ui/badge';
-import { BarChart, BookCopy, CheckCircle, FileText, Globe, LogOut, Search, UserIcon, Zap } from 'lucide-react';
+import { BarChart, CheckCircle, FileText, Globe, LogOut, Search, Send, UserIcon, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@jobify/ui/carousel';
 import { Star } from 'lucide-react';
-import { Facebook, Instagram, Linkedin, MessageCircle, Send, Twitter } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@jobify/ui/dialog';
 import ky from 'ky';
 import { useState, useEffect, useRef } from 'react';
@@ -61,11 +61,18 @@ const HeaderSection = () => {
 };
 const HeroSection = () => {
     const user = userStore((state) => state.user);
+    const router = useRouter();
     const [searchQuery, setSearchQuery] = useState('');
     const [location, setLocation] = useState('');
     const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        window.location.href = `/jobs?q=${searchQuery}&location=${location}`;
+        const params = new URLSearchParams();
+        if (searchQuery.trim())
+            params.set('q', searchQuery.trim());
+        if (location.trim())
+            params.set('location', location.trim());
+        const qs = params.toString();
+        router.push(qs ? `/jobs?${qs}` : '/jobs');
     };
     return (<section className='w-full pt-32 pb-20 md:pt-40 md:pb-28 relative'>
             <div className='absolute inset-0 bg-gradient-to-br from-primary/10 to-background z-0'></div>
@@ -74,14 +81,13 @@ const HeroSection = () => {
                     <div className='flex flex-col gap-6'>
                         <div>
                             <Badge variant='outline' className='mb-4 px-3 py-1 text-sm bg-primary/10 text-primary border-primary/30'>
-                                #1 Job Board Platform
+                                Search · apply · track
                             </Badge>
                             <h1 className='text-4xl md:text-6xl font-bold leading-tight tracking-tighter mb-4'>
-                                Find Your <span className='text-transparent bg-gradient-to-r from-[#D247BF] to-primary bg-clip-text'>Dream Job</span>{' '}
-                                Today
+                                Land work that <span className='text-transparent bg-gradient-to-r from-[#D247BF] to-primary bg-clip-text'>fits you</span>
                             </h1>
-                            <p className='text-xl text-muted-foreground max-w-md'>
-                                Connect with top employers and discover opportunities that match your skills, experience, and career goals.
+                            <p className='text-lg md:text-xl text-muted-foreground max-w-lg'>
+                                Fewer tabs, clearer roles. Browse openings, send a sharp application, and follow everything in one calm place.
                             </p>
                         </div>
 
@@ -99,11 +105,13 @@ const HeroSection = () => {
                                     Search Jobs
                                 </Button>
                             </form>
-                            <div className='flex flex-wrap gap-2 mt-3'>
-                                <span className='text-xs text-muted-foreground'>Trending:</span>
-                                {['Remote', 'Software Engineer', 'Marketing', 'Data Science', 'Design'].map((tag) => (<Badge key={tag} variant='secondary' className='text-xs cursor-pointer hover:bg-secondary/80' onClick={() => window.location.assign(`/jobs?q=${encodeURIComponent(tag)}`)}>
-                                        {tag}
-                                    </Badge>))}
+                            <div className='flex flex-wrap gap-2 mt-3 items-center'>
+                                <span className='text-xs text-muted-foreground'>Try:</span>
+                                {['Remote', 'Software Engineer', 'Marketing', 'Data Science', 'Design'].map((tag) => (<Link key={tag} href={`/jobs?q=${encodeURIComponent(tag)}`} prefetch={false} className='inline-flex'>
+                                        <Badge variant='secondary' className='text-xs hover:bg-secondary/80 transition-colors'>
+                                            {tag}
+                                        </Badge>
+                                    </Link>))}
                             </div>
                         </div>
 
@@ -121,10 +129,10 @@ const HeroSection = () => {
                         </div>
                     </div>
 
-                    <div className='relative group hidden lg:block'>
+                    <div className='relative group mt-8 lg:mt-0 max-w-lg mx-auto lg:max-w-none'>
                         <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[90%] h-[90%] bg-primary/30 rounded-full blur-3xl opacity-60'></div>
-                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, delay: 0.2 }}>
-                            <Image width={800} height={600} className='w-full rounded-lg shadow-2xl border border-border/50 transform translate-y-0 hover:-translate-y-2 transition-transform duration-500' src='/posts.png' alt='Job board dashboard'/>
+                        <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, delay: 0.15 }}>
+                            <Image width={800} height={600} className='w-full rounded-xl shadow-2xl border border-border/50 transform translate-y-0 hover:-translate-y-1 transition-transform duration-500' src='/posts.png' alt='Job board dashboard'/>
                         </motion.div>
                     </div>
                 </div>
@@ -132,10 +140,10 @@ const HeroSection = () => {
         </section>);
 };
 const STATS = [
-    { label: 'Active Jobs', target: 10000 },
-    { label: 'Companies', target: 2500 },
-    { label: 'Job Seekers', target: 1000000 },
-    { label: 'Successful Hires', target: 500000 },
+    { label: 'Open roles', target: 3200 },
+    { label: 'Teams hiring', target: 520 },
+    { label: 'Applications sent', target: 24000 },
+    { label: 'People hired', target: 6100 },
 ] as const;
 function formatStatValue(current: number, target: number): string {
     if (target >= 1e6)
@@ -187,8 +195,9 @@ const StatsSection = () => {
     }, []);
     return (<section ref={sectionRef} className='w-full py-16 bg-muted/40'>
             <div className='container'>
+                <p className='text-center text-xs text-muted-foreground mb-8 uppercase tracking-widest'>Momentum on the platform</p>
                 <div className='grid grid-cols-2 md:grid-cols-4 gap-8'>
-                    {STATS.map((stat, index) => (<StatCard key={stat.label} label={stat.label} target={stat.target} inView={inView}/>))}
+                    {STATS.map((stat) => (<StatCard key={stat.label} label={stat.label} target={stat.target} inView={inView}/>))}
                 </div>
             </div>
         </section>);
@@ -208,24 +217,21 @@ function StatCard({ label, target, inView }: {
 }
 const reviewList = [
     {
-        image: 'https://github.com/shadcn.png',
         name: 'Sophia Collins',
         userName: 'Cybersecurity Analyst',
-        comment: 'As someone in a specialized field, finding the right position was always challenging. JobConnect matched me with my dream company within two weeks!',
+        comment: 'Niche roles are painful to filter. Here I could actually see what matched my stack—and move in two weeks.',
         rating: 4.8,
     },
     {
-        image: 'https://github.com/shadcn.png',
         name: 'Ethan Parker',
         userName: 'Data Scientist',
-        comment: 'The resume ATS checker was invaluable. It helped me fine-tune my application materials and I received responses from 8 out of 10 jobs I applied for.',
-        rating: 5.0,
+        comment: 'Applications felt organized instead of scattered. I finally had a single place to tweak and resend without losing track.',
+        rating: 5,
     },
     {
-        image: 'https://github.com/shadcn.png',
         name: 'Isabella Reed',
         userName: 'DevOps Engineer',
-        comment: "I landed a role with a 30% salary increase thanks to JobConnect. The platform suggested positions I wouldn't have considered but that perfectly matched my skillset.",
+        comment: 'Found a role I would have scrolled past elsewhere. Less noise, more signal.',
         rating: 4.9,
     },
 ];
@@ -236,9 +242,9 @@ const TestimonialSection = () => {
                     <Badge variant='outline' className='mb-4 px-3 py-1 text-sm bg-primary/10 text-primary border-primary/30'>
                         Success Stories
                     </Badge>
-                    <h2 className='text-3xl md:text-4xl font-bold mb-4'>What Our Community Says</h2>
+                    <h2 className='text-3xl md:text-4xl font-bold mb-4'>Real people, calmer searches</h2>
                     <p className='text-muted-foreground max-w-2xl mx-auto'>
-                        Join thousands of job seekers who&#39;ve found success with our platform
+                        Short notes from folks who wanted less chaos in their job hunt
                     </p>
                 </div>
 
@@ -249,8 +255,8 @@ const TestimonialSection = () => {
                         {reviewList.map((review) => (<CarouselItem key={review.name} className='md:basis-1/2 lg:basis-1/3 p-2'>
                                 <Card className='h-full border border-border/50 hover:border-primary/20 transition-colors duration-300 hover:shadow-md'>
                                     <CardContent className='pt-6'>
-                                        <div className='flex gap-1 mb-4'>
-                                            {[...Array(5)].map((_, i) => (<Star key={i} className={`size-4 ${i < Math.floor(review.rating) ? 'fill-primary text-primary' : 'fill-muted text-muted'}`}/>))}
+                                        <div className='flex gap-1 mb-4 items-center'>
+                                            {[...Array(5)].map((_, i) => (<Star key={i} className={`size-4 ${i < Math.round(review.rating) ? 'fill-primary text-primary' : 'fill-muted text-muted'}`}/>))}
                                             <span className='text-xs text-muted-foreground ml-2'>{review.rating.toFixed(1)}</span>
                                         </div>
                                         <p className='text-sm mb-6'>{`"${review.comment}"`}</p>
@@ -259,8 +265,13 @@ const TestimonialSection = () => {
                                     <CardHeader className='pt-0'>
                                         <div className='flex flex-row items-center gap-4'>
                                             <Avatar>
-                                                <AvatarImage src={review.image} alt={review.name}/>
-                                                <AvatarFallback>{review.name.charAt(0)}</AvatarFallback>
+                                                <AvatarFallback className='bg-primary/15 text-primary font-medium'>
+                                                    {review.name
+                                                        .split(' ')
+                                                        .map((n) => n.charAt(0))
+                                                        .join('')
+                                                        .slice(0, 2)}
+                                                </AvatarFallback>
                                             </Avatar>
 
                                             <div className='flex flex-col'>
@@ -291,22 +302,8 @@ const FooterSection = () => {
                             <span className='font-bold text-xl'>JobConnect</span>
                         </Link>
                         <p className='text-muted-foreground mb-4 max-w-md'>
-                            Connecting talented professionals with innovative companies. Your career journey starts here.
+                            A quieter place to find work—search, apply, and track without the usual chaos.
                         </p>
-                        <div className='flex gap-3'>
-                            <Link href='#' className='h-10 w-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors' prefetch={false} aria-label='Twitter'>
-                                <Twitter className='h-5 w-5'/>
-                            </Link>
-                            <Link href='#' className='h-10 w-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors' prefetch={false} aria-label='LinkedIn'>
-                                <Linkedin className='h-5 w-5'/>
-                            </Link>
-                            <Link href='#' className='h-10 w-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors' prefetch={false} aria-label='Facebook'>
-                                <Facebook className='h-5 w-5'/>
-                            </Link>
-                            <Link href='#' className='h-10 w-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors' prefetch={false} aria-label='Instagram'>
-                                <Instagram className='h-5 w-5'/>
-                            </Link>
-                        </div>
                     </div>
 
                     <div>
@@ -347,26 +344,26 @@ const FooterSection = () => {
 };
 const features = [
     {
-        title: 'AI-Powered Job Matching',
-        description: 'Our intelligent algorithms analyze your skills, experience, and preferences to connect you with the perfect opportunities.',
+        title: 'Sharp search',
+        description: 'Slice by role, location, and how you like to work—remote, hybrid, or on-site.',
         icon: <Zap className='w-8 h-8 text-blue-500'/>,
         image: '/post.png',
     },
     {
-        title: 'Advanced Resume Analysis',
-        description: "Get instant feedback on your resume's ATS compatibility and receive personalized tips to improve your chances of success.",
+        title: 'Clean listings',
+        description: 'Job cards that tell you what matters first, so you spend time on roles worth it.',
         icon: <Globe className='w-8 h-8 text-green-500'/>,
         image: '/posts.png',
     },
     {
-        title: 'Streamlined Applications',
-        description: 'Apply to multiple positions with a single click and track your applications in real-time from start to finish.',
+        title: 'Simple applications',
+        description: 'One thoughtful flow per company—attach context without repeating yourself endlessly.',
         icon: <CheckCircle className='w-8 h-8 text-purple-500'/>,
         image: '/applications.png',
     },
     {
-        title: 'Comprehensive Analytics',
-        description: 'Gain valuable insights into your job search performance with detailed analytics and actionable recommendations.',
+        title: 'Your dashboard',
+        description: 'See statuses and next steps in one view instead of digging through email threads.',
         icon: <BarChart className='w-8 h-8 text-indigo-500'/>,
         image: '/analytic.png',
     },
@@ -377,17 +374,22 @@ const FeatureSection = () => {
             <div className='container'>
                 <div className='text-center mb-12'>
                     <Badge variant='outline' className='mb-4 px-3 py-1 text-sm bg-primary/10 text-primary border-primary/30'>
-                        Platform Features
+                        Built for focus
                     </Badge>
-                    <h2 className='text-3xl md:text-4xl font-bold mb-4'>Powerful Tools for Job Seekers</h2>
+                    <h2 className='text-3xl md:text-4xl font-bold mb-4'>Everything you need—nothing extra</h2>
                     <p className='text-muted-foreground max-w-2xl mx-auto'>
-                        Our comprehensive platform offers specialized features to help you find your dream job
+                        Tap a card for a closer look, then jump into live roles when you&apos;re ready
                     </p>
                 </div>
 
-                <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
+                <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6'>
                     {features.map((feature) => (<motion.div key={feature.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-                            <Card className='cursor-pointer hover:shadow-lg transition-all duration-300 h-full border border-border/50 hover:border-primary/20' onClick={() => setSelectedFeature(feature)}>
+                            <Card role='button' tabIndex={0} aria-label={`${feature.title}: view details`} className='cursor-pointer hover:shadow-lg transition-all duration-300 h-full border border-border/50 hover:border-primary/20 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2' onClick={() => setSelectedFeature(feature)} onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelectedFeature(feature);
+                    }
+                }}>
                                 <CardHeader className='space-y-4'>
                                     <div className='p-3 rounded-lg bg-muted w-fit'>{feature.icon}</div>
                                     <CardTitle className='text-xl'>{feature.title}</CardTitle>
@@ -406,7 +408,7 @@ const FeatureSection = () => {
                 <div className='flex justify-center mt-8'>
                     <Button size='lg' className='font-medium' asChild>
                         <Link href='/jobs' prefetch={false}>
-                            Explore Job Opportunities
+                            See open roles
                         </Link>
                     </Button>
                 </div>
@@ -425,23 +427,27 @@ const FeatureSection = () => {
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className='grid md:grid-cols-2 gap-8 mt-6'>
                         <div className='space-y-6'>
                             <div className='space-y-4'>
-                                <h3 className='font-semibold text-lg'>Key Benefits</h3>
+                                <h3 className='font-semibold text-lg'>Why it feels better</h3>
                                 <div className='flex items-start gap-3'>
                                     <CheckCircle className='w-5 h-5 text-primary mt-0.5 flex-shrink-0'/>
-                                    <p>Save time and effort with smart automation and intelligent matching.</p>
+                                    <p>Less tab-hopping—search, save, and apply from one home base.</p>
                                 </div>
                                 <div className='flex items-start gap-3'>
                                     <CheckCircle className='w-5 h-5 text-primary mt-0.5 flex-shrink-0'/>
-                                    <p>Increase efficiency with personalized recommendations and insights.</p>
+                                    <p>Clear job context up front so you don&apos;t decode vague postings.</p>
                                 </div>
                                 <div className='flex items-start gap-3'>
                                     <CheckCircle className='w-5 h-5 text-primary mt-0.5 flex-shrink-0'/>
-                                    <p>Improve outcomes with data-driven decision making and analytics.</p>
+                                    <p>Track progress without digging through inboxes.</p>
                                 </div>
                             </div>
 
                             <div>
-                                <Button size='sm'>Learn More</Button>
+                                <Button size='sm' asChild>
+                                    <Link href='/jobs' prefetch={false}>
+                                        Browse jobs
+                                    </Link>
+                                </Button>
                             </div>
                         </div>
 
@@ -465,17 +471,21 @@ const CTASection = () => {
 
                     <div className='grid md:grid-cols-2 gap-10 items-center relative z-10'>
                         <div>
-                            <h2 className='text-3xl md:text-4xl font-bold mb-4'>Ready to Take the Next Step in Your Career?</h2>
-                            <p className='text-lg mb-6'>
-                                Join thousands of professionals who have found their dream jobs through JobConnect. Sign up today and let us help you
-                                discover your next opportunity.
+                            <h2 className='text-3xl md:text-4xl font-bold mb-4'>Your next role is a calm search away</h2>
+                            <p className='text-lg mb-6 text-muted-foreground'>
+                                Create a free account to save progress, or start browsing—no pressure, no clutter.
                             </p>
                             <div className='flex flex-wrap gap-4'>
-                                <Button variant='outline' size='lg' asChild>
+                                <Button size='lg' asChild>
                                     <Link href='/jobs' prefetch={false}>
-                                        Browse Jobs
+                                        Browse jobs
                                     </Link>
                                 </Button>
+                                {!user?.id && (<Button variant='outline' size='lg' asChild>
+                                        <Link href='/signup' prefetch={false}>
+                                            Sign up free
+                                        </Link>
+                                    </Button>)}
                             </div>
                         </div>
 

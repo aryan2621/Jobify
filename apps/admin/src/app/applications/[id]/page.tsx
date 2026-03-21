@@ -105,7 +105,7 @@ const StatusBadge = ({ status }: { status: ApplicationStatus }) => {
     const { variant, icon } = variants[status];
 
     return (
-        <Badge variant={variant} className='flex items-center'>
+        <Badge variant={variant} className='inline-flex shrink-0 items-center whitespace-nowrap'>
             {icon}
             {status}
         </Badge>
@@ -122,7 +122,7 @@ const ApplicationCard = ({ application, isSelected, onClick }: { application: Ap
 
     return (
         <Card
-            className={`mb-3 cursor-pointer transition-all hover:shadow-md ${isSelected ? 'border-2 border-primary shadow-md' : ''}`}
+            className={`mb-3 min-w-0 max-w-full cursor-pointer overflow-hidden transition-all hover:shadow-md ${isSelected ? 'border-2 border-primary shadow-md' : ''}`}
             onClick={onClick}
             tabIndex={0}
             onKeyDown={(e) => {
@@ -134,35 +134,39 @@ const ApplicationCard = ({ application, isSelected, onClick }: { application: Ap
             role='button'
             aria-pressed={isSelected}
         >
-            <CardHeader className='flex flex-row items-center justify-between py-3 px-4'>
-                <div className='flex items-center space-x-3'>
-                    <Avatar className='border'>
+            <CardHeader className='flex min-w-0 flex-col gap-2 py-3 px-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3'>
+                <div className='flex min-w-0 flex-1 items-center gap-3'>
+                    <Avatar className='shrink-0 border'>
                         <AvatarFallback>{`${application.firstName[0]}${application.lastName[0]}`}</AvatarFallback>
                     </Avatar>
-                    <div>
-                        <CardTitle className='text-base'>{`${application.firstName} ${application.lastName}`}</CardTitle>
-                        <p className='text-xs text-muted-foreground'>{application.email}</p>
+                    <div className='min-w-0'>
+                        <CardTitle className='truncate text-base'>{`${application.firstName} ${application.lastName}`}</CardTitle>
+                        <p className='truncate text-xs text-muted-foreground' title={application.email}>
+                            {application.email}
+                        </p>
                     </div>
                 </div>
-                <StatusBadge status={application.status} />
+                <div className='flex shrink-0 justify-end sm:justify-start sm:pt-0'>
+                    <StatusBadge status={application.status} />
+                </div>
             </CardHeader>
-            <CardContent className='pt-0 pb-3 px-4'>
-                <div className='grid grid-cols-2 gap-1 text-xs'>
-                    <div className='flex items-center space-x-1'>
-                        <Briefcase className='w-3 h-3 text-muted-foreground' />
-                        <span>{application.experience[0]?.profile || 'Not specified'}</span>
+            <CardContent className='px-4 pb-3 pt-0'>
+                <div className='grid grid-cols-2 gap-x-2 gap-y-1 text-xs'>
+                    <div className='flex min-w-0 items-center gap-1'>
+                        <Briefcase className='h-3 w-3 shrink-0 text-muted-foreground' />
+                        <span className='truncate'>{application.experience[0]?.profile || 'Not specified'}</span>
                     </div>
-                    <div className='flex items-center space-x-1'>
-                        <MapPin className='w-3 h-3 text-muted-foreground' />
-                        <span>{application.currentLocation}</span>
+                    <div className='flex min-w-0 items-center gap-1'>
+                        <MapPin className='h-3 w-3 shrink-0 text-muted-foreground' />
+                        <span className='truncate'>{application.currentLocation}</span>
                     </div>
-                    <div className='flex items-center space-x-1'>
-                        <GraduationCap className='w-3 h-3 text-muted-foreground' />
-                        <span>{application.education[0]?.degree || 'Not specified'}</span>
+                    <div className='flex min-w-0 items-center gap-1'>
+                        <GraduationCap className='h-3 w-3 shrink-0 text-muted-foreground' />
+                        <span className='truncate'>{application.education[0]?.degree || 'Not specified'}</span>
                     </div>
-                    <div className='flex items-center space-x-1'>
-                        <Clock className='w-3 h-3 text-muted-foreground' />
-                        <span>{yearsOfExperience.toFixed(1)} years</span>
+                    <div className='flex min-w-0 items-center gap-1'>
+                        <Clock className='h-3 w-3 shrink-0 text-muted-foreground' />
+                        <span className='shrink-0'>{yearsOfExperience.toFixed(1)} years</span>
                     </div>
                 </div>
                 <div className='mt-2 flex flex-wrap gap-1'>
@@ -299,9 +303,9 @@ const ApplicationDetail = ({
     };
 
     return (
-        <Card className='overflow-auto'>
-            <CardHeader className='sticky top-0 z-10 bg-card pb-2 border-b'>
-                <div className='flex items-center justify-between gap-4 flex-wrap'>
+        <Card className='min-w-0 overflow-auto'>
+            <CardHeader className='sticky top-0 z-10 border-b bg-card pb-2'>
+                <div className='flex min-w-0 flex-wrap items-center justify-between gap-4'>
                     <div className='flex items-center space-x-4 min-w-0'>
                         <Avatar className='w-16 h-16 border flex-shrink-0'>
                             <AvatarFallback className='text-2xl'>{`${application.firstName[0]}${application.lastName[0]}`}</AvatarFallback>
@@ -633,8 +637,8 @@ const FilterBar = ({
     statusFilter: string;
     setStatusFilter: (status: string) => void;
 }) => (
-    <div className='flex flex-col sm:flex-row gap-2 sm:space-x-2'>
-        <div className='relative w-full sm:w-64'>
+    <div className='flex w-full min-w-0 shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-2'>
+        <div className='relative w-full min-w-0 sm:w-64'>
             <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
             <Input
                 placeholder='Search applicants...'
@@ -835,10 +839,10 @@ export default function JobApplicationsPage({ params }: { params: { id: string }
 
     return (
         <NavbarLayout>
-            <div className='px-4 sm:px-6 py-6'>
-                <div className='flex flex-col space-y-6'>
-                    <div className='flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0'>
-                        <div>
+            <div className='mx-auto max-w-full px-4 py-6 sm:px-6'>
+                <div className='flex min-w-0 flex-col space-y-6'>
+                    <div className='flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
+                        <div className='min-w-0 max-w-full lg:max-w-2xl lg:pr-4'>
                             <Button variant='ghost' asChild className='mb-2'>
                                 <Link href='/posts'>
                                     <ArrowLeft className='h-4 w-4 mr-2' />
@@ -846,7 +850,7 @@ export default function JobApplicationsPage({ params }: { params: { id: string }
                                 </Link>
                             </Button>
                             <h1 className='text-2xl font-bold'>Applications</h1>
-                            <p className='text-muted-foreground'>
+                            <p className='text-pretty text-muted-foreground break-words'>
                                 {loading
                                     ? 'Loading applications…'
                                     : 'Manage and review applications for this job'}
@@ -907,25 +911,25 @@ export default function JobApplicationsPage({ params }: { params: { id: string }
                     )}
 
                     {loading ? (
-                        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6 items-start'>
-                            <div className='lg:col-span-1 space-y-3'>
+                        <div className='grid min-w-0 grid-cols-1 gap-6 items-start lg:grid-cols-3'>
+                            <div className='min-w-0 space-y-3 lg:col-span-1'>
                                 <Skeleton className='h-12 w-full rounded-md' />
                                 <Skeleton className='h-32 w-full rounded-md' />
                                 <Skeleton className='h-32 w-full rounded-md' />
                                 <Skeleton className='h-32 w-full rounded-md' />
                             </div>
-                            <div className='lg:col-span-2 space-y-4'>
+                            <div className='min-w-0 space-y-4 lg:col-span-2'>
                                 <Skeleton className='h-24 w-full rounded-md' />
                                 <Skeleton className='h-64 w-full rounded-md' />
                             </div>
                         </div>
                     ) : (
-                        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6 items-start'>
-                            <div className='lg:col-span-1 h-[calc(100vh-220px)] overflow-hidden flex flex-col'>
-                                <Card className='flex-1 overflow-hidden'>
-                                    <CardHeader className='py-3 px-4 border-b'>
-                                        <div className='flex items-center justify-between'>
-                                            <CardTitle className='text-base'>
+                        <div className='grid min-w-0 grid-cols-1 gap-6 items-start lg:grid-cols-3'>
+                            <div className='flex min-h-0 min-w-0 flex-col overflow-hidden lg:col-span-1 h-[calc(100vh-220px)]'>
+                                <Card className='flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden'>
+                                    <CardHeader className='border-b px-4 py-3'>
+                                        <div className='flex min-w-0 items-center justify-between gap-2'>
+                                            <CardTitle className='min-w-0 truncate text-base'>
                                                 {loading
                                                     ? statusFilter !== 'all'
                                                         ? `${statusFilter}`
@@ -935,13 +939,13 @@ export default function JobApplicationsPage({ params }: { params: { id: string }
                                                       : `All Applications (${filteredApplications.length})`}
                                             </CardTitle>
                                             {!loading && applications.length > 0 && (
-                                                <Badge variant='outline'>
+                                                <Badge variant='outline' className='shrink-0 whitespace-nowrap'>
                                                     {filteredApplications.length} of {applications.length}
                                                 </Badge>
                                             )}
                                         </div>
                                     </CardHeader>
-                                    <div className='h-[calc(100%-57px)] overflow-auto p-3'>
+                                    <div className='min-h-0 min-w-0 flex-1 overflow-auto p-3'>
                                         {filteredApplications.length === 0 ? (
                                             <Card className='border-0 shadow-none'>
                                                 <CardContent className='flex flex-col items-center justify-center py-10'>
@@ -971,7 +975,7 @@ export default function JobApplicationsPage({ params }: { params: { id: string }
                                                 </CardContent>
                                             </Card>
                                         ) : (
-                                            <div className='space-y-3 pr-2'>
+                                            <div className='min-w-0 space-y-3 pr-1'>
                                                 {filteredApplications.map((application) => (
                                                     <ApplicationCard
                                                         key={application.id}

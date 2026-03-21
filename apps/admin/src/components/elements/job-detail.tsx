@@ -7,9 +7,7 @@ import {
     Inbox,
     MoreHorizontal,
     Share2,
-    MessageSquare,
     BarChart,
-    BookmarkPlus,
     Building,
     MapPin,
     Clock3,
@@ -33,10 +31,17 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 
 type JobDetailProps = { job: Job | null; applicationsHref?: string };
 
+function seekerJobsBaseUrl() {
+    const configured = process.env.NEXT_PUBLIC_USER_APP_URL?.trim().replace(/\/$/, '');
+    if (configured) return configured;
+    if (process.env.NODE_ENV === 'development') return 'http://localhost:3000';
+    if (typeof window !== 'undefined') return window.location.origin;
+    return '';
+}
+
 export const JobDetail = ({ job, applicationsHref }: JobDetailProps) => {
     const [sessionUserId, setSessionUserId] = useState<string | null>(null);
     const [fetching, setFetching] = useState(false);
-    const [isSaved, setIsSaved] = useState(false);
     const [currentTab, setCurrentTab] = useState('description');
 
     useEffect(() => {
@@ -77,12 +82,38 @@ export const JobDetail = ({ job, applicationsHref }: JobDetailProps) => {
     const daysRemaining = getDaysRemaining(job.lastDateToApply);
     const isOwner = job.createdBy === sessionUserId;
 
-    const handleSaveJob = () => {
-        setIsSaved(!isSaved);
-        toast({
-            title: isSaved ? 'Job Removed' : 'Job Saved',
-            description: isSaved ? 'Job has been removed from your saved list.' : 'Job has been saved to your profile.',
-        });
+    const shareUrl =
+        typeof window !== 'undefined' ? `${seekerJobsBaseUrl()}/jobs?jobId=${encodeURIComponent(job.id)}` : '';
+    const shareTitle = `${job.profile} at ${job.company ?? 'Company'}`;
+    const shareText = `${job.profile} - ${job.company ?? 'Company'} (${job.location})`;
+
+    const handleShareJob = async () => {
+        if (!shareUrl) {
+            toast({ title: 'Share unavailable', description: 'Could not build a job link.', variant: 'destructive' });
+            return;
+        }
+        try {
+            if (typeof navigator !== 'undefined' && navigator.share) {
+                await navigator.share({
+                    title: shareTitle,
+                    text: shareText,
+                    url: shareUrl,
+                });
+                toast({ title: 'Shared', description: 'Job link shared successfully.' });
+            } else {
+                await navigator.clipboard.writeText(shareUrl);
+                toast({ title: 'Link copied', description: 'Job link copied to clipboard.' });
+            }
+        } catch (err) {
+            if ((err as Error).name !== 'AbortError') {
+                try {
+                    await navigator.clipboard.writeText(shareUrl);
+                    toast({ title: 'Link copied', description: 'Job link copied to clipboard.' });
+                } catch {
+                    toast({ title: 'Share failed', description: 'Could not share or copy link.', variant: 'destructive' });
+                }
+            }
+        }
     };
 
     return (
@@ -105,33 +136,26 @@ export const JobDetail = ({ job, applicationsHref }: JobDetailProps) => {
                             </div>
 
                             <div className='flex items-center space-x-2'>
-                                <Button variant={isSaved ? 'default' : 'outline'} size='sm' className='gap-1' onClick={handleSaveJob}>
-                                    <BookmarkPlus className='h-4 w-4' />
-                                    {isSaved ? 'Saved' : 'Save'}
-                                </Button>
-
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant='ghost' size='icon'>
+                                        <Button variant='outline' size='sm' className='gap-1.5'>
+                                            <span>More</span>
                                             <MoreHorizontal className='h-4 w-4' />
-                                            <span className='sr-only'>More options</span>
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align='end'>
-                                        <DropdownMenuItem className='flex items-center'>
+                                        <DropdownMenuItem className='flex cursor-pointer items-center' onSelect={handleShareJob}>
                                             <Share2 className='mr-2 h-4 w-4' />
                                             Share Job
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem className='flex items-center'>
-                                            <MessageSquare className='mr-2 h-4 w-4' />
-                                            Contact Recruiter
                                         </DropdownMenuItem>
                                         {isOwner && (
                                             <>
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem className='flex items-center'>
-                                                    <BarChart className='mr-2 h-4 w-4' />
-                                                    View Stats
+                                                <DropdownMenuItem asChild>
+                                                    <Link href='/analytics' prefetch={false} className='flex items-center cursor-pointer'>
+                                                        <BarChart className='mr-2 h-4 w-4' />
+                                                        View Stats
+                                                    </Link>
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem asChild>
                                                     <Link href={`/applications/${job.id}`} className='flex items-center'>

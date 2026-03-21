@@ -151,28 +151,27 @@ const PricingPage = () => {
             </div>
 
             <div className='flex flex-col items-center mb-12'>
-                <div className='flex items-center justify-center space-x-3 mb-4'>
+                <div className='flex flex-wrap items-center justify-center gap-x-3 gap-y-2 mb-4 px-1'>
                     <span className={`text-sm ${!isYearly ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>Monthly</span>
                     <Switch checked={isYearly} onCheckedChange={setIsYearly} className='data-[state=checked]:bg-primary' />
                     <span className={`text-sm ${isYearly ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>Yearly</span>
                     {isYearly && (
-                        <Badge variant='secondary' className='ml-1 bg-green-100 text-green-800 hover:bg-green-100'>
+                        <Badge variant='secondary' className='bg-green-100 text-green-800 hover:bg-green-100'>
                             Save 17%
                         </Badge>
                     )}
                 </div>
             </div>
 
-            <div className='grid md:grid-cols-3 gap-6 mb-16'>
-                
-                <Card className='relative flex flex-col border-border hover:border-primary/30 hover:shadow-md transition-all duration-300'>
+            <div id='pricing-plans' className='grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 mb-16 max-w-full'>
+                <Card className='relative flex flex-col min-w-0 border-border hover:border-primary/30 hover:shadow-md transition-all duration-300'>
                     <CardHeader className='pb-4'>
-                        <CardTitle className='flex justify-between items-start'>
-                            <div>
+                        <CardTitle className='flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start'>
+                            <div className='min-w-0'>
                                 <div className='text-2xl font-bold'>BASIC</div>
                                 <CardDescription className='mt-1.5'>For recruiters getting started</CardDescription>
                             </div>
-                            <Badge variant='outline' className='bg-muted/80'>
+                            <Badge variant='outline' className='bg-muted/80 w-fit shrink-0'>
                                 STARTER
                             </Badge>
                         </CardTitle>
@@ -183,11 +182,11 @@ const PricingPage = () => {
                     </CardHeader>
 
                     <CardContent className='flex-grow'>
-                        <div className='flex items-center mb-4 pb-4 border-b'>
-                            <div className='p-2 rounded-full bg-primary/10 mr-2'>
+                        <div className='flex items-start gap-2 mb-4 pb-4 border-b'>
+                            <div className='p-2 rounded-full bg-primary/10 shrink-0'>
                                 <Zap className='h-5 w-5 text-primary' />
                             </div>
-                            <p className='text-sm'>For recruiters posting a few roles and managing candidates</p>
+                            <p className='text-sm min-w-0'>For recruiters posting a few roles and managing candidates</p>
                         </div>
 
                         {renderFeatureList(basicFeatures)}
@@ -223,18 +222,25 @@ const PricingPage = () => {
                     </CardFooter>
                 </Card>
 
-                {}
-                <Card className='relative flex flex-col border-primary shadow-lg scale-[1.02] z-10'>
-                    <Badge variant='default' className='absolute -top-4 left-0 right-0 mx-auto w-fit px-3 py-1  text-xs font-semibold rounded-full'>
+                <Card className='relative flex flex-col min-w-0 border-primary shadow-lg lg:scale-[1.02] lg:z-10'>
+                    <Badge
+                        variant='default'
+                        className='hidden lg:inline-flex absolute -top-4 left-1/2 -translate-x-1/2 w-fit px-3 py-1 text-xs font-semibold rounded-full'
+                    >
                         MOST POPULAR
                     </Badge>
-                    <CardHeader className='pb-4'>
-                        <CardTitle className='flex justify-between items-start'>
-                            <div>
+                    <CardHeader className='pb-4 pt-4 lg:pt-6'>
+                        <div className='flex justify-center mb-3 lg:hidden'>
+                            <Badge variant='default' className='px-3 py-1 text-xs font-semibold rounded-full'>
+                                MOST POPULAR
+                            </Badge>
+                        </div>
+                        <CardTitle className='flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start'>
+                            <div className='min-w-0'>
                                 <div className='text-2xl font-bold'>PRO</div>
                                 <CardDescription className='mt-1.5'>For recruiters with active pipelines</CardDescription>
                             </div>
-                            <Badge variant='default' className='bg-primary'>
+                            <Badge variant='default' className='bg-primary w-fit shrink-0'>
                                 RECOMMENDED
                             </Badge>
                         </CardTitle>
@@ -245,11 +251,11 @@ const PricingPage = () => {
                     </CardHeader>
 
                     <CardContent className='flex-grow'>
-                        <div className='flex items-center mb-4 pb-4 border-b'>
-                            <div className='p-2 rounded-full bg-primary/10 mr-2'>
+                        <div className='flex items-start gap-2 mb-4 pb-4 border-b'>
+                            <div className='p-2 rounded-full bg-primary/10 shrink-0'>
                                 <BarChart className='h-5 w-5 text-primary' />
                             </div>
-                            <p className='text-sm'>More postings, AI workflows, and analytics for serious recruiters</p>
+                            <p className='text-sm min-w-0'>More postings, AI workflows, and analytics for serious recruiters</p>
                         </div>
 
                         {renderFeatureList(proFeatures)}
@@ -285,15 +291,14 @@ const PricingPage = () => {
                     </CardFooter>
                 </Card>
 
-                {}
-                <Card className='relative flex flex-col border-border hover:border-primary/30 hover:shadow-md transition-all duration-300'>
+                <Card className='relative flex flex-col min-w-0 border-border hover:border-primary/30 hover:shadow-md transition-all duration-300'>
                     <CardHeader className='pb-4'>
-                        <CardTitle className='flex justify-between items-start'>
-                            <div>
+                        <CardTitle className='flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start'>
+                            <div className='min-w-0'>
                                 <div className='text-2xl font-bold'>ENTERPRISE</div>
                                 <CardDescription className='mt-1.5'>For agencies and large teams</CardDescription>
                             </div>
-                            <Badge variant='outline' className='bg-muted/80'>
+                            <Badge variant='outline' className='bg-muted/80 w-fit shrink-0'>
                                 CUSTOM
                             </Badge>
                         </CardTitle>
@@ -303,11 +308,11 @@ const PricingPage = () => {
                     </CardHeader>
 
                     <CardContent className='flex-grow'>
-                        <div className='flex items-center mb-4 pb-4 border-b'>
-                            <div className='p-2 rounded-full bg-primary/10 mr-2'>
+                        <div className='flex items-start gap-2 mb-4 pb-4 border-b'>
+                            <div className='p-2 rounded-full bg-primary/10 shrink-0'>
                                 <Shield className='h-5 w-5 text-primary' />
                             </div>
-                            <p className='text-sm'>Unlimited postings and dedicated support for recruitment agencies</p>
+                            <p className='text-sm min-w-0'>Unlimited postings and dedicated support for recruitment agencies</p>
                         </div>
 
                         {renderFeatureList(enterpriseFeatures)}
@@ -345,7 +350,6 @@ const PricingPage = () => {
                 </Card>
             </div>
 
-            {}
             <div className='mb-16'>
                 <div className='text-center mb-8'>
                     <h2 className='text-2xl font-bold mb-2'>Frequently Asked Questions</h2>
@@ -369,13 +373,13 @@ const PricingPage = () => {
                             <p className='text-muted-foreground mb-6'>
                                 Start your 14-day free trial — no card required. Need custom volume? Talk to us.
                             </p>
-                            <div className='flex flex-col sm:flex-row justify-center gap-4'>
-                                <Button size='lg' className='px-8'>
-                                    Start Free Trial
+                            <div className='flex flex-col sm:flex-row justify-center items-stretch sm:items-center gap-3 sm:gap-4'>
+                                <Button size='lg' className='px-8 w-full sm:w-auto' asChild>
+                                    <Link href='#pricing-plans'>Start Free Trial</Link>
                                 </Button>
-                                <Button variant='outline' size='lg' className='px-8' asChild>
-                                    <Link href='/contact'>
-                                        <MessageSquare className='mr-2 h-4 w-4' />
+                                <Button variant='outline' size='lg' className='px-8 w-full sm:w-auto' asChild>
+                                    <Link href='/contact' className='inline-flex items-center justify-center'>
+                                        <MessageSquare className='mr-2 h-4 w-4 shrink-0' />
                                         Contact Sales
                                     </Link>
                                 </Button>

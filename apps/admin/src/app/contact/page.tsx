@@ -81,6 +81,20 @@ export default function ContactPage() {
         loadUser();
     }, []);
 
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const sp = new URLSearchParams(window.location.search);
+        const inquiryType = sp.get('inquiryType');
+        const message = sp.get('message');
+        if (inquiryType || message) {
+            setFormData((prev) => ({
+                ...prev,
+                ...(inquiryType && { inquiryType }),
+                ...(message && { message }),
+            }));
+        }
+    }, []);
+
     const handleSubmit = async (e: { preventDefault: () => void }) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -232,12 +246,14 @@ export default function ContactPage() {
                                                             <SelectValue placeholder='Select topic' />
                                                         </SelectTrigger>
                                                         <SelectContent>
+                                                            <SelectItem value='general'>General</SelectItem>
                                                             <SelectItem value='posting'>Posting roles / job requisitions</SelectItem>
                                                             <SelectItem value='applications'>Managing applications & candidate pipeline</SelectItem>
                                                             <SelectItem value='workflows'>Recruiting workflows & automation</SelectItem>
                                                             <SelectItem value='account'>Recruiter account & settings</SelectItem>
                                                             <SelectItem value='billing'>Billing & subscription</SelectItem>
                                                             <SelectItem value='technical'>Technical issue</SelectItem>
+                                                            <SelectItem value='feedback'>Feedback</SelectItem>
                                                             <SelectItem value='other'>Other</SelectItem>
                                                         </SelectContent>
                                                     </Select>
