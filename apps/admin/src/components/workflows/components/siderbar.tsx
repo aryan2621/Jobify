@@ -21,7 +21,7 @@ import { BellRing, FileText, GitBranch, Flag, Info, Video, Clock, Save, Loader2 
 import { cn } from '@/lib/utils';
 import { TaskType, NodeType } from '@jobify/domain/workflow';
 import { toast } from '@jobify/ui/use-toast';
-import ky from 'ky';
+import ky, { HTTPError } from 'ky';
 import { nanoid } from 'nanoid';
 
 interface SidebarProps {
@@ -241,7 +241,7 @@ export default function Sidebar({ nodes, edges, workflowId }: SidebarProps) {
             description: '',
             nodes,
             edges,
-            status: 'draft' as const,
+            status: 'active' as const,
         };
         try {
             if (workflowId) {
@@ -264,12 +264,25 @@ export default function Sidebar({ nodes, edges, workflowId }: SidebarProps) {
                 router.push('/workflows');
             }
         } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Failed to save workflow';
-            toast({
-                title: 'Save failed',
-                description: message,
-                variant: 'destructive',
-            });
+            (async () => {
+                let description = 'Failed to save workflow';
+                if (err instanceof HTTPError) {
+                    try {
+                        const body = (await err.response.json()) as { message?: string };
+                        if (body?.message) description = body.message;
+                        else if (err.message) description = err.message;
+                    } catch {
+                        if (err.message) description = err.message;
+                    }
+                } else if (err instanceof Error) {
+                    description = err.message;
+                }
+                toast({
+                    title: 'Save failed',
+                    description,
+                    variant: 'destructive',
+                });
+            })();
         } finally {
             setIsSaving(false);
         }

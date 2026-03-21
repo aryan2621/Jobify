@@ -14,9 +14,10 @@ import {
 import { Button } from '@jobify/ui/button';
 import { Input } from '@jobify/ui/input';
 import { useToast } from '@jobify/ui/use-toast';
-import { MoreVertical, PenSquare, Copy, Trash2, Plus, Search, FilterX, GitGraph } from 'lucide-react';
+import { MoreVertical, PenSquare, Trash2, Plus, Search, FilterX, GitGraph } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@jobify/ui/dialog';
 import { Badge } from '@jobify/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@jobify/ui/tooltip';
 import { Tabs, TabsList, TabsTrigger } from '@jobify/ui/tabs';
 import { Skeleton } from '@jobify/ui/skeleton';
 import ky from 'ky';
@@ -90,6 +91,10 @@ export default function WorkflowList() {
         router.push('/workflow');
     };
 
+    const hasWorkflow = workflows.length > 0;
+    const oneWorkflowTooltip =
+        'Only one workflow is allowed for your account. Use Open Editor on the card below to change it, or delete it to start fresh.';
+
     
     const confirmDeleteWorkflow = (id: string) => {
         setWorkflowToDelete(id);
@@ -153,13 +158,30 @@ export default function WorkflowList() {
 
     return (
         <NavbarLayout>
-            <div className='container mx-auto p-4 max-w-7xl'>
+            <TooltipProvider delayDuration={200}>
+                <div className='container mx-auto p-4 max-w-7xl'>
                 <div className='flex justify-between items-center mb-6'>
-                    <h1 className='text-2xl font-bold'>Recruitment Workflows</h1>
-                    <Button onClick={handleCreateWorkflow}>
-                        <Plus className='h-4 w-4 mr-2' />
-                        Create Workflow
-                    </Button>
+                    <h1 className='text-2xl font-bold'>Recruitment Workflow</h1>
+                    {hasWorkflow ? (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <span className='inline-flex'>
+                                    <Button type='button' disabled>
+                                        <Plus className='h-4 w-4 mr-2' />
+                                        Create workflow
+                                    </Button>
+                                </span>
+                            </TooltipTrigger>
+                            <TooltipContent side='bottom' className='max-w-xs text-sm'>
+                                {oneWorkflowTooltip}
+                            </TooltipContent>
+                        </Tooltip>
+                    ) : (
+                        <Button type='button' onClick={handleCreateWorkflow}>
+                            <Plus className='h-4 w-4 mr-2' />
+                            Create workflow
+                        </Button>
+                    )}
                 </div>
 
                 <div className='mb-6 flex flex-col sm:flex-row gap-2 sm:gap-4'>
@@ -219,12 +241,16 @@ export default function WorkflowList() {
                         <p className='text-muted-foreground mb-4'>
                             {searchQuery || statusFilter !== 'all'
                                 ? 'Try adjusting your search or filters'
-                                : 'Create your first workflow to get started with recruitment automation'}
+                                : hasWorkflow
+                                  ? 'No workflows match your filters.'
+                                  : 'Create your recruitment workflow to automate emails, assignments, and interviews'}
                         </p>
-                        <Button onClick={handleCreateWorkflow}>
-                            <Plus className='h-4 w-4 mr-2' />
-                            Create New Workflow
-                        </Button>
+                        {!hasWorkflow && (
+                            <Button type='button' onClick={handleCreateWorkflow}>
+                                <Plus className='h-4 w-4 mr-2' />
+                                Create workflow
+                            </Button>
+                        )}
                     </div>
                 ) : (
                     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
@@ -248,10 +274,6 @@ export default function WorkflowList() {
                                                 <DropdownMenuItem onClick={() => handleEditWorkflow(workflow.id)}>
                                                     <PenSquare className='h-4 w-4 mr-2' />
                                                     Edit
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem>
-                                                    <Copy className='h-4 w-4 mr-2' />
-                                                    Duplicate
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem
@@ -301,7 +323,8 @@ export default function WorkflowList() {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
-            </div>
+                </div>
+            </TooltipProvider>
         </NavbarLayout>
     );
 }

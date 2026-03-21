@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
     ReactFlow,
     addEdge,
@@ -56,6 +57,7 @@ type EditorProps = {
 };
 
 export const Editor = ({ workflowId }: EditorProps) => {
+    const router = useRouter();
     const defaultTemplate = useMemo(() => createDefaultRecruitmentWorkflow(), []);
 
     const [nodes, setNodes, onNodesChange] = useNodesState(defaultTemplate.nodes as any[]);
@@ -302,6 +304,24 @@ export const Editor = ({ workflowId }: EditorProps) => {
         setIsSidebarVisible((prev) => !prev);
     }, []);
 
+
+    useEffect(() => {
+        if (workflowId) return;
+
+        let cancelled = false;
+        (async () => {
+            try {
+                const list = await ky.get('/api/get-workflows').json<{ id: string }[]>();
+                if (cancelled || !list?.length) return;
+                router.replace(`/workflow/${list[0].id}`);
+            } catch {
+                /* allow new workflow when none exist */
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [workflowId, router]);
 
     useEffect(() => {
         const fetchWorkflow = async () => {

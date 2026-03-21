@@ -2,7 +2,7 @@ import { ADMIN_AUTH_COOKIE_NAME } from '@jobify/domain/auth-cookie';
 import { isRecognisedError, UnauthorizedError } from '@jobify/domain/error';
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-import { createWorkflow } from '@jobify/appwrite-server/collections/workflow-collection';
+import { createWorkflow, getWorkflowsByUserId } from '@jobify/appwrite-server/collections/workflow-collection';
 import { Workflow } from '@jobify/domain/workflow';
 
 export async function POST(req: NextRequest) {
@@ -15,6 +15,14 @@ export async function POST(req: NextRequest) {
         const user = jwt.verify(token.value, process.env.JWT_SECRET!);
         const userId = (user as any).id;
         const workflowData = await req.json();
+
+        const existing = await getWorkflowsByUserId(userId);
+        if (existing.length > 0) {
+            return NextResponse.json(
+                { message: 'You already have a workflow. Open it from Workflows to edit.' },
+                { status: 409 }
+            );
+        }
 
         const workflow: Workflow = {
             id: workflowData.id,
