@@ -15,6 +15,7 @@
         "@jobify/domain": "*",
         "@jobify/ui": "*",
         "@google/generative-ai": "^0.20.0",
+        "@googleapis/calendar": "^9.7.9",
         "@googleapis/gmail": "^12.0.0",
         "@googleapis/people": "^3.0.9",
         "@radix-ui/react-accordion": "^1.2.0",

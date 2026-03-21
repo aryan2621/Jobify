@@ -12,6 +12,7 @@ import ky from 'ky';
 import { useToast } from '@jobify/ui/use-toast';
 import AiDialog from '@/components/elements/ai-dialog';
 import { Check, Mail, AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 
 const EMAIL_BODY_VARIABLES: { value: string; label: string }[] = [
@@ -25,9 +26,10 @@ interface BodyFieldWithMentionsProps {
     value: string;
     onChange: (value: string) => void;
     placeholder?: string;
+    invalid?: boolean;
 }
 
-function BodyFieldWithMentions({ value, onChange, placeholder }: BodyFieldWithMentionsProps) {
+function BodyFieldWithMentions({ value, onChange, placeholder, invalid }: BodyFieldWithMentionsProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const cursorAfterInsertRef = useRef<number | null>(null);
@@ -167,7 +169,7 @@ function BodyFieldWithMentions({ value, onChange, placeholder }: BodyFieldWithMe
                 onKeyDown={handleKeyDown}
                 onBlur={() => setTimeout(closeDropdown, 150)}
                 placeholder={placeholder}
-                className="min-h-[100px]"
+                className={cn('min-h-[100px]', invalid && 'border-destructive')}
             />
             {dropdownOpen && filtered.length > 0 && (
                 <ul
@@ -211,24 +213,44 @@ interface FormField {
     value: string;
     onChange: (value: string) => void;
     required?: boolean;
+    showError?: boolean;
+    errorMessage?: string;
 }
 
-const FormInput = ({ label, type = 'text', placeholder, value, onChange, required }: FormField) => (
-    <div>
-        <Label className='mb-2 block'>
-            {label}
-            {required && <span className='text-destructive ml-0.5'>*</span>}
-        </Label>
-        <Input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
-    </div>
-);
+const FormInput = ({ label, type = 'text', placeholder, value, onChange, required, showError, errorMessage }: FormField) => {
+    const invalid = Boolean(showError && errorMessage);
+    return (
+        <div>
+            <Label className={cn('mb-2 block', invalid && 'text-destructive')}>
+                {label}
+                {required && <span className='text-destructive ml-0.5'>*</span>}
+            </Label>
+            <Input
+                type={type}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder={placeholder}
+                className={cn(invalid && 'border-destructive')}
+            />
+            {invalid && <p className='text-destructive text-xs mt-1'>{errorMessage}</p>}
+        </div>
+    );
+};
+
+type NotificationValidationKey = 'label' | 'to' | 'subject' | 'body';
+
+type NotificationValidationState = Record<NotificationValidationKey, { valid: boolean; message: string }>;
 
 const EmailConfig = ({
     node,
     handleEmailConfigChange,
+    formSubmitted,
+    validation,
 }: {
     node: NotificationNode;
     handleEmailConfigChange: (field: string, value: string) => void;
+    formSubmitted: boolean;
+    validation: NotificationValidationState;
 }) => (
     <div className='flex flex-col gap-3'>
         <FormInput
@@ -238,6 +260,8 @@ const EmailConfig = ({
             onChange={(value) => handleEmailConfigChange('to', value)}
             placeholder='e.g. {{candidate.email}} or recipient@example.com'
             required
+            showError={formSubmitted}
+            errorMessage={!validation.to.valid ? validation.to.message : undefined}
         />
         <FormInput
             label='CC (optional)'
@@ -259,9 +283,11 @@ const EmailConfig = ({
             onChange={(value) => handleEmailConfigChange('subject', value)}
             placeholder='Subject'
             required
+            showError={formSubmitted}
+            errorMessage={!validation.subject.valid ? validation.subject.message : undefined}
         />
         <div>
-            <Label className='mb-2 block'>
+            <Label className={cn('mb-2 block', formSubmitted && !validation.body.valid && 'text-destructive')}>
                 Body
                 <span className='text-destructive ml-0.5'>*</span>
             </Label>
@@ -270,15 +296,28 @@ const EmailConfig = ({
                 value={node.data.emailConfig?.body || ''}
                 onChange={(v) => handleEmailConfigChange('body', v)}
                 placeholder='e.g. Hi @ or Dear {{candidate.name}}, …'
+                invalid={formSubmitted && !validation.body.valid}
             />
+            {formSubmitted && !validation.body.valid && (
+                <p className='text-destructive text-xs mt-1'>{validation.body.message}</p>
+            )}
         </div>
     </div>
 );
+
+const emptyNotificationValidation = (): NotificationValidationState => ({
+    label: { valid: true, message: '' },
+    to: { valid: true, message: '' },
+    subject: { valid: true, message: '' },
+    body: { valid: true, message: '' },
+});
 
 const NotificationNodeBuilderComponent = ({ node, onSubmit }: NotificationNodeBuilderProps) => {
     const cpNode = new NotificationNode(node.id, node.data, node.position, [NotificationOption.EMAIL], node.sourcePosition, node.targetPosition);
 
     const [newNode, setNewNode] = useState(cpNode);
+    const [formSubmitted, setFormSubmitted] = useState(false);
+    const [validation, setValidation] = useState<NotificationValidationState>(emptyNotificationValidation);
     const [aiPrompt, setAiPrompt] = useState<string>('');
     const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
     const [aiModel, setAiModel] = useState<string>('gemini-1.5-flash');
@@ -314,6 +353,47 @@ const NotificationNodeBuilderComponent = ({ node, onSubmit }: NotificationNodeBu
                 },
             },
         });
+        if (field === 'to' || field === 'subject' || field === 'body') {
+            setValidation((prev) => ({ ...prev, [field]: { valid: true, message: '' } }));
+        }
+    };
+
+    const validateNotificationForm = (): boolean => {
+        const next: NotificationValidationState = emptyNotificationValidation();
+        let ok = true;
+
+        if (!newNode.data.label.trim()) {
+            next.label = { valid: false, message: 'Label is required' };
+            ok = false;
+        }
+        if (!newNode.data.emailConfig?.to?.trim()) {
+            next.to = { valid: false, message: 'To is required' };
+            ok = false;
+        }
+        if (!newNode.data.emailConfig?.subject?.trim()) {
+            next.subject = { valid: false, message: 'Subject is required' };
+            ok = false;
+        }
+        if (!newNode.data.emailConfig?.body?.trim()) {
+            next.body = { valid: false, message: 'Body is required' };
+            ok = false;
+        }
+
+        setValidation(next);
+        return ok;
+    };
+
+    const handleSubmit = () => {
+        setFormSubmitted(true);
+        if (!validateNotificationForm()) {
+            toast({
+                title: 'Validation Error',
+                description: 'Please correct the errors in the form',
+                variant: 'destructive',
+            });
+            return;
+        }
+        onSubmit(newNode);
     };
 
     const handleAiPrompt = async () => {
@@ -347,7 +427,13 @@ const NotificationNodeBuilderComponent = ({ node, onSubmit }: NotificationNodeBu
                 <FormInput
                     label='Label'
                     value={newNode.data.label}
-                    onChange={(value) => setNewNode({ ...newNode, data: { ...newNode.data, label: value } })}
+                    onChange={(value) => {
+                        setNewNode({ ...newNode, data: { ...newNode.data, label: value } });
+                        setValidation((prev) => ({ ...prev, label: { valid: true, message: '' } }));
+                    }}
+                    required
+                    showError={formSubmitted}
+                    errorMessage={!validation.label.valid ? validation.label.message : undefined}
                 />
 
                 <div>
@@ -384,7 +470,12 @@ const NotificationNodeBuilderComponent = ({ node, onSubmit }: NotificationNodeBu
                             <p className='text-xs text-muted-foreground'>Checking connection…</p>
                         )}
                     </div>
-                    <EmailConfig node={newNode} handleEmailConfigChange={handleEmailConfigChange} />
+                    <EmailConfig
+                        node={newNode}
+                        handleEmailConfigChange={handleEmailConfigChange}
+                        formSubmitted={formSubmitted}
+                        validation={validation}
+                    />
                     <AiDialog
                         isOpen={isAiDialogOpen}
                         onOpenChange={setIsAiDialogOpen}
@@ -400,7 +491,7 @@ const NotificationNodeBuilderComponent = ({ node, onSubmit }: NotificationNodeBu
                 </div>
             </div>
 
-            <Button onClick={() => onSubmit(newNode)} className='mt-4 w-full'>
+            <Button onClick={handleSubmit} className='mt-4 w-full'>
                 Submit
             </Button>
         </div>

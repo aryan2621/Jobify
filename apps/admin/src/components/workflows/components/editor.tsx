@@ -62,32 +62,32 @@ export const Editor = ({ workflowId }: EditorProps) => {
     const [edges, setEdges, onEdgesChange] = useEdgesState(defaultTemplate.edges);
     const { screenToFlowPosition, fitView, zoomIn, zoomOut } = useReactFlow();
 
-    
+
     const [type] = useDnD();
 
-    
+
     const [selectedNode, setSelectedNode] = useState<WorkflowNode | null>(null);
     const [isSheetOpen, setSheetOpen] = useState(false);
     const [isSidebarVisible, setIsSidebarVisible] = useState(true);
     const [isDarkMode, setIsDarkMode] = useState(false);
 
-    
+
     const [history, setHistory] = useState<HistoryState[]>([{ nodes: defaultTemplate.nodes, edges: defaultTemplate.edges }]);
     const [historyIndex, setHistoryIndex] = useState(0);
     const historyTimeoutRef = useRef<any>(null);
 
-    
+
     const undoPressed = useKeyPress(['z']);
     const redoPressed = useKeyPress(['y']);
     const deletePressed = useKeyPress(['Delete', 'Backspace']);
 
-    
+
     const [isModified, setIsModified] = useState(false);
 
-    
+
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
-    
+
     const nodeTypes = {
         [NodeType.START]: CustomNode,
         [NodeType.END]: CustomNode,
@@ -100,17 +100,17 @@ export const Editor = ({ workflowId }: EditorProps) => {
         'custom-edge': CustomEdge,
     };
 
-    
+
     const saveToHistory = useCallback(() => {
-        
+
         if (historyTimeoutRef.current) {
             clearTimeout(historyTimeoutRef.current);
         }
 
-        
+
         historyTimeoutRef.current = setTimeout(() => {
             setHistory((prev) => {
-                
+
                 const newHistory = prev.slice(0, historyIndex + 1);
                 return [...newHistory, { nodes, edges }];
             });
@@ -119,14 +119,14 @@ export const Editor = ({ workflowId }: EditorProps) => {
         }, 500);
     }, [nodes, edges, historyIndex]);
 
-    
+
     useEffect(() => {
         if (nodes.length > 0 || edges.length > 0) {
             saveToHistory();
         }
     }, [nodes, edges, saveToHistory]);
 
-    
+
     useEffect(() => {
         if (undoPressed) {
             handleUndo();
@@ -145,7 +145,7 @@ export const Editor = ({ workflowId }: EditorProps) => {
         }
     }, [deletePressed]);
 
-    
+
     useEffect(() => {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
             if (isModified) {
@@ -161,7 +161,7 @@ export const Editor = ({ workflowId }: EditorProps) => {
         };
     }, [isModified]);
 
-    
+
     const handleUndo = useCallback(() => {
         if (historyIndex > 0) {
             const newIndex = historyIndex - 1;
@@ -173,7 +173,7 @@ export const Editor = ({ workflowId }: EditorProps) => {
         }
     }, [history, historyIndex, setNodes, setEdges]);
 
-    
+
     const handleRedo = useCallback(() => {
         if (historyIndex < history.length - 1) {
             const newIndex = historyIndex + 1;
@@ -185,10 +185,10 @@ export const Editor = ({ workflowId }: EditorProps) => {
         }
     }, [history, historyIndex, setNodes, setEdges]);
 
-    
+
     const onConnect = useCallback(
         (connection: any) => {
-            
+
             const edge = {
                 ...connection,
                 type: 'custom-edge',
@@ -196,49 +196,50 @@ export const Editor = ({ workflowId }: EditorProps) => {
                 style: { strokeWidth: 2 },
             };
 
-            
+
             setEdges((eds) => addEdge(edge, eds));
         },
         [setEdges]
     );
 
-    
+
     const onDragOver = useCallback((event: React.DragEvent) => {
         event.preventDefault();
         event.dataTransfer.dropEffect = 'move';
     }, []);
 
-    
+
     const onDrop = useCallback(
         (event: React.DragEvent) => {
             event.preventDefault();
             if (!type) return;
 
-            
+
             const position = screenToFlowPosition({
                 x: event.clientX,
                 y: event.clientY,
             });
 
-            
+
             const newNode = nodeFactory(type, { label: `${type.charAt(0).toUpperCase() + type.slice(1)}` }, position, Position.Bottom, Position.Top);
 
-            
+
             setNodes((nds) => nds.concat(newNode));
         },
         [screenToFlowPosition, type, setNodes]
     );
 
-    
+
     const onNodeClick = useCallback((event: React.MouseEvent, node: WorkflowNode) => {
-        setSelectedNode(node);
         const isStartOrEnd = node.type === NodeType.START || node.type === NodeType.END;
-        if (!isStartOrEnd) {
-            setSheetOpen(true);
+        if (isStartOrEnd) {
+            return;
         }
+        setSelectedNode(node);
+        setSheetOpen(true);
     }, []);
 
-    
+
     const onNodeSubmit = useCallback(
         (node: WorkflowNode) => {
             setNodes((nds) => nds.map((n) => (n.id === node.id ? node : n)));
@@ -253,13 +254,13 @@ export const Editor = ({ workflowId }: EditorProps) => {
         [setNodes]
     );
 
-    
+
     const handleDeleteSelected = useCallback(() => {
         setNodes((nds) => nds.filter((node) => !node.selected));
         setEdges((eds) => eds.filter((edge) => !edge.selected));
     }, [setNodes, setEdges]);
 
-    
+
     const handleClearAll = useCallback(() => {
         if (
             window.confirm(
@@ -279,7 +280,7 @@ export const Editor = ({ workflowId }: EditorProps) => {
         }
     }, [setNodes, setEdges]);
 
-    
+
     const handleExportImage = useCallback(() => {
         const downloadImage = (dataUrl: string) => {
             const a = document.createElement('a');
@@ -288,20 +289,20 @@ export const Editor = ({ workflowId }: EditorProps) => {
             a.click();
         };
 
-        
-        
+
+
         toast({
             title: 'Export Image',
             description: 'Image export would happen here (placeholder)',
         });
     }, []);
 
-    
+
     const toggleSidebar = useCallback(() => {
         setIsSidebarVisible((prev) => !prev);
     }, []);
 
-    
+
     useEffect(() => {
         const fetchWorkflow = async () => {
             if (!workflowId) return;
@@ -371,7 +372,7 @@ export const Editor = ({ workflowId }: EditorProps) => {
                             multiSelectionKeyCode='Control'
                             className={`${isDarkMode ? 'react-flow-dark' : ''}`}
                         >
-                            {}
+                            { }
                             <Background
                                 variant={BackgroundVariant.Dots}
                                 gap={12}
@@ -379,7 +380,7 @@ export const Editor = ({ workflowId }: EditorProps) => {
                                 color={isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}
                             />
 
-                            
+
                             <MiniMap
                                 nodeStrokeWidth={3}
                                 zoomable
@@ -388,37 +389,37 @@ export const Editor = ({ workflowId }: EditorProps) => {
                                 nodeColor={(node) => {
                                     switch (node.type) {
                                         case NodeType.START:
-                                            return '#10b981'; 
+                                            return '#10b981';
                                         case NodeType.END:
-                                            return '#ef4444'; 
+                                            return '#ef4444';
                                         case NodeType.TASK:
-                                            
+
                                             const taskNode = node as WorkflowNode;
                                             if (taskNode.taskType === TaskType.NOTIFY) {
-                                                return '#3b82f6'; 
+                                                return '#3b82f6';
                                             } else if (taskNode.taskType === TaskType.ASSIGNMENT) {
-                                                return '#f59e0b'; 
+                                                return '#f59e0b';
                                             } else if (taskNode.taskType === TaskType.INTERVIEW) {
-                                                return '#8b5cf6'; 
+                                                return '#8b5cf6';
                                             } else if (taskNode.taskType === TaskType.WAIT) {
-                                                return '#36c2e3'; 
+                                                return '#36c2e3';
                                             } else if (taskNode.taskType === TaskType.CONDITION) {
-                                                return '#0d9488'; 
+                                                return '#0d9488';
                                             } else if (taskNode.taskType === TaskType.UPDATE_STATUS) {
-                                                return '#ea580c'; 
+                                                return '#ea580c';
                                             }
-                                            return '#9ca3af'; 
+                                            return '#9ca3af';
                                         default:
-                                            return '#9ca3af'; 
+                                            return '#9ca3af';
                                     }
                                 }}
                                 maskColor={isDarkMode ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.6)'}
                             />
 
-                            {}
+                            { }
                             <Controls showInteractive={true} />
 
-                            
+
                             <Panel position='top-center' className='flex bg-background border rounded-md shadow-sm overflow-hidden'>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -527,13 +528,13 @@ export const Editor = ({ workflowId }: EditorProps) => {
                             </Panel>
                         </ReactFlow>
 
-                        {}
+                        { }
                         {isSidebarVisible && <Sidebar nodes={nodes} edges={edges} workflowId={workflowId} />}
 
-                        
+
                         <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
                             <SheetContent>
-                                
+
                                 {selectedNode && selectedNode.type === NodeType.TASK && selectedNode.taskType === TaskType.NOTIFY && (
                                     <NotificationNodeBuilderComponent node={selectedNode as NotificationNode} onSubmit={onNodeSubmit} />
                                 )}

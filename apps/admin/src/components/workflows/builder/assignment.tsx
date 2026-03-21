@@ -187,7 +187,6 @@ const AssignmentNodeBuilderComponent = ({ node, onSubmit }: AssignmentNodeBuilde
                     <Input value={newNode.data.name ?? `assignment_${newNode.id.slice(0, 8)}`} disabled className='bg-muted' />
                 </div>
 
-                {}
                 <div>
                     <Label
                         className={cn('mb-2 block', formSubmitted && !validation.label.valid && 'text-destructive')}

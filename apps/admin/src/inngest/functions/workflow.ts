@@ -1,27 +1,20 @@
 import { inngest } from '../client';
+import { APPLICATION_SUBMITTED, WORKFLOW_STEP } from '../constants';
 import { getWorkflowById } from '@jobify/appwrite-server/collections/workflow-collection';
 import { fetchApplicationById, updateApplicationWorkflowProgress } from '@jobify/appwrite-server/collections/application-collection';
 import { fetchJobById as getJobById } from '@jobify/appwrite-server/collections/job-collection';
-import { EmailService } from '@/appwrite/server/services/email-service';
 import { deserializeNode } from '@/lib/utils/workflow-utils';
-import { NodeType, TaskType } from '@jobify/domain/workflow';
-
-const APPLICATION_SUBMITTED = 'application/submitted';
-const WORKFLOW_STEP = 'workflow/step';
+import { NodeType, TaskType, type WaitNode } from '@jobify/domain/workflow';
+import {
+    applicationFromDocument,
+    getFirstNodeAfterStart,
+    jobFromDocument,
+    planWaitSchedule,
+    resolveNextNodeId,
+    runNodeStep,
+} from '../steps';
 
 type WorkflowPayload = { applicationId: string; jobId: string; currentNodeId?: string };
-
-function getNextNodeId(nodes: any[], edges: any[], currentNodeId: string): string | null {
-    const outgoing = edges.filter((e: any) => e.source === currentNodeId);
-    if (outgoing.length === 0) return null;
-    return outgoing[0].target;
-}
-
-function getFirstNodeAfterStart(nodes: any[], edges: any[]): string | null {
-    const start = nodes.find((n: any) => n.type === NodeType.START);
-    if (!start) return null;
-    return getNextNodeId(nodes, edges, start.id);
-}
 
 export const runWorkflowStep = inngest.createFunction(
     {
@@ -49,59 +42,38 @@ export const runWorkflowStep = inngest.createFunction(
             return [workflow, application, job];
         });
 
-        const nodes: any[] = typeof workflowDoc.nodes === 'string' ? JSON.parse(workflowDoc.nodes) : workflowDoc.nodes;
-        const edges: any[] = typeof workflowDoc.edges === 'string' ? JSON.parse(workflowDoc.edges) : workflowDoc.edges;
-        const application = applicationDoc as unknown as { id: string; email?: string; firstName?: string; lastName?: string; workflowId?: string; stage?: string; currentNodeId?: string };
-        const job = jobDoc as unknown as { id: string; profile?: string; company?: string; createdBy?: string };
+        const nodes: unknown[] =
+            typeof workflowDoc.nodes === 'string' ? JSON.parse(workflowDoc.nodes as string) : (workflowDoc.nodes as unknown[]);
+        const edges: unknown[] =
+            typeof workflowDoc.edges === 'string' ? JSON.parse(workflowDoc.edges as string) : (workflowDoc.edges as unknown[]);
+
+        const application = applicationFromDocument(applicationDoc as Record<string, unknown>);
+        const job = jobFromDocument(jobDoc as Record<string, unknown>);
+        const ctx = { applicationId, jobId, application, job };
 
         const currentNodeId =
-            incomingNodeId ?? (application.currentNodeId as string | undefined) ?? getFirstNodeAfterStart(nodes, edges);
+            incomingNodeId ?? application.currentNodeId ?? getFirstNodeAfterStart(nodes, edges);
         if (!currentNodeId) return { done: true, reason: 'no-next-node' };
 
-        const nodeRaw = nodes.find((n: any) => n.id === currentNodeId);
+        const nodeRaw = (nodes as { id?: string }[]).find((n) => n.id === currentNodeId);
         if (!nodeRaw) return { done: true, reason: 'node-not-found' };
         const node = deserializeNode(nodeRaw);
 
-        await step.run('execute-node', async () => {
-            if (node.type === NodeType.TASK) {
-                const task = node as any;
-                if (task.taskType === TaskType.NOTIFY && task.data?.emailConfig?.to) {
-                    const to = task.data.emailConfig.to.replace('{{candidate.email}}', application.email ?? '').trim() || application.email;
-                    const subject = (task.data.emailConfig.subject ?? '')
-                        .replace(/\{\{candidate\.name\}\}/g, [application.firstName, application.lastName].filter(Boolean).join(' ') || 'Candidate')
-                        .replace(/\{\{job\.title\}\}/g, job.profile ?? '')
-                        .replace(/\{\{job\.company\}\}/g, job.company ?? '');
-                    const body = (task.data.emailConfig.body ?? '')
-                        .replace(/\{\{candidate\.name\}\}/g, [application.firstName, application.lastName].filter(Boolean).join(' ') || 'Candidate')
-                        .replace(/\{\{candidate\.email\}\}/g, application.email ?? '')
-                        .replace(/\{\{job\.title\}\}/g, job.profile ?? '')
-                        .replace(/\{\{job\.company\}\}/g, job.company ?? '');
-                    if (to && job.createdBy) {
-                        const result = await EmailService.sendEmail({
-                            userId: job.createdBy,
-                            to,
-                            subject,
-                            html: body.replace(/\n/g, '<br/>'),
-                        });
-                        if (result.error) throw result.error;
-                    }
-                } else if (task.taskType === TaskType.UPDATE_STATUS && task.stage) {
-                    await updateApplicationWorkflowProgress(applicationId, { stage: task.stage });
-                }
-            }
+        await step.run(`node:${currentNodeId}`, async () => {
+            await runNodeStep(ctx, node);
         });
 
-        let nextNodeId = getNextNodeId(nodes, edges, currentNodeId);
+        const nextNodeId = resolveNextNodeId(edges, currentNodeId, node, application);
         let nodeToRunNext = nextNodeId;
 
-        const nextRaw = nextNodeId ? nodes.find((n: any) => n.id === nextNodeId) : null;
+        const nextRaw = nextNodeId ? (nodes as { id?: string }[]).find((n) => n.id === nextNodeId) : null;
         const nextNode = nextRaw ? deserializeNode(nextRaw) : null;
-        const isWait = nextNode?.type === NodeType.TASK && (nextNode as any).taskType === TaskType.WAIT;
-        const waitNode = isWait ? (nextNode as any) : null;
+        const isWait = nextNode?.type === NodeType.TASK && (nextNode as { taskType?: TaskType }).taskType === TaskType.WAIT;
+        const waitNode = isWait ? (nextNode as WaitNode) : null;
         const isEnd = nextNode?.type === NodeType.END;
 
         if (isWait && waitNode) {
-            nodeToRunNext = getNextNodeId(nodes, edges, nextNodeId!) ?? nextNodeId!;
+            nodeToRunNext = resolveNextNodeId(edges, nextNodeId!, waitNode, application) ?? nextNodeId!;
         }
 
         await updateApplicationWorkflowProgress(applicationId, { currentNodeId: nodeToRunNext ?? currentNodeId });
@@ -109,17 +81,19 @@ export const runWorkflowStep = inngest.createFunction(
         if (!nextNodeId) return { done: true };
         if (isEnd) return { done: true };
 
-        if (isWait && waitNode?.exactDateTime) {
-            await step.sendEvent('resume-after-wait', {
-                name: WORKFLOW_STEP,
-                data: { applicationId, jobId, currentNodeId: nodeToRunNext },
-                ts: new Date(waitNode.exactDateTime).getTime(),
-            });
-            return { done: false, scheduled: true };
-        }
-        if (isWait && waitNode?.duration != null && waitNode?.unit) {
-            const ms = ({ minutes: 60e3, hours: 3600e3, days: 86400e3, weeks: 604800e3 } as any)[waitNode.unit] ?? 86400e3;
-            await step.sleep('wait-duration', `${(waitNode.duration * ms) / 1000}s`);
+        if (isWait && waitNode) {
+            const plan = planWaitSchedule(waitNode);
+            if (plan.kind === 'exact') {
+                await step.sendEvent('resume-after-wait', {
+                    name: WORKFLOW_STEP,
+                    data: { applicationId, jobId, currentNodeId: nodeToRunNext },
+                    ts: plan.ts,
+                });
+                return { done: false, scheduled: true };
+            }
+            if (plan.kind === 'relative' && plan.sleepSeconds > 0) {
+                await step.sleep('wait-duration', `${plan.sleepSeconds}s`);
+            }
         }
 
         await inngest.send({

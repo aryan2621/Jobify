@@ -6,8 +6,10 @@ import { Label } from '@jobify/ui/label';
 import { Input } from '@jobify/ui/input';
 import { Button } from '@jobify/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@jobify/ui/select';
-import { GitBranch, Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { nanoid } from 'nanoid';
+import { useToast } from '@jobify/ui/use-toast';
+import { cn } from '@/lib/utils';
 
 interface ConditionNodeBuilderProps {
     node: ConditionNode;
@@ -27,7 +29,34 @@ const OPERATOR_OPTIONS: { value: ConditionOperator; label: string }[] = [
     { value: ConditionOperator.NOT_EXISTS, label: 'not exists' },
 ];
 
+const ALLOWED_CONDITION_FIELDS = new Set(CONDITION_FIELDS.map((f) => f.value));
+
+function isAllowedConditionField(field: string | undefined): boolean {
+    return Boolean(field && ALLOWED_CONDITION_FIELDS.has(field));
+}
+
+function operatorNeedsValue(op: ConditionOperator): boolean {
+    return op !== ConditionOperator.EXISTS && op !== ConditionOperator.NOT_EXISTS;
+}
+
+const ALLOWED_VALUE_STRINGS = new Set<string>([...Object.values(ApplicationStage), 'true', 'false']);
+
+function conditionValueToSelectString(value: ConditionBranch['value']): string {
+    if (value === true || value === false) return String(value);
+    if (value === undefined || value === null) return '';
+    return String(value);
+}
+
+function isAllowedConditionValue(value: ConditionBranch['value']): boolean {
+    if (value === true || value === false) return true;
+    if (typeof value === 'string' && ALLOWED_VALUE_STRINGS.has(value)) return true;
+    return false;
+}
+
+type ConditionRowErrors = { field?: string; value?: string };
+
 const ConditionNodeBuilderComponent = ({ node, onSubmit }: ConditionNodeBuilderProps) => {
+    const { toast } = useToast();
     const [newNode, setNewNode] = useState<ConditionNode>(() => {
         const n = node as ConditionNode;
         return new ConditionNode(
@@ -39,6 +68,9 @@ const ConditionNodeBuilderComponent = ({ node, onSubmit }: ConditionNodeBuilderP
             n.targetPosition
         );
     });
+
+    const [formSubmitted, setFormSubmitted] = useState(false);
+    const [rowErrors, setRowErrors] = useState<Record<number, ConditionRowErrors>>({});
 
     const addCondition = () => {
         setNewNode((prev) => ({
@@ -63,6 +95,63 @@ const ConditionNodeBuilderComponent = ({ node, onSubmit }: ConditionNodeBuilderP
             ...prev,
             conditions: prev.conditions.filter((_, i) => i !== index),
         }));
+        setRowErrors((prev) => {
+            const next: Record<number, ConditionRowErrors> = {};
+            for (const [key, err] of Object.entries(prev)) {
+                const i = Number(key);
+                if (i === index) continue;
+                next[i > index ? i - 1 : i] = err;
+            }
+            return next;
+        });
+    };
+
+    const clearRowFieldError = (index: number, key: keyof ConditionRowErrors) => {
+        setRowErrors((prev) => {
+            const row = prev[index];
+            if (!row?.[key]) return prev;
+            const nextRow = { ...row };
+            delete nextRow[key];
+            const next = { ...prev };
+            if (Object.keys(nextRow).length === 0) delete next[index];
+            else next[index] = nextRow;
+            return next;
+        });
+    };
+
+    const validateConditions = (): boolean => {
+        const errors: Record<number, ConditionRowErrors> = {};
+        newNode.conditions.forEach((cond, index) => {
+            if (!isAllowedConditionField(cond.field)) {
+                errors[index] = { ...errors[index], field: 'Select a field' };
+            }
+            if (operatorNeedsValue(cond.operator) && !isAllowedConditionValue(cond.value)) {
+                errors[index] = { ...errors[index], value: 'Select a value' };
+            }
+        });
+        setRowErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
+    const handleSave = () => {
+        setFormSubmitted(true);
+        if (newNode.conditions.length === 0) {
+            toast({
+                title: 'Validation Error',
+                description: 'Add at least one branch condition.',
+                variant: 'destructive',
+            });
+            return;
+        }
+        if (!validateConditions()) {
+            toast({
+                title: 'Validation Error',
+                description: 'Please fix the highlighted condition rows.',
+                variant: 'destructive',
+            });
+            return;
+        }
+        onSubmit(newNode);
     };
 
     return (
@@ -103,7 +192,15 @@ const ConditionNodeBuilderComponent = ({ node, onSubmit }: ConditionNodeBuilderP
                         </p>
                     ) : (
                         <div className="flex flex-col gap-3">
-                            {newNode.conditions.map((cond, index) => (
+                            {newNode.conditions.map((cond, index) => {
+                                const fieldError = formSubmitted && rowErrors[index]?.field;
+                                const valueError = formSubmitted && rowErrors[index]?.value;
+                                const fieldSelectValue = isAllowedConditionField(cond.field) ? cond.field : undefined;
+                                const valueStr = conditionValueToSelectString(cond.value);
+                                const valueSelectValue =
+                                    operatorNeedsValue(cond.operator) && ALLOWED_VALUE_STRINGS.has(valueStr) ? valueStr : undefined;
+
+                                return (
                                 <div key={cond.id} className="border rounded-md p-3 flex flex-col gap-3">
                                     <div className="flex justify-between items-start">
                                         <span className="text-xs font-medium text-muted-foreground">Condition {index + 1}</span>
@@ -113,13 +210,21 @@ const ConditionNodeBuilderComponent = ({ node, onSubmit }: ConditionNodeBuilderP
                                     </div>
                                     <div className="flex flex-col gap-3">
                                         <div>
-                                            <Label className="text-xs mb-1.5 block">Field</Label>
-                                            <Select
-                                                value={cond.field}
-                                                onValueChange={(v) => updateCondition(index, { field: v })}
+                                            <Label
+                                                className={cn('text-xs mb-1.5 block', fieldError && 'text-destructive')}
                                             >
-                                                <SelectTrigger className="h-9">
-                                                    <SelectValue />
+                                                Field
+                                                <span className="text-destructive ml-0.5">*</span>
+                                            </Label>
+                                            <Select
+                                                value={fieldSelectValue}
+                                                onValueChange={(v) => {
+                                                    updateCondition(index, { field: v });
+                                                    clearRowFieldError(index, 'field');
+                                                }}
+                                            >
+                                                <SelectTrigger className={cn('h-9', fieldError && 'border-destructive')}>
+                                                    <SelectValue placeholder="Select field" />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {CONDITION_FIELDS.map((f) => (
@@ -129,12 +234,24 @@ const ConditionNodeBuilderComponent = ({ node, onSubmit }: ConditionNodeBuilderP
                                                     ))}
                                                 </SelectContent>
                                             </Select>
+                                            {fieldError ? (
+                                                <p className="text-destructive text-xs mt-1">{fieldError}</p>
+                                            ) : null}
                                         </div>
                                         <div>
-                                            <Label className="text-xs mb-1.5 block">Operator</Label>
+                                            <Label className="text-xs mb-1.5 block">
+                                                Operator
+                                                <span className="text-destructive ml-0.5">*</span>
+                                            </Label>
                                             <Select
                                                 value={cond.operator}
-                                                onValueChange={(v) => updateCondition(index, { operator: v as ConditionOperator })}
+                                                onValueChange={(v) => {
+                                                    const op = v as ConditionOperator;
+                                                    updateCondition(index, { operator: op });
+                                                    if (!operatorNeedsValue(op)) {
+                                                        clearRowFieldError(index, 'value');
+                                                    }
+                                                }}
                                             >
                                                 <SelectTrigger className="h-9">
                                                     <SelectValue />
@@ -148,15 +265,25 @@ const ConditionNodeBuilderComponent = ({ node, onSubmit }: ConditionNodeBuilderP
                                                 </SelectContent>
                                             </Select>
                                         </div>
-                                        {cond.operator !== ConditionOperator.EXISTS && cond.operator !== ConditionOperator.NOT_EXISTS && (
+                                        {operatorNeedsValue(cond.operator) && (
                                             <div>
-                                                <Label className="text-xs mb-1.5 block">Value</Label>
-                                                <Select
-                                                    value={String(cond.value ?? '')}
-                                                    onValueChange={(v) => updateCondition(index, { value: v === 'true' ? true : v === 'false' ? false : v })}
+                                                <Label
+                                                    className={cn('text-xs mb-1.5 block', valueError && 'text-destructive')}
                                                 >
-                                                    <SelectTrigger className="h-9">
-                                                        <SelectValue placeholder="Value" />
+                                                    Value
+                                                    <span className="text-destructive ml-0.5">*</span>
+                                                </Label>
+                                                <Select
+                                                    value={valueSelectValue}
+                                                    onValueChange={(v) => {
+                                                        updateCondition(index, {
+                                                            value: v === 'true' ? true : v === 'false' ? false : v,
+                                                        });
+                                                        clearRowFieldError(index, 'value');
+                                                    }}
+                                                >
+                                                    <SelectTrigger className={cn('h-9', valueError && 'border-destructive')}>
+                                                        <SelectValue placeholder="Select value" />
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {Object.values(ApplicationStage).map((s) => (
@@ -168,17 +295,21 @@ const ConditionNodeBuilderComponent = ({ node, onSubmit }: ConditionNodeBuilderP
                                                         <SelectItem value="false">false</SelectItem>
                                                     </SelectContent>
                                                 </Select>
+                                                {valueError ? (
+                                                    <p className="text-destructive text-xs mt-1">{valueError}</p>
+                                                ) : null}
                                             </div>
                                         )}
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>
             </div>
 
-            <Button onClick={() => onSubmit(newNode)} className="mt-4 w-full">
+            <Button type="button" onClick={handleSave} className="mt-4 w-full">
                 Save Condition Configuration
             </Button>
         </div>

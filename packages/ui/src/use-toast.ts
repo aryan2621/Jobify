@@ -3,9 +3,12 @@
 import * as React from 'react';
 import { toast as sonnerToast } from 'sonner';
 
-const DEFAULT_TOAST_DURATION = 5000;
+/** Auto-dismiss for success, info, and warning toasts */
+const AUTO_DISMISS_MS_NEUTRAL = 3000;
+/** Errors often need a moment longer to read */
+const AUTO_DISMISS_MS_DESTRUCTIVE = 5000;
 
-type ToastVariant = 'default' | 'destructive';
+type ToastVariant = 'default' | 'destructive' | 'info' | 'warning';
 
 type ToastProps = {
     title?: React.ReactNode;
@@ -14,14 +17,32 @@ type ToastProps = {
     duration?: number;
 };
 
-function toast({ title, description, variant, duration }: ToastProps) {
+function defaultDuration(variant: ToastVariant | undefined): number {
+    return variant === 'destructive' ? AUTO_DISMISS_MS_DESTRUCTIVE : AUTO_DISMISS_MS_NEUTRAL;
+}
+
+function toast({ title, description, variant = 'default', duration }: ToastProps) {
     const message = title ?? '';
     const opts = {
         description: description as string | undefined,
-        duration: duration ?? DEFAULT_TOAST_DURATION,
+        duration: duration ?? defaultDuration(variant),
     };
 
-    const id = variant === 'destructive' ? sonnerToast.error(message, opts) : sonnerToast.success(message, opts);
+    let id: string | number;
+    switch (variant) {
+        case 'destructive':
+            id = sonnerToast.error(message, opts);
+            break;
+        case 'info':
+            id = sonnerToast.info(message, opts);
+            break;
+        case 'warning':
+            id = sonnerToast.warning(message, opts);
+            break;
+        default:
+            id = sonnerToast.success(message, opts);
+            break;
+    }
 
     return {
         id: String(id),

@@ -253,24 +253,33 @@ const edge = (source: string, target: string): Edge => ({
 });
 
 /**
- * Full recruitment funnel on the canvas: every node type once, wired linearly,
- * with sensible defaults so validation passes (notify email, assignment, interview, wait).
+ * Default hiring pipeline: acknowledge → triage wait → shortlist → take-home → candidate wait →
+ * branch on assignment submission → interview + stage update, or close as not selected.
+ * Condition edges use target ids with interview < endRejected (lexicographic) so branch 0 maps to interview.
  */
 export function createDefaultRecruitmentWorkflow(): { nodes: WorkflowNode[]; edges: Edge[] } {
     const id = {
         start: crypto.randomUUID(),
         notify: crypto.randomUUID(),
-        statusShortlist: crypto.randomUUID(),
+        updateApplied: crypto.randomUUID(),
+        waitRecruiterReview: crypto.randomUUID(),
+        updateShortlisted: crypto.randomUUID(),
         assignment: crypto.randomUUID(),
-        wait: crypto.randomUUID(),
+        waitCandidateWindow: crypto.randomUUID(),
         condition: crypto.randomUUID(),
-        interview: crypto.randomUUID(),
-        statusInterview: crypto.randomUUID(),
-        end: crypto.randomUUID(),
+        interview: '',
+        endNotSelected: '',
+        updateInterviewScheduled: crypto.randomUUID(),
+        endPipeline: crypto.randomUUID(),
     };
-    const branchId = crypto.randomUUID();
+    do {
+        id.interview = crypto.randomUUID();
+        id.endNotSelected = crypto.randomUUID();
+    } while (id.interview >= id.endNotSelected);
+
+    const conditionBranchId = crypto.randomUUID();
     const assignmentDeadline = new Date(Date.now() + 7 * 86400000).toISOString();
-    const interviewTime = new Date(Date.now() + 14 * 86400000).toISOString();
+    const interviewTime = new Date(Date.now() + 10 * 86400000).toISOString();
 
     const plain: Record<string, unknown>[] = [
         {
@@ -281,7 +290,7 @@ export function createDefaultRecruitmentWorkflow(): { nodes: WorkflowNode[]; edg
                 name: `start_${id.start.slice(0, 8)}`,
                 trigger: 'application_received',
             },
-            position: { x: 280, y: 0 },
+            position: { x: 260, y: 0 },
         },
         {
             id: id.notify,
@@ -289,26 +298,50 @@ export function createDefaultRecruitmentWorkflow(): { nodes: WorkflowNode[]; edg
             taskType: TaskType.NOTIFY,
             notificationOptions: [NotificationOption.EMAIL],
             data: {
-                label: 'Acknowledge candidate',
+                label: 'Email: application received',
                 name: `notify_${id.notify.slice(0, 8)}`,
                 emailConfig: {
                     to: '{{candidate.email}}',
-                    subject: 'We received your application — {{job.title}}',
-                    body: 'Hi {{candidate.name}},\n\nThank you for applying for {{job.title}} at {{job.company}}. We will review your profile and follow up soon.\n\n— The hiring team',
+                    subject: 'We received your application — {{job.title}} at {{job.company}}',
+                    body: 'Hi {{candidate.name}},\n\nThanks for applying for {{job.title}} at {{job.company}}. Our team will review your profile. If there is a strong fit, we will invite you to the next step within a few business days.\n\nYou can track your status in your candidate portal.\n\nBest,\nThe hiring team',
                 },
             },
-            position: { x: 280, y: 120 },
+            position: { x: 260, y: 110 },
         },
         {
-            id: id.statusShortlist,
+            id: id.updateApplied,
             type: NodeType.TASK,
             taskType: TaskType.UPDATE_STATUS,
             data: {
-                label: 'Mark shortlisted',
-                name: `update_status_${id.statusShortlist.slice(0, 8)}`,
+                label: 'Stage: Applied (in review)',
+                name: `update_status_${id.updateApplied.slice(0, 8)}`,
+            },
+            stage: ApplicationStage.APPLIED,
+            position: { x: 260, y: 220 },
+        },
+        {
+            id: id.waitRecruiterReview,
+            type: NodeType.TASK,
+            taskType: TaskType.WAIT,
+            data: {
+                label: 'Wait: recruiter review (2 weekdays)',
+                name: `wait_${id.waitRecruiterReview.slice(0, 8)}`,
+            },
+            duration: 2,
+            unit: DelayUnit.DAYS,
+            workingDaysOnly: true,
+            position: { x: 260, y: 330 },
+        },
+        {
+            id: id.updateShortlisted,
+            type: NodeType.TASK,
+            taskType: TaskType.UPDATE_STATUS,
+            data: {
+                label: 'Stage: Shortlisted — send take-home',
+                name: `update_status_${id.updateShortlisted.slice(0, 8)}`,
             },
             stage: ApplicationStage.SHORTLISTED,
-            position: { x: 280, y: 240 },
+            position: { x: 260, y: 440 },
         },
         {
             id: id.assignment,
@@ -318,93 +351,108 @@ export function createDefaultRecruitmentWorkflow(): { nodes: WorkflowNode[]; edg
                 label: 'Take-home assignment',
                 name: `assignment_${id.assignment.slice(0, 8)}`,
             },
-            url: 'https://example.com/assignment',
+            url: 'https://example.com/replace-with-your-brief-notion-or-doc',
             deadline: assignmentDeadline,
-            description: 'Complete the exercise and submit your solution before the deadline.',
+            description:
+                'Replace the URL above with your real brief (Notion, Google Doc, or repo). Candidates receive this link by email and submit work on the Jobify portal. Describe expectations, timebox, and how you will evaluate.',
             attachments: [] as string[],
             submissionTracking: 'link',
-            position: { x: 280, y: 360 },
+            position: { x: 260, y: 550 },
         },
         {
-            id: id.wait,
+            id: id.waitCandidateWindow,
             type: NodeType.TASK,
             taskType: TaskType.WAIT,
             data: {
-                label: 'Pause before screening',
-                name: `wait_${id.wait.slice(0, 8)}`,
+                label: 'Wait: candidate has 5 days to submit',
+                name: `wait_${id.waitCandidateWindow.slice(0, 8)}`,
             },
-            duration: 2,
+            duration: 5,
             unit: DelayUnit.DAYS,
-            workingDaysOnly: true,
-            position: { x: 280, y: 480 },
+            workingDaysOnly: false,
+            position: { x: 260, y: 660 },
         },
         {
             id: id.condition,
             type: NodeType.TASK,
             taskType: TaskType.CONDITION,
             data: {
-                label: 'Meets bar for interview?',
+                label: 'Assignment submitted on portal?',
                 name: `condition_${id.condition.slice(0, 8)}`,
             },
             conditions: [
                 {
-                    id: branchId,
-                    field: 'stage',
+                    id: conditionBranchId,
+                    field: 'workflowState.submitted',
                     operator: ConditionOperator.EQ,
-                    value: ApplicationStage.SHORTLISTED,
+                    value: true,
                 },
             ],
-            position: { x: 280, y: 600 },
+            position: { x: 260, y: 770 },
         },
         {
             id: id.interview,
             type: NodeType.TASK,
             taskType: TaskType.INTERVIEW,
             data: {
-                label: 'Technical interview',
+                label: 'Live interview (replace Meet link)',
                 name: `interview_${id.interview.slice(0, 8)}`,
             },
-            link: 'https://meet.example.com/interview',
-            description: '60-minute technical conversation with the engineering team.',
+            link: 'https://meet.google.com/replace-with-your-link',
+            description:
+                'Replace the meeting link and time. When this step runs, the candidate gets an email and (if you connected Google Calendar) a calendar invite.',
             attachments: [] as string[],
             time: interviewTime,
             duration: 60,
             participants: [] as string[],
-            position: { x: 280, y: 720 },
+            position: { x: 120, y: 900 },
         },
         {
-            id: id.statusInterview,
+            id: id.endNotSelected,
+            type: NodeType.END,
+            data: {
+                label: 'End: no submission — close',
+                name: `end_${id.endNotSelected.slice(0, 8)}`,
+                outcome: 'rejected',
+            },
+            position: { x: 400, y: 900 },
+        },
+        {
+            id: id.updateInterviewScheduled,
             type: NodeType.TASK,
             taskType: TaskType.UPDATE_STATUS,
             data: {
-                label: 'Interview scheduled',
-                name: `update_status_${id.statusInterview.slice(0, 8)}`,
+                label: 'Stage: Interview scheduled',
+                name: `update_status_${id.updateInterviewScheduled.slice(0, 8)}`,
             },
             stage: ApplicationStage.INTERVIEW_SCHEDULED,
-            position: { x: 280, y: 840 },
+            position: { x: 120, y: 1020 },
         },
         {
-            id: id.end,
+            id: id.endPipeline,
             type: NodeType.END,
             data: {
-                label: 'Pipeline complete',
-                name: `end_${id.end.slice(0, 8)}`,
+                label: 'End: interview step done (extend if needed)',
+                name: `end_${id.endPipeline.slice(0, 8)}`,
                 outcome: 'ongoing',
             },
-            position: { x: 280, y: 960 },
+            position: { x: 120, y: 1130 },
         },
     ];
 
     const nodes = plain.map((n) => deserializeNode(n));
     const edges: Edge[] = [
         edge(id.start, id.notify),
-        edge(id.notify, id.statusShortlist),
-        edge(id.statusShortlist, id.assignment),
-        edge(id.assignment, id.wait),
-        edge(id.wait, id.condition),
+        edge(id.notify, id.updateApplied),
+        edge(id.updateApplied, id.waitRecruiterReview),
+        edge(id.waitRecruiterReview, id.updateShortlisted),
+        edge(id.updateShortlisted, id.assignment),
+        edge(id.assignment, id.waitCandidateWindow),
+        edge(id.waitCandidateWindow, id.condition),
         edge(id.condition, id.interview),
-        edge(id.interview, id.statusInterview),
-        edge(id.statusInterview, id.end),
+        edge(id.condition, id.endNotSelected),
+        edge(id.interview, id.updateInterviewScheduled),
+        edge(id.updateInterviewScheduled, id.endPipeline),
     ];
 
     return { nodes, edges };
