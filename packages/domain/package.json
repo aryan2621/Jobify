@@ -1,0 +1,6 @@
+{
+  "name": "@jobify/domain",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false
+}

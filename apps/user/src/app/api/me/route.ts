@@ -1,0 +1,88 @@
+import { USER_AUTH_COOKIE_NAME } from '@jobify/domain/auth-cookie';
+import { NextRequest, NextResponse } from 'next/server';
+import { fetchUserByUserId, updateUser } from '@jobify/appwrite-server/collections/user-collection';
+import { getAvatarViewUrl } from '@jobify/appwrite-server/storage';
+import { BadRequestError, isRecognisedError } from '@jobify/domain/error';
+import bcryptjs from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+export async function GET(req: NextRequest) {
+    const token = req.cookies.get(USER_AUTH_COOKIE_NAME);
+    try {
+        if (!token) {
+            throw new Error('You are not authorized to perform this action');
+        }
+        const user = jwt.verify(token.value, process.env.JWT_SECRET!);
+        const id = (user as any).id;
+        const dbUser = await fetchUserByUserId(id);
+        if (!dbUser) {
+            throw new Error('You are not authorized to perform this action');
+        }
+        const avatarUrl = dbUser.avatarFileId ? getAvatarViewUrl(dbUser.avatarFileId) : null;
+        return NextResponse.json(
+            {
+                id: dbUser.id,
+                firstName: dbUser.firstName,
+                lastName: dbUser.lastName,
+                username: dbUser.username,
+                email: dbUser.email,
+                createdAt: dbUser.createdAt,
+                avatarFileId: dbUser.avatarFileId,
+                avatarUrl,
+            },
+            { status: 200 }
+        );
+    }
+    catch (error) {
+        console.log('Error while fetching user', error);
+        if (isRecognisedError(error)) {
+            const err = error as any;
+            return NextResponse.json({ message: err.message }, { status: err.statusCode });
+        }
+        return NextResponse.json({ message: 'Error while fetching user' }, { status: 500 });
+    }
+}
+export async function PUT(req: NextRequest) {
+    const token = req.cookies.get(USER_AUTH_COOKIE_NAME);
+    try {
+        if (!token) {
+            throw new Error('You are not authorized to perform this action');
+        }
+        const user = jwt.verify(token.value, process.env.JWT_SECRET!);
+        const id = (user as any).id;
+        const dbUser = await fetchUserByUserId(id);
+        if (!dbUser) {
+            throw new BadRequestError('You are not authorized to perform this action');
+        }
+        const { firstName, lastName, password } = await req.json();
+        let hashedPassword: string | undefined;
+        if (password) {
+            const salt = bcryptjs.genSaltSync(10);
+            hashedPassword = bcryptjs.hashSync(password, salt);
+        }
+        interface UpdateUserObj {
+            firstName?: string;
+            lastName?: string;
+            password?: string;
+        }
+        const obj: UpdateUserObj = {};
+        if (firstName) {
+            obj.firstName = firstName;
+        }
+        if (lastName) {
+            obj.lastName = lastName;
+        }
+        if (password) {
+            obj.password = hashedPassword;
+        }
+        await updateUser(id, obj);
+        return NextResponse.json({ message: 'User updated successfully' }, { status: 200 });
+    }
+    catch (error) {
+        console.log('Error while updating user', error);
+        if (isRecognisedError(error)) {
+            const err = error as any;
+            return NextResponse.json({ message: err.message }, { status: err.statusCode });
+        }
+        return NextResponse.json({ message: 'Error while updating user' }, { status: 500 });
+    }
+}

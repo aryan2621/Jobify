@@ -1,0 +1,12 @@
+{
+  "name": "@jobify/appwrite-server",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false,
+  "dependencies": {
+    "@jobify/domain": "*",
+    "appwrite": "^15.0.0",
+    "node-appwrite": "^13.0.0",
+    "uuid": "^10.0.0"
+  }
+}

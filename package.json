@@ -1,0 +1,20 @@
+{
+  "name": "jobify",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "turbo run format",
+    "format:fix": "turbo run format:fix"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@types/uuid": "^10.0.0",
+    "turbo": "^2.5.4"
+  },
+  "packageManager": "npm@10.9.2",
+  "workspaces": ["apps/*", "packages/*"]
+}

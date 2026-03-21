@@ -1,7 +1,7 @@
 {
-    "projectId": "66c1a1870003f6fe3d7c",
-    "projectName": "jobify",
-    "endpoint": "https://fra.cloud.appwrite.io/v1",
+    "projectId": "69bd7456000bdb6b8190",
+    "projectName": "jobconnect",
+    "endpoint": "https://sgp.cloud.appwrite.io/v1",
     "settings": {
         "services": {
             "account": true,
@@ -41,8 +41,8 @@
     },
     "tablesDB": [
         {
-            "$id": "jobify",
-            "name": "jobify",
+            "$id": "jobconnect",
+            "name": "jobconnect",
             "enabled": true
         }
     ],
@@ -55,7 +55,7 @@
                 "update(\"any\")",
                 "delete(\"any\")"
             ],
-            "databaseId": "jobify",
+            "databaseId": "jobconnect",
             "name": "users",
             "enabled": true,
             "rowSecurity": false,
@@ -134,7 +134,7 @@
             "indexes": [
                 {
                     "key": "id",
-                    "type": "fulltext",
+                    "type": "key",
                     "status": "available",
                     "columns": [
                         "id"
@@ -145,7 +145,7 @@
                 },
                 {
                     "key": "email",
-                    "type": "fulltext",
+                    "type": "unique",
                     "status": "available",
                     "columns": [
                         "email"
@@ -156,7 +156,127 @@
                 },
                 {
                     "key": "username",
-                    "type": "fulltext",
+                    "type": "unique",
+                    "status": "available",
+                    "columns": [
+                        "username"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                }
+            ]
+        },
+        {
+            "$id": "admins",
+            "$permissions": [
+                "read(\"any\")",
+                "create(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
+            ],
+            "databaseId": "jobconnect",
+            "name": "admins",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "id",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "lastName",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "createdAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "firstName",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "username",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "email",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "password",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 200,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "avatarFileId",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": false
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "id",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "id"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "email",
+                    "type": "unique",
+                    "status": "available",
+                    "columns": [
+                        "email"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "username",
+                    "type": "unique",
                     "status": "available",
                     "columns": [
                         "username"
@@ -175,7 +295,7 @@
                 "update(\"any\")",
                 "delete(\"any\")"
             ],
-            "databaseId": "jobify",
+            "databaseId": "jobconnect",
             "name": "applications",
             "enabled": true,
             "rowSecurity": false,
@@ -389,7 +509,7 @@
             "indexes": [
                 {
                     "key": "id",
-                    "type": "fulltext",
+                    "type": "key",
                     "status": "available",
                     "columns": [
                         "id"
@@ -400,7 +520,7 @@
                 },
                 {
                     "key": "jobId",
-                    "type": "fulltext",
+                    "type": "key",
                     "status": "available",
                     "columns": [
                         "jobId"
@@ -411,7 +531,7 @@
                 },
                 {
                     "key": "createdBy",
-                    "type": "fulltext",
+                    "type": "key",
                     "status": "available",
                     "columns": [
                         "createdBy"
@@ -430,7 +550,7 @@
                 "update(\"any\")",
                 "delete(\"any\")"
             ],
-            "databaseId": "jobify",
+            "databaseId": "jobconnect",
             "name": "jobs",
             "enabled": true,
             "rowSecurity": false,
@@ -562,11 +682,18 @@
                 },
                 {
                     "key": "state",
-                    "type": "text",
+                    "type": "string",
                     "required": false,
                     "array": false,
+                    "size": 50,
                     "default": "Published",
-                    "encrypt": false
+                    "encrypt": false,
+                    "format": "enum",
+                    "elements": [
+                        "Draft",
+                        "Published",
+                        "Closed"
+                    ]
                 },
                 {
                     "key": "workflowId",
@@ -581,7 +708,7 @@
             "indexes": [
                 {
                     "key": "id",
-                    "type": "fulltext",
+                    "type": "key",
                     "status": "available",
                     "columns": [
                         "id"
@@ -592,10 +719,21 @@
                 },
                 {
                     "key": "createdBy",
-                    "type": "fulltext",
+                    "type": "key",
                     "status": "available",
                     "columns": [
                         "createdBy"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "state",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "state"
                     ],
                     "orders": [
                         "ASC"
@@ -611,7 +749,7 @@
                 "update(\"any\")",
                 "delete(\"any\")"
             ],
-            "databaseId": "jobify",
+            "databaseId": "jobconnect",
             "name": "workflows",
             "enabled": true,
             "rowSecurity": false,
@@ -723,7 +861,30 @@
                     ]
                 }
             ],
-            "indexes": []
+            "indexes": [
+                {
+                    "key": "createdBy",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "createdBy"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "updatedAt",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "updatedAt"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                }
+            ]
         },
         {
             "$id": "settings",
@@ -733,7 +894,7 @@
                 "update(\"any\")",
                 "delete(\"any\")"
             ],
-            "databaseId": "jobify",
+            "databaseId": "jobconnect",
             "name": "settings",
             "enabled": true,
             "rowSecurity": false,
@@ -813,7 +974,7 @@
             "indexes": [
                 {
                     "key": "userId",
-                    "type": "fulltext",
+                    "type": "key",
                     "status": "available",
                     "columns": [
                         "userId"
@@ -823,8 +984,19 @@
                     ]
                 },
                 {
+                    "key": "provider",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "provider"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
                     "key": "id",
-                    "type": "fulltext",
+                    "type": "key",
                     "status": "available",
                     "columns": [
                         "id"
@@ -838,7 +1010,7 @@
     ],
     "buckets": [
         {
-            "$id": "resume-bucket",
+            "$id": "storage",
             "$permissions": [
                 "read(\"any\")",
                 "create(\"any\")",
@@ -846,7 +1018,7 @@
                 "delete(\"any\")"
             ],
             "fileSecurity": false,
-            "name": "resume-bucket",
+            "name": "storage",
             "enabled": true,
             "maximumFileSize": 50000000,
             "allowedFileExtensions": [
