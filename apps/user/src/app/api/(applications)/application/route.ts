@@ -55,7 +55,6 @@ export async function POST(req: NextRequest) {
         if (alreadyApplied) {
             throw new UnauthorizedError('You have already applied to this job');
         }
-        // Resolve workflow from the job poster's account
         const adminId = job.createdBy;
         const adminWorkflows = adminId ? await getWorkflowsByUserId(adminId) : [];
         const workflowId = adminWorkflows.length > 0
@@ -66,8 +65,10 @@ export async function POST(req: NextRequest) {
             body.stage = 'applied';
         }
         await createApplicationDocument(body);
-        // Trigger workflow non-blocking — failure won't affect the application submission
-        triggerWorkflow(body.id, body.jobId);
+        if (workflowId) {
+            console.log('Triggering workflow for application', body.id, body.jobId);
+            await triggerWorkflow(body.id, body.jobId);
+        }
         return NextResponse.json({ message: 'Application posted successfully' }, { status: 201 });
     }
     catch (error: any) {
@@ -75,9 +76,7 @@ export async function POST(req: NextRequest) {
         if (isRecognisedError(error)) {
             return NextResponse.json({ message: error.message }, { status: error.statusCode });
         }
-        else {
-            return NextResponse.json({ message: 'Error while posting application' }, { status: 500 });
-        }
+        return NextResponse.json({ message: 'Error while posting application' }, { status: 500 });
     }
 }
 export async function PUT(req: NextRequest) {
@@ -108,8 +107,6 @@ export async function PUT(req: NextRequest) {
         if (isRecognisedError(error)) {
             return NextResponse.json({ message: error.message }, { status: error.statusCode });
         }
-        else {
-            return NextResponse.json({ message: 'Error while updating application' }, { status: 500 });
-        }
+        return NextResponse.json({ message: 'Error while updating application' }, { status: 500 });
     }
 }

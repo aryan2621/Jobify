@@ -53,8 +53,7 @@ export async function PUT(req: NextRequest) {
         console.log('Error while updating application', error);
         if (isRecognisedError(error)) {
             return NextResponse.json({ message: error.message }, { status: error.statusCode });
-        } else {
-            return NextResponse.json({ message: 'Error while updating application' }, { status: 500 });
         }
+        return NextResponse.json({ message: 'Error while updating application' }, { status: 500 });
     }
 }

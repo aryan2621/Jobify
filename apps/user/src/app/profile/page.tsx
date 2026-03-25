@@ -26,7 +26,7 @@ function ProfilePageContent() {
     const [uploadingImage, setUploadingImage] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState('personal');
-    const [applications, setApplications] = useState<Application[]>([]);
+    const [applications, setApplications] = useState<WorkflowApplication[]>([]);
     const [loadingApplications, setLoadingApplications] = useState(false);
     const avatarInputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();

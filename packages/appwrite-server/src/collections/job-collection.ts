@@ -20,7 +20,6 @@ async function createJobDocument(job: Job) {
             createdAt: job.createdAt,
             state: job.state,
             createdBy: job.createdBy,
-            workflowId: job.workflowId ?? undefined,
         });
     } catch (error) {
         console.log('Error creating job document', error);
@@ -120,7 +119,6 @@ async function updateJobDocument(job: Job) {
             createdAt: job.createdAt,
             state: job.state,
             createdBy: job.createdBy,
-            workflowId: job.workflowId ?? undefined,
         });
     } catch (error) {
         console.log('Error updating job document', error);
