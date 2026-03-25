@@ -5,6 +5,31 @@ import { Application } from '@jobify/domain/application';
 import { fetchJobById } from '@jobify/appwrite-server/collections/job-collection';
 import { createApplicationDocument, fetchApplicationById, updateApplicationStatus, hasApplicationByUserAndJob } from '@jobify/appwrite-server/collections/application-collection';
 import { isRecognisedError, NotFoundError, UnauthorizedError, ForbiddenError } from '@jobify/domain/error';
+
+async function triggerWorkflow(applicationId: string, jobId: string) {
+    const adminUrl = process.env.ADMIN_APP_URL;
+    const workflowSecret = process.env.WORKFLOW_SECRET;
+    if (!adminUrl || !workflowSecret) {
+        console.warn('ADMIN_APP_URL or WORKFLOW_SECRET not set; skipping workflow trigger');
+        return;
+    }
+    try {
+        const res = await fetch(`${adminUrl}/api/trigger-workflow`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-workflow-secret': workflowSecret,
+            },
+            body: JSON.stringify({ applicationId, jobId }),
+        });
+        if (!res.ok) {
+            console.warn('Failed to trigger workflow for application', applicationId, await res.text());
+        }
+    } catch (error) {
+        console.error('Error triggering workflow after application submit', error);
+    }
+}
+
 export async function POST(req: NextRequest) {
     const token = req.cookies.get(USER_AUTH_COOKIE_NAME);
     try {
@@ -35,6 +60,11 @@ export async function POST(req: NextRequest) {
             body.stage = 'applied';
         }
         await createApplicationDocument(body);
+
+        if (workflowId) {
+            await triggerWorkflow(body.id, body.jobId);
+        }
+
         return NextResponse.json({ message: 'Application posted successfully' }, { status: 201 });
     }
     catch (error: any) {
