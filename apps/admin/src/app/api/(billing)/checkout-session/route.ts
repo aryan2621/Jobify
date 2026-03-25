@@ -4,8 +4,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { SubscriptionType, subscriptionPrices, yearlySubscriptionPrices } from '@jobify/domain/subscription';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {});
-
 const CHECKOUT_IMAGE =
     'https://img.etimg.com/thumb/width-1600,height-900,imgsize-6770,resizemode-75,msid-116547755/news/international/us/solo-leveling-season-2-new-trailer-release-date-and-plot-revealed.jpg';
 
@@ -30,6 +28,7 @@ export async function POST(request: NextRequest) {
         const planName = plan.charAt(0).toUpperCase() + plan.slice(1);
         const description = `${planName} plan — ${billing === 'yearly' ? 'Yearly' : 'Monthly'}`;
 
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {});
         const checkoutSession: Stripe.Checkout.Session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [
