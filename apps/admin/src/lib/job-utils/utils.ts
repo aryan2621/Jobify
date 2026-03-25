@@ -45,6 +45,5 @@ export const mapJobResponse = (job: Job & { $id?: string }) => {
         job.createdAt,
         job.state,
         job.createdBy,
-        job.workflowId
     );
 };

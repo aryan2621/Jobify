@@ -2,3 +2,6 @@ node_modules
 .turbo
 *.log
 .DS_Store
+admin_cookies.txt
+user_cookies.txt
+.env

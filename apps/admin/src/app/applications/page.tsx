@@ -327,7 +327,7 @@ const ApplicationDetail = ({
                                 open={showStatusDialog}
                                 onOpenChange={(open) => {
                                     if (!open && statusChangeLoading) {
-                                        
+
                                         return;
                                     }
                                     setShowStatusDialog(open);
@@ -355,7 +355,7 @@ const ApplicationDetail = ({
                                                     await onStatusChange(ApplicationStatus.APPLIED);
                                                     setShowStatusDialog(false);
                                                 } catch (error) {
-                                                    
+
                                                 }
                                             }}
                                             disabled={statusChangeLoading}
@@ -380,7 +380,7 @@ const ApplicationDetail = ({
                                                     await onStatusChange(ApplicationStatus.SELECTED);
                                                     setShowStatusDialog(false);
                                                 } catch (error) {
-                                                    
+
                                                 }
                                             }}
                                             disabled={statusChangeLoading}
@@ -405,7 +405,7 @@ const ApplicationDetail = ({
                                                     await onStatusChange(ApplicationStatus.REJECTED);
                                                     setShowStatusDialog(false);
                                                 } catch (error) {
-                                                    
+
                                                 }
                                             }}
                                             disabled={statusChangeLoading}
@@ -647,15 +647,15 @@ export default function AdminApplicationsPage() {
     const [error, setError] = useState<string | null>(null);
     const [statusChangeLoading, setStatusChangeLoading] = useState(false);
 
-    
+
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [sortOption, setSortOption] = useState('newest');
 
-    
+
     const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
-    
+
     const fetchApplications = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -693,7 +693,7 @@ export default function AdminApplicationsPage() {
 
             setApplications(fetchedApplications);
 
-            
+
             if (fetchedApplications.length > 0) {
                 const jobIds = [...new Set(fetchedApplications.map((app) => app.jobId))];
                 fetchJobsData(jobIds);
@@ -710,12 +710,12 @@ export default function AdminApplicationsPage() {
         }
     }, [selectedApplication]);
 
-    
+
     const fetchJobsData = async (jobIds: string[]) => {
         try {
             const jobsMap = new Map<string, Job>();
 
-            
+
             await Promise.all(
                 jobIds.map(async (jobId) => {
                     try {
@@ -737,7 +737,6 @@ export default function AdminApplicationsPage() {
                                 jobData.createdAt,
                                 jobData.state,
                                 jobData.createdBy,
-                                jobData.workflowId
                             )
                         );
                     } catch (error) {
@@ -752,12 +751,12 @@ export default function AdminApplicationsPage() {
         }
     };
 
-    
+
     useEffect(() => {
         fetchApplications();
     }, [fetchApplications]);
 
-    
+
     const handleStatusChange = async (status: ApplicationStatus) => {
         if (!selectedApplication) return;
 
@@ -771,7 +770,7 @@ export default function AdminApplicationsPage() {
                 },
             });
 
-            
+
             setApplications((prevApplications) => prevApplications.map((app) => (app.id === selectedApplication.id ? { ...app, status } : app)));
 
             setSelectedApplication((prev) => (prev ? { ...prev, status } : null));
@@ -792,23 +791,23 @@ export default function AdminApplicationsPage() {
         }
     };
 
-    
+
     const resetFilters = () => {
         setSearchQuery('');
         setStatusFilter('all');
         setSortOption('newest');
     };
 
-    
+
     const filteredApplications = useMemo(() => {
         let filtered = [...applications];
 
-        
+
         if (statusFilter !== 'all') {
             filtered = filtered.filter((app) => app.status === statusFilter);
         }
 
-        
+
         if (debouncedSearchQuery) {
             const query = debouncedSearchQuery.toLowerCase();
             filtered = filtered.filter(
@@ -822,7 +821,7 @@ export default function AdminApplicationsPage() {
             );
         }
 
-        
+
         filtered.sort((a, b) => {
             switch (sortOption) {
                 case 'newest':
@@ -841,7 +840,7 @@ export default function AdminApplicationsPage() {
         return filtered;
     }, [applications, statusFilter, debouncedSearchQuery, sortOption]);
 
-    
+
     const selectedJobDetails = useMemo(() => {
         if (!selectedApplication) return null;
         return jobs.get(selectedApplication.jobId) || null;
@@ -890,7 +889,7 @@ export default function AdminApplicationsPage() {
 
                         <div className='h-[calc(100vh-300px)] overflow-auto space-y-2'>
                             {loading ? (
-                                
+
                                 Array(5)
                                     .fill(0)
                                     .map((_, index) => (
@@ -919,7 +918,7 @@ export default function AdminApplicationsPage() {
                                         </Card>
                                     ))
                             ) : filteredApplications.length === 0 ? (
-                                
+
                                 <Card className='py-10'>
                                     <CardContent className='flex flex-col items-center justify-center text-center'>
                                         <Inbox className='h-12 w-12 text-muted-foreground mb-4' />
@@ -939,7 +938,7 @@ export default function AdminApplicationsPage() {
                                     </CardContent>
                                 </Card>
                             ) : (
-                                
+
                                 filteredApplications.map((application) => (
                                     <ApplicationCard
                                         key={application.id}

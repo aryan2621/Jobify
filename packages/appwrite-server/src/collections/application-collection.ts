@@ -1,10 +1,10 @@
 import { DB_NAME, APPLICATION_COLLECTION } from '../name';
 import { database } from '../config';
-import { Application, ApplicationStatus } from '@jobify/domain/application';
+import { Application, ApplicationStatus, WorkflowApplication } from '@jobify/domain/application';
 import { Query } from 'appwrite';
 import { UserApplicationsRequest } from '@jobify/domain/request';
 
-async function createApplicationDocument(application: Application) {
+async function createApplicationDocument(application: WorkflowApplication) {
     try {
         return await database.createDocument(DB_NAME, APPLICATION_COLLECTION, application.id, {
             id: application.id,

@@ -29,7 +29,6 @@ export async function POST(req: NextRequest) {
             body.createdAt,
             body.state,
             id,
-            body.workflowId
         );
         await createJobDocument(job);
         return NextResponse.json({ message: 'Job created' }, { status: 201 });
@@ -94,7 +93,7 @@ export async function PUT(req: NextRequest) {
             throw new UnauthorizedError('You do not have access to update this job');
         }
 
-        const existing = existingJob as { createdAt?: string; workflowId?: string };
+        const existing = existingJob as { createdAt?: string };
         const job = new Job(
             body.id,
             body.profile,
@@ -110,7 +109,6 @@ export async function PUT(req: NextRequest) {
             existing.createdAt ?? body.createdAt,
             body.state,
             userId,
-            body.workflowId ?? existing.workflowId
         );
         await updateJobDocument(job);
         return NextResponse.json(job, { status: 200 });

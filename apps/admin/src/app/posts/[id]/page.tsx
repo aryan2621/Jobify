@@ -48,7 +48,6 @@ export default function EditJobPostPage({ params }: { params: { id: string } }) 
                     r.createdAt,
                     r.state,
                     r.createdBy,
-                    r.workflowId
                 )
             );
         } catch (error) {

@@ -14,7 +14,7 @@ import { LoadingProfileSkeleton } from '@/components/elements/profile-skeleton';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { userStore } from '@/store';
 import { LogOut, Camera, Loader2 } from 'lucide-react';
-import { Application } from '@jobify/domain/application';
+import { Application, WorkflowApplication } from '@jobify/domain/application';
 import { UserSummary } from './components/summary';
 import ProfilePersonalTab from './components/profile-personal-tab';
 import ProfileSecurityTab from './components/profile-security-tab';
@@ -76,7 +76,7 @@ function ProfilePageContent() {
             const res = (await ky.get(url).json()) as any[];
             const fetchedApplications = (res ?? []).map(
                 (application: any) =>
-                    new Application(
+                    new WorkflowApplication(
                         application.id,
                         application.firstName,
                         application.lastName,
@@ -186,88 +186,88 @@ function ProfilePageContent() {
         return `${profile.firstName.charAt(0)}${profile.lastName.charAt(0)}`;
     };
     return (<NavbarLayout>
-            <div className='container mx-auto px-4 py-6'>
-                {loading ? (<LoadingProfileSkeleton />) : (<div className='space-y-6'>
-                        <div className='flex flex-col md:flex-row gap-6 items-start'>
-                            <div className='relative'>
-                                <Avatar key={avatarUrl ?? 'initials'} className='w-32 h-32 border-4 border-background cursor-pointer' onClick={!uploadingImage ? handleAvatarClick : undefined}>
-                                    <AvatarImage src={avatarUrl ?? undefined} alt={`${profile.firstName} ${profile.lastName}`}/>
-                                    <AvatarFallback className='text-3xl'>{getInitials()}</AvatarFallback>
-                                </Avatar>
-                                {uploadingImage && (<div className='absolute inset-0 rounded-full bg-background/80 flex items-center justify-center'>
-                                        <Loader2 className='h-8 w-8 animate-spin text-primary'/>
-                                    </div>)}
-                                <div className='absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer shadow-sm' onClick={!uploadingImage ? handleAvatarClick : undefined}>
-                                    <Camera className='h-4 w-4'/>
-                                </div>
-                                <input ref={avatarInputRef} type='file' accept='image/*' className='hidden' onChange={handleAvatarUpload} disabled={uploadingImage}/>
-                            </div>
+        <div className='container mx-auto px-4 py-6'>
+            {loading ? (<LoadingProfileSkeleton />) : (<div className='space-y-6'>
+                <div className='flex flex-col md:flex-row gap-6 items-start'>
+                    <div className='relative'>
+                        <Avatar key={avatarUrl ?? 'initials'} className='w-32 h-32 border-4 border-background cursor-pointer' onClick={!uploadingImage ? handleAvatarClick : undefined}>
+                            <AvatarImage src={avatarUrl ?? undefined} alt={`${profile.firstName} ${profile.lastName}`} />
+                            <AvatarFallback className='text-3xl'>{getInitials()}</AvatarFallback>
+                        </Avatar>
+                        {uploadingImage && (<div className='absolute inset-0 rounded-full bg-background/80 flex items-center justify-center'>
+                            <Loader2 className='h-8 w-8 animate-spin text-primary' />
+                        </div>)}
+                        <div className='absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer shadow-sm' onClick={!uploadingImage ? handleAvatarClick : undefined}>
+                            <Camera className='h-4 w-4' />
+                        </div>
+                        <input ref={avatarInputRef} type='file' accept='image/*' className='hidden' onChange={handleAvatarUpload} disabled={uploadingImage} />
+                    </div>
 
-                            <div className='flex-1'>
-                                <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
-                                    <div>
-                                        <h1 className='text-3xl font-bold'>
-                                            {profile.firstName} {profile.lastName}
-                                        </h1>
-                                        <p className='text-muted-foreground'>{profile.email}</p>
-                                        <div className='flex items-center gap-2 mt-2'>
-                                            <Badge variant='secondary'>Job Seeker</Badge>
-                                            <span className='text-sm text-muted-foreground'>@{profile.username}</span>
-                                        </div>
-                                    </div>
-
-                                    <Button variant='outline' size='sm' className='gap-2' onClick={handleLogout}>
-                                        <LogOut className='h-4 w-4'/>
-                                        Logout
-                                    </Button>
+                    <div className='flex-1'>
+                        <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
+                            <div>
+                                <h1 className='text-3xl font-bold'>
+                                    {profile.firstName} {profile.lastName}
+                                </h1>
+                                <p className='text-muted-foreground'>{profile.email}</p>
+                                <div className='flex items-center gap-2 mt-2'>
+                                    <Badge variant='secondary'>Job Seeker</Badge>
+                                    <span className='text-sm text-muted-foreground'>@{profile.username}</span>
                                 </div>
                             </div>
+
+                            <Button variant='outline' size='sm' className='gap-2' onClick={handleLogout}>
+                                <LogOut className='h-4 w-4' />
+                                Logout
+                            </Button>
                         </div>
+                    </div>
+                </div>
 
-                        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-                            <div className='lg:col-span-2 space-y-6'>
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Profile Information</CardTitle>
-                                        <CardDescription>Manage your personal information and account settings</CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <Tabs value={activeTab} onValueChange={setActiveTab}>
-                                            <TabsList className='grid grid-cols-2 mb-6'>
-                                                <TabsTrigger value='personal'>Personal Info</TabsTrigger>
-                                                <TabsTrigger value='security'>Security</TabsTrigger>
-                                            </TabsList>
+                <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+                    <div className='lg:col-span-2 space-y-6'>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Profile Information</CardTitle>
+                                <CardDescription>Manage your personal information and account settings</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                                    <TabsList className='grid grid-cols-2 mb-6'>
+                                        <TabsTrigger value='personal'>Personal Info</TabsTrigger>
+                                        <TabsTrigger value='security'>Security</TabsTrigger>
+                                    </TabsList>
 
-                                            <TabsContent value='personal'>
-                                                <ProfilePersonalTab profile={profile} setProfile={setProfile} submitting={submitting} updateUser={updateUser}/>
-                                            </TabsContent>
+                                    <TabsContent value='personal'>
+                                        <ProfilePersonalTab profile={profile} setProfile={setProfile} submitting={submitting} updateUser={updateUser} />
+                                    </TabsContent>
 
-                                            <TabsContent value='security'>
-                                                <ProfileSecurityTab profile={profile} setProfile={setProfile} submitting={submitting} updateUser={updateUser}/>
-                                            </TabsContent>
-                                        </Tabs>
-                                    </CardContent>
-                                </Card>
+                                    <TabsContent value='security'>
+                                        <ProfileSecurityTab profile={profile} setProfile={setProfile} submitting={submitting} updateUser={updateUser} />
+                                    </TabsContent>
+                                </Tabs>
+                            </CardContent>
+                        </Card>
 
-                                <UserDashboard applications={applications} loading={loadingApplications}/>
-                            </div>
-                            <div className='space-y-6'>
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Account Summary</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <UserSummary applications={applications} loading={loadingApplications}/>
-                                    </CardContent>
-                                </Card>
-                            </div>
-                        </div>
-                    </div>)}
-            </div>
-        </NavbarLayout>);
+                        <UserDashboard applications={applications} loading={loadingApplications} />
+                    </div>
+                    <div className='space-y-6'>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Account Summary</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <UserSummary applications={applications} loading={loadingApplications} />
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            </div>)}
+        </div>
+    </NavbarLayout>);
 }
 export default function ProfilePage() {
     return (<Suspense fallback={<LoadingProfileSkeleton />}>
-            <ProfilePageContent />
-        </Suspense>);
+        <ProfilePageContent />
+    </Suspense>);
 }

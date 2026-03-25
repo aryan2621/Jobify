@@ -1,8 +1,9 @@
 import { USER_AUTH_COOKIE_NAME } from '@jobify/domain/auth-cookie';
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-import { Application } from '@jobify/domain/application';
+import { WorkflowApplication } from '@jobify/domain/application';
 import { fetchJobById } from '@jobify/appwrite-server/collections/job-collection';
+import { getWorkflowsByUserId } from '@jobify/appwrite-server/collections/workflow-collection';
 import { createApplicationDocument, fetchApplicationById, updateApplicationStatus, hasApplicationByUserAndJob } from '@jobify/appwrite-server/collections/application-collection';
 import { isRecognisedError, NotFoundError, UnauthorizedError, ForbiddenError } from '@jobify/domain/error';
 
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
         }
         const user = jwt.verify(token.value, process.env.JWT_SECRET!);
         const id = (user as any).id;
-        const body = (await req.json()) as Application;
+        const body = (await req.json()) as WorkflowApplication;
         body.createdBy = id;
         const job = await fetchJobById(body.jobId);
         if (!job) {
@@ -54,17 +55,19 @@ export async function POST(req: NextRequest) {
         if (alreadyApplied) {
             throw new UnauthorizedError('You have already applied to this job');
         }
-        const workflowId = (job as { workflowId?: string }).workflowId;
+        // Resolve workflow from the job poster's account
+        const adminId = job.createdBy;
+        const adminWorkflows = adminId ? await getWorkflowsByUserId(adminId) : [];
+        const workflowId = adminWorkflows.length > 0
+            ? ((adminWorkflows[0] as any).id ?? (adminWorkflows[0] as any).$id)
+            : undefined;
         if (workflowId) {
             body.workflowId = workflowId;
             body.stage = 'applied';
         }
         await createApplicationDocument(body);
-
-        if (workflowId) {
-            await triggerWorkflow(body.id, body.jobId);
-        }
-
+        // Trigger workflow non-blocking — failure won't affect the application submission
+        triggerWorkflow(body.id, body.jobId);
         return NextResponse.json({ message: 'Application posted successfully' }, { status: 201 });
     }
     catch (error: any) {

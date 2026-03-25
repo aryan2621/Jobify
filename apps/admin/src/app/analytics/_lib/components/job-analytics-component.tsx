@@ -37,13 +37,13 @@ const processJobData = (jobs: Job[], filterBy: 'JobType' | 'WorkplaceType') => {
                     date,
                     ...(filterBy === 'JobType'
                         ? {
-                              [JobType.FULL_TIME]: 0,
-                              [JobType.PART_TIME]: 0,
-                              [JobType.INTERNSHIP]: 0,
-                              [JobType.CONTRACT]: 0,
-                              [JobType.FREELANCE]: 0,
-                              [JobType.TEMPORARY]: 0,
-                          }
+                            [JobType.FULL_TIME]: 0,
+                            [JobType.PART_TIME]: 0,
+                            [JobType.INTERNSHIP]: 0,
+                            [JobType.CONTRACT]: 0,
+                            [JobType.FREELANCE]: 0,
+                            [JobType.TEMPORARY]: 0,
+                        }
                         : { [WorkplaceTypes.REMOTE]: 0, [WorkplaceTypes.HYBRID]: 0, [WorkplaceTypes.ONSITE]: 0 }),
                 };
             }
@@ -87,7 +87,6 @@ export default function JobAnalyticsComponent() {
                 job.createdAt,
                 job.state,
                 job.createdBy,
-                job.workflowId
             )
         );
         setJobs(fetchedJobs);

@@ -28,7 +28,6 @@ export async function POST(req: NextRequest) {
             body.createdAt,
             body.state,
             id,
-            body.workflowId
         );
         await createJobDocument(job);
         return NextResponse.json({ message: 'Job created' }, { status: 201 });

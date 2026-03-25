@@ -39,5 +39,4 @@ export const mapJobResponse = (job: Job) =>
         job.createdAt,
         job.state,
         job.createdBy,
-        job.workflowId
     );

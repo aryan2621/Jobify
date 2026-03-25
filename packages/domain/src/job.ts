@@ -63,6 +63,5 @@ export class Job {
         this.createdAt = createdAt;
         this.state = state;
         this.createdBy = createdBy;
-        this.workflowId = workflowId;
     }
 }

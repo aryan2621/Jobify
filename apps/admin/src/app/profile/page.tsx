@@ -100,7 +100,6 @@ export default function ProfilePage() {
                     job.createdAt,
                     job.state,
                     job.createdBy,
-                    job.workflowId
                 )
             );
             setPostedJobs(fetchedJobs);

@@ -47,7 +47,7 @@ export enum ApplicationStatus {
     REJECTED = 'Rejected',
     SELECTED = 'Selected'
 }
-export type ApplicationWorkflowState = Record<string, { submitted?: boolean; submittedAt?: string; [key: string]: unknown }>;
+export type ApplicationWorkflowState = Record<string, { submitted?: boolean; submittedAt?: string;[key: string]: unknown }>;
 
 export enum JobSource {
     LINKEDIN = 'LinkedIn',
@@ -76,6 +76,48 @@ export class Application {
     jobId: string;
     createdAt: string;
     createdBy: string;
+    constructor(
+        id: string,
+        firstName: string,
+        lastName: string,
+        email: string,
+        phone: string,
+        currentLocation: string,
+        gender: Gender,
+        education: Education[],
+        experience: Experience[],
+        skills: string[],
+        source: JobSource,
+        resume: string,
+        socialLinks: string[],
+        coverLetter: string,
+        status: ApplicationStatus,
+        jobId: string,
+        createdAt: string,
+        createdBy: string,
+    ) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.phone = phone;
+        this.currentLocation = currentLocation;
+        this.gender = gender;
+        this.education = education;
+        this.experience = experience;
+        this.skills = skills;
+        this.source = source;
+        this.resume = resume;
+        this.socialLinks = socialLinks;
+        this.coverLetter = coverLetter;
+        this.status = status;
+        this.jobId = jobId;
+        this.createdAt = createdAt;
+        this.createdBy = createdBy;
+    }
+}
+
+export class WorkflowApplication extends Application {
     workflowId?: string;
     stage?: string;
     currentNodeId?: string;
@@ -102,26 +144,9 @@ export class Application {
         workflowId?: string,
         stage?: string,
         currentNodeId?: string,
-        workflowState?: ApplicationWorkflowState
+        workflowState?: ApplicationWorkflowState,
     ) {
-        this.id = id;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.phone = phone;
-        this.currentLocation = currentLocation;
-        this.gender = gender;
-        this.education = education;
-        this.experience = experience;
-        this.skills = skills;
-        this.source = source;
-        this.resume = resume;
-        this.socialLinks = socialLinks;
-        this.coverLetter = coverLetter;
-        this.status = status;
-        this.jobId = jobId;
-        this.createdAt = createdAt;
-        this.createdBy = createdBy;
+        super(id, firstName, lastName, email, phone, currentLocation, gender, education, experience, skills, source, resume, socialLinks, coverLetter, status, jobId, createdAt, createdBy);
         this.workflowId = workflowId;
         this.stage = stage;
         this.currentNodeId = currentNodeId;
