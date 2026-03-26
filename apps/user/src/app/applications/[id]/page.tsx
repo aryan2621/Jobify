@@ -49,7 +49,7 @@ export default function UserApplicationDetailPage({ params }: {
                 response.status,
                 response.jobId,
                 response.createdAt,
-                response.createdBy,
+                response.createdBy
             );
             setApplication(app);
             fetchJob(response.jobId);

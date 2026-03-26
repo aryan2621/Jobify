@@ -66,7 +66,6 @@
                     "required": true,
                     "array": false,
                     "size": 50,
-                    "default": null,
                     "encrypt": false
                 },
                 {
@@ -879,6 +878,362 @@
                     "status": "available",
                     "columns": [
                         "updatedAt"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                }
+            ]
+        },
+        {
+            "$id": "workflow-executions",
+            "$permissions": [
+                "read(\"any\")",
+                "create(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
+            ],
+            "databaseId": "jobconnect",
+            "name": "workflow-executions",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "id",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "applicationId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "encrypt": false
+                },
+                {
+                    "key": "jobId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "encrypt": false
+                },
+                {
+                    "key": "recruiterId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "encrypt": false
+                },
+                {
+                    "key": "workflowId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "encrypt": false
+                },
+                {
+                    "key": "status",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "format": "enum",
+                    "elements": [
+                        "running",
+                        "waiting",
+                        "completed",
+                        "failed",
+                        "cancelled"
+                    ]
+                },
+                {
+                    "key": "currentNodeId",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "stage",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 200,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "state",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "error",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "nextRunAt",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "startedAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": ""
+                },
+                {
+                    "key": "completedAt",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "updatedAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": ""
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "id",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "id"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "applicationId",
+                    "type": "unique",
+                    "status": "available",
+                    "columns": [
+                        "applicationId"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "recruiterId",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "recruiterId"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "status",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "status"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "updatedAt",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "updatedAt"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                }
+            ]
+        },
+        {
+            "$id": "workflow-execution-events",
+            "$permissions": [
+                "read(\"any\")",
+                "create(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
+            ],
+            "databaseId": "jobconnect",
+            "name": "workflow-execution-events",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "id",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "encrypt": false
+                },
+                {
+                    "key": "executionId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "encrypt": false
+                },
+                {
+                    "key": "applicationId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "encrypt": false
+                },
+                {
+                    "key": "jobId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "encrypt": false
+                },
+                {
+                    "key": "recruiterId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "encrypt": false
+                },
+                {
+                    "key": "workflowId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "encrypt": false
+                },
+                {
+                    "key": "nodeId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "encrypt": false
+                },
+                {
+                    "key": "nodeType",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "encrypt": false
+                },
+                {
+                    "key": "stepType",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "encrypt": false
+                },
+                {
+                    "key": "status",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "format": "enum",
+                    "elements": [
+                        "started",
+                        "completed",
+                        "failed"
+                    ]
+                },
+                {
+                    "key": "input",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "output",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "error",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "createdAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": ""
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "id",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "id"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "executionId",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "executionId"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "createdAt",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "createdAt"
                     ],
                     "orders": [
                         "ASC"

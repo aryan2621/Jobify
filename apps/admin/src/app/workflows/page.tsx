@@ -70,6 +70,7 @@ export default function WorkflowList() {
         loadWorkflows();
     }, [toast]);
 
+
     
     const filteredWorkflows = workflows.filter((workflow) => {
         const matchesSearch =
@@ -155,6 +156,7 @@ export default function WorkflowList() {
             </Badge>
         );
     };
+
 
     return (
         <NavbarLayout>
@@ -323,6 +325,7 @@ export default function WorkflowList() {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
+
                 </div>
             </TooltipProvider>
         </NavbarLayout>

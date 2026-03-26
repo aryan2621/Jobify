@@ -4,5 +4,7 @@ export const ADMIN_COLLECTION = 'admins';
 export const JOB_COLLECTION = 'jobs';
 export const APPLICATION_COLLECTION = 'applications';
 export const WORKFLOW_COLLECTION = 'workflows';
+export const WORKFLOW_EXECUTIONS_COLLECTION = 'workflow-executions';
+export const WORKFLOW_EXECUTION_EVENTS_COLLECTION = 'workflow-execution-events';
 export const STORAGE = 'storage';
 export const SETTINGS_COLLECTION = 'settings';

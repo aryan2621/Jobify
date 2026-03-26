@@ -3,7 +3,6 @@ import { inngest } from '@/inngest/client';
 import { APPLICATION_SUBMITTED } from '@/inngest/constants';
 import { fetchApplicationById } from '@jobify/appwrite-server/collections/application-collection';
 import { fetchJobById } from '@jobify/appwrite-server/collections/job-collection';
-import { getWorkflowsByUserId } from '@jobify/appwrite-server/collections/workflow-collection';
 
 export async function POST(req: NextRequest) {
     try {
@@ -32,17 +31,6 @@ export async function POST(req: NextRequest) {
         }
         if (!job) {
             return NextResponse.json({ error: 'Job not found' }, { status: 404 });
-        }
-
-        let workflowId = (application as any).workflowId;
-        if (!workflowId) {
-            const adminId = (job as any).createdBy;
-            const workflows = adminId ? await getWorkflowsByUserId(adminId) : [];
-            workflowId = workflows.length > 0 ? ((workflows[0] as any).id ?? (workflows[0] as any).$id) : undefined;
-        }
-
-        if (!workflowId) {
-            return NextResponse.json({ message: 'No workflow found for this job; nothing to trigger' }, { status: 200 });
         }
 
         await inngest.send({

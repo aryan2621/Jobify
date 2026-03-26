@@ -1,6 +1,6 @@
 import { NodeType, TaskType, type ConditionNode, type WorkflowNode } from '@jobify/domain/workflow';
 import { evaluateConditionBranch } from './evaluate-condition-branch';
-import type { ApplicationSnapshot } from './types';
+import type { WorkflowExecutionSnapshot } from './types';
 
 type Edge = { source: string; target: string };
 
@@ -33,14 +33,14 @@ function resolveConditionNext(
     conditionNode: ConditionNode,
     edges: unknown[],
     conditionNodeId: string,
-    application: ApplicationSnapshot
+    execution: WorkflowExecutionSnapshot
 ): string | null {
     const outgoing = getSortedOutgoingEdges(edges, conditionNodeId);
     if (outgoing.length === 0) return null;
 
     const branches = conditionNode.conditions ?? [];
     for (let i = 0; i < branches.length; i++) {
-        if (evaluateConditionBranch(branches[i], application)) {
+        if (evaluateConditionBranch(branches[i], execution)) {
             return outgoing[i]?.target ?? null;
         }
     }
@@ -58,10 +58,10 @@ export function resolveNextNodeId(
     edges: unknown[],
     currentNodeId: string,
     currentNode: WorkflowNode,
-    application: ApplicationSnapshot
+    execution: WorkflowExecutionSnapshot
 ): string | null {
     if (currentNode.type === NodeType.TASK && currentNode.taskType === TaskType.CONDITION) {
-        return resolveConditionNext(currentNode as ConditionNode, edges, currentNodeId, application);
+        return resolveConditionNext(currentNode as ConditionNode, edges, currentNodeId, execution);
     }
     return getNextNodeIdLinear(edges, currentNodeId);
 }

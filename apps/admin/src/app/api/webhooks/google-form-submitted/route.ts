@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchApplicationById, updateApplicationWorkflowState } from '@jobify/appwrite-server/collections/application-collection';
+import { fetchApplicationById } from '@jobify/appwrite-server/collections/application-collection';
+import { updateWorkflowExecutionState } from '@jobify/appwrite-server/collections/workflow-collection';
 
 export async function POST(req: NextRequest) {
     try {
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
         }
 
         const nodeId = assignmentNodeId ?? body.nodeId ?? 'assignment';
-        await updateApplicationWorkflowState(applicationId, nodeId, {
+        await updateWorkflowExecutionState(applicationId, nodeId, {
             submitted: true,
             submittedAt: new Date().toISOString(),
         });

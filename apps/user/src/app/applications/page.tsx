@@ -13,7 +13,7 @@ import { Skeleton } from '@jobify/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@jobify/ui/tabs';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@jobify/ui/tooltip';
 import { User as UserIcon, Briefcase, MapPin, Phone, Building, GraduationCap, Lightbulb, Globe, FileText, Calendar, ChevronDown, Filter, SortAsc, SortDesc, Search, Download, Mail, AlertCircle, Info, CheckCircle, XCircle, Clock, } from 'lucide-react';
-import { Application, ApplicationStatus, WorkflowApplication } from '@jobify/domain/application';
+import { Application, ApplicationStatus } from '@jobify/domain/application';
 import { User } from '@jobify/domain/user';
 import { Job } from '@jobify/domain/job';
 import { getResume } from '@jobify/appwrite-server/storage';
@@ -517,7 +517,7 @@ export default function ApplicationsPage() {
             }
             const fetchedApplications = (res ?? []).map(
                 (application: any) =>
-                    new WorkflowApplication(
+                    new Application(
                         application.id,
                         application.firstName,
                         application.lastName,
@@ -535,11 +535,7 @@ export default function ApplicationsPage() {
                         application.status,
                         application.jobId,
                         application.createdAt,
-                        application.createdBy,
-                        application.workflowId,
-                        application.stage,
-                        application.currentNodeId,
-                        application.workflowState ? JSON.parse(application.workflowState as string) : undefined
+                        application.createdBy
                     )
             );
             setApplications((prevApplications) => [...prevApplications, ...fetchedApplications]);

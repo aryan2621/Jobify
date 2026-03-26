@@ -14,7 +14,7 @@ import { LoadingProfileSkeleton } from '@/components/elements/profile-skeleton';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { userStore } from '@/store';
 import { LogOut, Camera, Loader2 } from 'lucide-react';
-import { Application, WorkflowApplication } from '@jobify/domain/application';
+import { Application } from '@jobify/domain/application';
 import { UserSummary } from './components/summary';
 import ProfilePersonalTab from './components/profile-personal-tab';
 import ProfileSecurityTab from './components/profile-security-tab';
@@ -26,7 +26,7 @@ function ProfilePageContent() {
     const [uploadingImage, setUploadingImage] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState('personal');
-    const [applications, setApplications] = useState<WorkflowApplication[]>([]);
+    const [applications, setApplications] = useState<Application[]>([]);
     const [loadingApplications, setLoadingApplications] = useState(false);
     const avatarInputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
@@ -76,7 +76,7 @@ function ProfilePageContent() {
             const res = (await ky.get(url).json()) as any[];
             const fetchedApplications = (res ?? []).map(
                 (application: any) =>
-                    new WorkflowApplication(
+                    new Application(
                         application.id,
                         application.firstName,
                         application.lastName,
@@ -94,11 +94,7 @@ function ProfilePageContent() {
                         application.status,
                         application.jobId,
                         application.createdAt,
-                        application.createdBy,
-                        application.workflowId,
-                        application.stage,
-                        application.currentNodeId,
-                        application.workflowState ? JSON.parse(application.workflowState as string) : undefined
+                        application.createdBy
                     )
             );
             setApplications(fetchedApplications);

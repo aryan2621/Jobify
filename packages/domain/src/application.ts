@@ -47,8 +47,6 @@ export enum ApplicationStatus {
     REJECTED = 'Rejected',
     SELECTED = 'Selected'
 }
-export type ApplicationWorkflowState = Record<string, { submitted?: boolean; submittedAt?: string;[key: string]: unknown }>;
-
 export enum JobSource {
     LINKEDIN = 'LinkedIn',
     ANGEL_LIST = 'Angel List',
@@ -114,42 +112,5 @@ export class Application {
         this.jobId = jobId;
         this.createdAt = createdAt;
         this.createdBy = createdBy;
-    }
-}
-
-export class WorkflowApplication extends Application {
-    workflowId?: string;
-    stage?: string;
-    currentNodeId?: string;
-    workflowState?: ApplicationWorkflowState;
-    constructor(
-        id: string,
-        firstName: string,
-        lastName: string,
-        email: string,
-        phone: string,
-        currentLocation: string,
-        gender: Gender,
-        education: Education[],
-        experience: Experience[],
-        skills: string[],
-        source: JobSource,
-        resume: string,
-        socialLinks: string[],
-        coverLetter: string,
-        status: ApplicationStatus,
-        jobId: string,
-        createdAt: string,
-        createdBy: string,
-        workflowId?: string,
-        stage?: string,
-        currentNodeId?: string,
-        workflowState?: ApplicationWorkflowState,
-    ) {
-        super(id, firstName, lastName, email, phone, currentLocation, gender, education, experience, skills, source, resume, socialLinks, coverLetter, status, jobId, createdAt, createdBy);
-        this.workflowId = workflowId;
-        this.stage = stage;
-        this.currentNodeId = currentNodeId;
-        this.workflowState = workflowState;
     }
 }

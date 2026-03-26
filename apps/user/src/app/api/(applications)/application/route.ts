@@ -1,9 +1,8 @@
 import { USER_AUTH_COOKIE_NAME } from '@jobify/domain/auth-cookie';
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-import { WorkflowApplication } from '@jobify/domain/application';
+import { Application } from '@jobify/domain/application';
 import { fetchJobById } from '@jobify/appwrite-server/collections/job-collection';
-import { getWorkflowsByUserId } from '@jobify/appwrite-server/collections/workflow-collection';
 import { createApplicationDocument, fetchApplicationById, updateApplicationStatus, hasApplicationByUserAndJob } from '@jobify/appwrite-server/collections/application-collection';
 import { isRecognisedError, NotFoundError, UnauthorizedError, ForbiddenError } from '@jobify/domain/error';
 
@@ -39,7 +38,7 @@ export async function POST(req: NextRequest) {
         }
         const user = jwt.verify(token.value, process.env.JWT_SECRET!);
         const id = (user as any).id;
-        const body = (await req.json()) as WorkflowApplication;
+        const body = (await req.json()) as Application;
         body.createdBy = id;
         const job = await fetchJobById(body.jobId);
         if (!job) {
@@ -55,20 +54,9 @@ export async function POST(req: NextRequest) {
         if (alreadyApplied) {
             throw new UnauthorizedError('You have already applied to this job');
         }
-        const adminId = job.createdBy;
-        const adminWorkflows = adminId ? await getWorkflowsByUserId(adminId) : [];
-        const workflowId = adminWorkflows.length > 0
-            ? ((adminWorkflows[0] as any).id ?? (adminWorkflows[0] as any).$id)
-            : undefined;
-        if (workflowId) {
-            body.workflowId = workflowId;
-            body.stage = 'applied';
-        }
+
         await createApplicationDocument(body);
-        if (workflowId) {
-            console.log('Triggering workflow for application', body.id, body.jobId);
-            await triggerWorkflow(body.id, body.jobId);
-        }
+        await triggerWorkflow(body.id, body.jobId);
         return NextResponse.json({ message: 'Application posted successfully' }, { status: 201 });
     }
     catch (error: any) {

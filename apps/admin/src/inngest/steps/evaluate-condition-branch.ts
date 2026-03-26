@@ -1,11 +1,11 @@
 import { ConditionOperator } from '@jobify/domain/workflow';
-import type { ApplicationSnapshot } from './types';
+import type { WorkflowExecutionSnapshot } from './types';
 
-function getFieldValue(field: string, application: ApplicationSnapshot): unknown {
-    if (field === 'application.stage') return application.stage;
-    if (field === 'application.status') return application.status;
+function getFieldValue(field: string, execution: WorkflowExecutionSnapshot): unknown {
+    if (field === 'application.stage') return execution.stage;
+    if (field === 'application.status') return execution.status;
     if (field === 'workflowState.submitted') {
-        const ws = application.workflowState ?? {};
+        const ws = execution.workflowState ?? {};
         return Object.values(ws).some(
             (s) => s && typeof s === 'object' && (s as { submitted?: boolean }).submitted === true
         );
@@ -21,9 +21,9 @@ function compareEq(a: unknown, b: unknown): boolean {
 
 export function evaluateConditionBranch(
     branch: { field: string; operator: ConditionOperator; value?: string | number | boolean },
-    application: ApplicationSnapshot
+    execution: WorkflowExecutionSnapshot
 ): boolean {
-    const fieldVal = getFieldValue(branch.field, application);
+    const fieldVal = getFieldValue(branch.field, execution);
     switch (branch.operator) {
         case ConditionOperator.EQ:
             return compareEq(fieldVal, branch.value);

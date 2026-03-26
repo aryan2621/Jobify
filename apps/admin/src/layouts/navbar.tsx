@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@jobify/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@jobify/ui/sheet';
 import { BarChartIcon, CircleHelpIcon, FileIcon, MenuIcon, ProfileIcon } from '@/components/elements/icon';
-import { BookCopyIcon, HouseIcon, PanelLeftClose, PanelLeftOpen, Workflow, HandCoins, LogOut } from 'lucide-react';
+import { BookCopyIcon, HouseIcon, ListTree, PanelLeftClose, PanelLeftOpen, Workflow, HandCoins, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { userStore } from '@/store';
 import { usePathname } from 'next/navigation';
@@ -131,6 +131,13 @@ const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
                                         isCollapsed={isCollapsed}
                                         isActive={pathname.startsWith('/workflows')}
                                     />
+                                    <NavItem
+                                        href='/workflow-executions'
+                                        icon={<ListTree className='h-5 w-5' />}
+                                        label='Workflow Executions'
+                                        isCollapsed={isCollapsed}
+                                        isActive={pathname.startsWith('/workflow-executions')}
+                                    />
 
                                     <NavItem
                                         href='/analytics'
@@ -238,6 +245,13 @@ const NavbarLayout: React.FC<NavbarLayoutProps> = ({ children }) => {
                                                 label='Workflows'
                                                 isCollapsed={false}
                                                 isActive={pathname.startsWith('/workflows')}
+                                            />
+                                            <NavItem
+                                                href='/workflow-executions'
+                                                icon={<ListTree className='h-5 w-5' />}
+                                                label='Workflow Executions'
+                                                isCollapsed={false}
+                                                isActive={pathname.startsWith('/workflow-executions')}
                                             />
 
                                             <NavItem
