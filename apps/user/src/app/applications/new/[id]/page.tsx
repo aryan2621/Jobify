@@ -746,14 +746,13 @@ export default function JobApplicationForm({ params }: {
                                                                         </Button>
                                                                     </div>)}
 
-                                                                {page === 4 && (<SkillsForm formData={formData} validation={validation} predefinedSkills={job?.skills ?? []} onFieldChange={handleFieldChange} onAddSocialLink={handleAddSocialLink} onRemoveSocialLink={handleRemoveSocialLink} onUpdateSocialLink={handleUpdateSocialLink}/>)}
+                                                                {page === 4 && (<SkillsForm formData={formData} validation={validation} predefinedSkills={job?.skills ?? []} onFieldChange={handleFieldChange} onResumeFilesSelected={handleFiles} onAddSocialLink={handleAddSocialLink} onRemoveSocialLink={handleRemoveSocialLink} onUpdateSocialLink={handleUpdateSocialLink}/>)}
 
                                                                 {page === 5 && (<CoverLetterForm formData={formData} validation={validation} onFieldChange={handleFieldChange}/>)}
                                                             </motion.div>
                                                         </AnimatePresence>
                                                     </>) : (<ApplicationReview formData={formData} validationErrors={validationErrors}/>)}
 
-                                                <input type='file' id='resume-file' accept='.pdf,.doc,.docx' onChange={(e) => handleFiles(e.target.files)} className='hidden'/>
                                             </form>
                                         </CardContent>
 

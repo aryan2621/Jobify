@@ -9,11 +9,12 @@ import { Label } from '@jobify/ui/label';
 import { Input } from '@jobify/ui/input';
 import { Button } from '@jobify/ui/button';
 import { Badge } from '@jobify/ui/badge';
-export const SkillsForm = memo(({ formData, validation, predefinedSkills, onFieldChange, onAddSocialLink, onRemoveSocialLink, onUpdateSocialLink, }: {
+export const SkillsForm = memo(({ formData, validation, predefinedSkills, onFieldChange, onResumeFilesSelected, onAddSocialLink, onRemoveSocialLink, onUpdateSocialLink, }: {
     formData: Application;
     validation: FormValidation;
     predefinedSkills: string[];
     onFieldChange: (field: string, value: any, index?: number) => void;
+    onResumeFilesSelected: (files: FileList | null) => void;
     onAddSocialLink: () => void;
     onRemoveSocialLink: (index: number) => void;
     onUpdateSocialLink: (index: number, value: string) => void;
@@ -79,12 +80,16 @@ export const SkillsForm = memo(({ formData, validation, predefinedSkills, onFiel
 
                     <FormField label='Resume / CV' error={validation.resume?.errorMessage} touched={validation.resume?.touched} required helpText='Upload your resume in PDF, DOC, or DOCX format (max 5MB)'>
                         <div className='flex flex-col space-y-2'>
-                            <Input type='file' id='resume' accept='.pdf,.doc,.docx' onChange={(e) => {
-            const files = e.target.files;
-            if (files && files.length > 0) {
-                onFieldChange('resume', '', -1);
-            }
-        }} className={validation.resume?.touched && !validation.resume?.isValid ? 'border-destructive' : ''}/>
+                            <Input
+                                type='file'
+                                id='resume'
+                                accept='.pdf,.doc,.docx'
+                                onChange={(e) => {
+                                    onResumeFilesSelected(e.target.files);
+                                    e.target.value = '';
+                                }}
+                                className={validation.resume?.touched && !validation.resume?.isValid ? 'border-destructive' : ''}
+                            />
                             {formData.resume && <p className='text-xs text-primary'>Resume uploaded successfully</p>}
                         </div>
                     </FormField>

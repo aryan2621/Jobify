@@ -4,7 +4,21 @@ import jwt from 'jsonwebtoken';
 import { uploadResume } from '@jobify/appwrite-server/storage';
 import { isRecognisedError, UnauthorizedError } from '@jobify/domain/error';
 const MAX_SIZE = 5 * 1024 * 1024;
-const ALLOWED_TYPES = ['application/pdf'];
+const ALLOWED_TYPES = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+];
+function isAllowedResumeFile(file: File): boolean {
+    if (ALLOWED_TYPES.includes(file.type)) {
+        return true;
+    }
+    const name = file.name.toLowerCase();
+    if (name.endsWith('.pdf') || name.endsWith('.doc') || name.endsWith('.docx')) {
+        return file.type === '' || file.type === 'application/octet-stream';
+    }
+    return false;
+}
 export async function POST(req: NextRequest) {
     const token = req.cookies.get(USER_AUTH_COOKIE_NAME);
     try {
@@ -17,8 +31,8 @@ export async function POST(req: NextRequest) {
         if (!file || !(file instanceof File)) {
             return NextResponse.json({ message: 'No file provided' }, { status: 400 });
         }
-        if (!ALLOWED_TYPES.includes(file.type)) {
-            return NextResponse.json({ message: 'Invalid file type. Only PDF is allowed.' }, { status: 400 });
+        if (!isAllowedResumeFile(file)) {
+            return NextResponse.json({ message: 'Invalid file type. Only PDF, DOC, or DOCX is allowed.' }, { status: 400 });
         }
         if (file.size > MAX_SIZE) {
             return NextResponse.json({ message: 'File must be less than 5MB' }, { status: 400 });
