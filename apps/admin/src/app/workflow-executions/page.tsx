@@ -41,6 +41,37 @@ function formatDate(dateString: string): string {
     });
 }
 
+function formatDateTime(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+    });
+}
+
+function formatContent(value?: string): string {
+    if (!value) return '';
+    try {
+        return JSON.stringify(JSON.parse(value), null, 2);
+    } catch {
+        return value;
+    }
+}
+
+function describeEvent(event: WorkflowExecutionEvent): string {
+    if (event.status === 'failed') {
+        return `${event.stepType} failed while processing this workflow step.`;
+    }
+    if (event.status === 'completed') {
+        return `${event.stepType} completed successfully and produced the output below.`;
+    }
+    return `${event.stepType} started and is currently processing.`;
+}
+
 function ExecutionStatusBadge({ status }: { status: WorkflowExecution['status'] }) {
     const variantClass =
         status === 'completed'
@@ -178,13 +209,13 @@ export default function WorkflowExecutionsPage() {
                 </Card>
 
                 <Sheet open={!!selectedExecution} onOpenChange={(open) => !open && setSelectedExecution(null)}>
-                    <SheetContent side='right' className='w-full sm:max-w-2xl'>
-                        <div className='space-y-4'>
-                            <div>
+                    <SheetContent side='right' className='w-full sm:max-w-2xl overflow-hidden'>
+                        <div className='h-full min-h-0 flex flex-col space-y-4'>
+                            <div className='shrink-0'>
                                 <h3 className='text-lg font-semibold'>Execution Timeline</h3>
                                 {selectedExecution && (
                                     <p className='text-sm text-muted-foreground'>
-                                        Execution {selectedExecution.id} for application {selectedExecution.applicationId}
+                                        Detailed step-by-step trace of this workflow run, including inputs, outputs, failures, and timestamps.
                                     </p>
                                 )}
                             </div>
@@ -197,25 +228,39 @@ export default function WorkflowExecutionsPage() {
                             ) : executionEvents.length === 0 ? (
                                 <div className='text-sm text-muted-foreground'>No events captured yet.</div>
                             ) : (
-                                <ScrollArea className='h-[85vh] pr-3'>
+                                <ScrollArea className='flex-1 min-h-0 pr-3'>
                                     <div className='space-y-3'>
-                                        {executionEvents.map((event) => (
+                                        {executionEvents.map((event, index) => (
                                             <Card key={event.id}>
                                                 <CardHeader className='pb-2'>
                                                     <div className='flex items-center justify-between gap-2'>
                                                         <div className='text-sm font-medium'>
-                                                            {event.stepType} ({event.nodeId})
+                                                            Step {index + 1}: {event.stepType}
                                                         </div>
                                                         <Badge variant='outline'>{event.status}</Badge>
                                                     </div>
-                                                    <CardDescription>{formatDate(event.createdAt)}</CardDescription>
+                                                    <CardDescription>{formatDateTime(event.createdAt)}</CardDescription>
                                                 </CardHeader>
                                                 <CardContent className='space-y-2 text-xs'>
+                                                    <div>
+                                                        <div className='font-medium mb-1'>What Happened</div>
+                                                        <p className='text-muted-foreground'>{describeEvent(event)}</p>
+                                                    </div>
+                                                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-2'>
+                                                        <div className='rounded bg-muted/50 p-2'>
+                                                            <div className='font-medium mb-1'>Step Type</div>
+                                                            <div>{event.stepType}</div>
+                                                        </div>
+                                                        <div className='rounded bg-muted/50 p-2'>
+                                                            <div className='font-medium mb-1'>Status</div>
+                                                            <div>{event.status}</div>
+                                                        </div>
+                                                    </div>
                                                     {event.input && (
                                                         <div>
                                                             <div className='font-medium mb-1'>Input</div>
                                                             <pre className='bg-muted p-2 rounded overflow-auto whitespace-pre-wrap break-all'>
-                                                                {event.input}
+                                                                {formatContent(event.input)}
                                                             </pre>
                                                         </div>
                                                     )}
@@ -223,7 +268,7 @@ export default function WorkflowExecutionsPage() {
                                                         <div>
                                                             <div className='font-medium mb-1'>Output</div>
                                                             <pre className='bg-muted p-2 rounded overflow-auto whitespace-pre-wrap break-all'>
-                                                                {event.output}
+                                                                {formatContent(event.output)}
                                                             </pre>
                                                         </div>
                                                     )}
@@ -231,7 +276,7 @@ export default function WorkflowExecutionsPage() {
                                                         <div>
                                                             <div className='font-medium mb-1 text-destructive'>Error</div>
                                                             <pre className='bg-destructive/10 p-2 rounded overflow-auto whitespace-pre-wrap break-all'>
-                                                                {event.error}
+                                                                {formatContent(event.error)}
                                                             </pre>
                                                         </div>
                                                     )}
