@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, type ChangeEvent } from 'react';
+import { useState, type ChangeEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@jobify/ui/card';
 import { Button } from '@jobify/ui/button';
@@ -8,8 +8,7 @@ import { Textarea } from '@jobify/ui/textarea';
 import { Label } from '@jobify/ui/label';
 import { Badge } from '@jobify/ui/badge';
 import { useToast } from '@jobify/ui/use-toast';
-import { Calendar, Clock, FileText, Link as LinkIcon, Upload, CheckCircle, ArrowLeft, ExternalLink, AlertCircle, Info, FileUp } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Clock, FileText, Link as LinkIcon, Upload, CheckCircle, ArrowLeft, ExternalLink, AlertCircle, Info, FileUp } from 'lucide-react';
 const MOCK_ASSIGNMENT = {
     id: 'node_123',
     label: 'Technical Coding Challenge',

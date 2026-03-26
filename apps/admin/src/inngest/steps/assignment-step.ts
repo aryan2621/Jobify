@@ -19,7 +19,7 @@ export async function runAssignmentStep(ctx: WorkflowRunContext, node: Assignmen
     const url = node.url?.trim();
     if (!url) return;
 
-    const subject = expandWorkflowPlaceholders(`Assignment: ${node.data.label} — {{job.title}}`, application, job);
+    const subject = expandWorkflowPlaceholders(`Assignment: ${node.data.label} - {{job.title}}`, application, job);
     const deadlineStr = node.deadline && !Number.isNaN(node.deadline.getTime()) ? node.deadline.toUTCString() : '';
 
     const base = getUserAppBaseUrl();

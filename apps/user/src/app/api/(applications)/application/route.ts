@@ -30,6 +30,37 @@ async function triggerWorkflow(applicationId: string, jobId: string) {
     }
 }
 
+export async function GET(req: NextRequest) {
+    const token = req.cookies.get(USER_AUTH_COOKIE_NAME);
+    try {
+        if (!token) {
+            throw new UnauthorizedError('You are not authorized to perform this action');
+        }
+        const user = jwt.verify(token.value, process.env.JWT_SECRET!);
+        const userId = (user as any).id as string;
+        const applicationId = req.nextUrl.searchParams.get('id');
+        if (!applicationId) {
+            throw new NotFoundError('Application id is required');
+        }
+
+        const application = await fetchApplicationById(applicationId);
+        if (!application) {
+            throw new NotFoundError('Requested application does not exist');
+        }
+        if ((application.createdBy as string) !== userId) {
+            throw new ForbiddenError('You are not allowed to access this application');
+        }
+
+        return NextResponse.json(application, { status: 200 });
+    } catch (error: any) {
+        console.log('Error while fetching application', error);
+        if (isRecognisedError(error)) {
+            return NextResponse.json({ message: error.message }, { status: error.statusCode });
+        }
+        return NextResponse.json({ message: 'Error while fetching application' }, { status: 500 });
+    }
+}
+
 export async function POST(req: NextRequest) {
     const token = req.cookies.get(USER_AUTH_COOKIE_NAME);
     try {
