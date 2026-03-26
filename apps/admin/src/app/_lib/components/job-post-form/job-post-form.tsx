@@ -4,14 +4,25 @@ import React, { useState, FormEvent, useCallback, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import ky from 'ky';
 import { useRouter } from 'next/navigation';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Info, Loader2 } from 'lucide-react';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@jobify/ui/card';
 import { Button } from '@jobify/ui/button';
+import { Label } from '@jobify/ui/label';
+import { Switch } from '@jobify/ui/switch';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@jobify/ui/tooltip';
 import { toast } from '@jobify/ui/use-toast';
 import { Badge } from '@jobify/ui/badge';
 import { Job, JobState, JobType, WorkplaceTypes } from '@jobify/domain/job';
-import { FORM_STEPS, REJECTION_EMAIL_CONTENT, SELECTION_EMAIL_CONTENT, ValidationState } from '@/app/_lib/utils';
+import {
+    clearNewJobDraft,
+    FORM_STEPS,
+    loadNewJobDraft,
+    REJECTION_EMAIL_CONTENT,
+    saveNewJobDraft,
+    SELECTION_EMAIL_CONTENT,
+    ValidationState,
+} from '@/app/_lib/utils';
 import { FormProgress } from './form-progress';
 import { StepBasicInfo } from './step-basic-info';
 import { StepWorkplace } from './step-workplace';
@@ -33,6 +44,8 @@ export default function JobPostForm({ initialData, isEditMode = false, onSuccess
     const [newSkill, setNewSkill] = useState('');
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+    const [draftHydrated, setDraftHydrated] = useState(() => isEditMode);
 
     const [formData, setFormData] = useState<Job>(() => {
         if (initialData) {
@@ -484,6 +497,10 @@ export default function JobPostForm({ initialData, isEditMode = false, onSuccess
 
             const updatedJob = await response.json();
 
+            if (!isEditMode) {
+                clearNewJobDraft();
+            }
+
             toast({
                 title: 'Success',
                 description: isEditMode
@@ -520,21 +537,73 @@ export default function JobPostForm({ initialData, isEditMode = false, onSuccess
         }
     }, [isEditMode, initialData]);
 
+    useEffect(() => {
+        if (isEditMode) {
+            setDraftHydrated(true);
+            return;
+        }
+        const saved = loadNewJobDraft();
+        if (saved) {
+            setFormData(saved.job);
+            setPage(saved.page);
+            setNewSkill(saved.newSkill);
+            toast({
+                title: 'Draft restored',
+                description: 'Your unsaved job draft was loaded from this browser.',
+            });
+        }
+        setDraftHydrated(true);
+    }, [isEditMode]);
+
+    useEffect(() => {
+        if (isEditMode || !autoSaveEnabled || !draftHydrated) return;
+        const timer = setTimeout(() => {
+            saveNewJobDraft({ job: formData, page, newSkill });
+        }, 2000);
+        return () => clearTimeout(timer);
+    }, [formData, page, newSkill, autoSaveEnabled, isEditMode, draftHydrated]);
+
     return (
         <Card className='max-w-3xl mx-auto'>
             <CardHeader>
-                <div className='flex justify-between items-start'>
+                <div className='flex justify-between items-start gap-4 flex-wrap'>
                     <div>
                         <CardTitle>{isEditMode ? 'Edit Job Posting' : 'Post a New Job'}</CardTitle>
                         <CardDescription>
                             {isEditMode ? 'Update the job details and save or publish.' : 'Fill out the form to post a new job opening.'}
                         </CardDescription>
                     </div>
-                    {isEditMode && (
-                        <div className='flex items-center space-x-2'>
+                    <div className='flex items-center gap-3 flex-shrink-0'>
+                        {isEditMode && (
                             <Badge variant={formData.state === JobState.PUBLISHED ? 'default' : 'outline'}>{formData.state}</Badge>
-                        </div>
-                    )}
+                        )}
+                        {!isEditMode && (
+                            <div className='flex items-center gap-2 rounded-md border px-3 py-2 bg-muted/30'>
+                                <Label htmlFor='job-autosave' className='text-sm cursor-pointer flex items-center gap-1.5'>
+                                    <span>Auto-save draft</span>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <button
+                                                    type='button'
+                                                    className='text-muted-foreground hover:text-foreground'
+                                                    aria-label='About auto-save draft'
+                                                >
+                                                    <Info className='h-4 w-4' aria-hidden />
+                                                </button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p className='max-w-xs text-sm'>
+                                                    Saves your progress in this browser every few seconds. Cleared when you publish or save to the server.
+                                                </p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </Label>
+                                <Switch id='job-autosave' checked={autoSaveEnabled} onCheckedChange={setAutoSaveEnabled} />
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <FormProgress currentPage={page} totalPages={FORM_STEPS.length} />

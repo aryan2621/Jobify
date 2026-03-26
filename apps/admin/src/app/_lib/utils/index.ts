@@ -1,3 +1,86 @@
+import { Job, JobState, JobType, WorkplaceTypes } from '@jobify/domain/job';
+
+export const ADMIN_NEW_JOB_DRAFT_KEY = 'jobify_admin_new_job_draft';
+
+export type NewJobDraftPayload = {
+    job: Job;
+    page: number;
+    newSkill: string;
+};
+
+export function parseJobFromDraft(raw: unknown): Job | null {
+    if (!raw || typeof raw !== 'object') return null;
+    const o = raw as Record<string, unknown>;
+    try {
+        return new Job(
+            String(o.id ?? ''),
+            String(o.profile ?? ''),
+            String(o.description ?? ''),
+            String(o.company ?? ''),
+            (o.type as JobType) ?? JobType.FULL_TIME,
+            (o.workplaceType as WorkplaceTypes) ?? WorkplaceTypes.ONSITE,
+            String(o.lastDateToApply ?? ''),
+            String(o.location ?? ''),
+            Array.isArray(o.skills) ? (o.skills as unknown[]).map(String) : [],
+            String(o.rejectionContent ?? ''),
+            String(o.selectionContent ?? ''),
+            String(o.createdAt ?? new Date().toISOString()),
+            (o.state as JobState) ?? JobState.DRAFT,
+            String(o.createdBy ?? ''),
+            o.workflowId != null && o.workflowId !== '' ? String(o.workflowId) : undefined
+        );
+    } catch {
+        return null;
+    }
+}
+
+export function saveNewJobDraft(payload: NewJobDraftPayload): void {
+    if (typeof window === 'undefined') return;
+    try {
+        const plain = {
+            ...payload.job,
+            skills: [...(payload.job.skills ?? [])],
+        };
+        localStorage.setItem(
+            ADMIN_NEW_JOB_DRAFT_KEY,
+            JSON.stringify({
+                job: plain,
+                page: payload.page,
+                newSkill: payload.newSkill,
+            })
+        );
+    } catch (e) {
+        console.error('Failed to save new job draft', e);
+    }
+}
+
+export function loadNewJobDraft(): NewJobDraftPayload | null {
+    if (typeof window === 'undefined') return null;
+    try {
+        const raw = localStorage.getItem(ADMIN_NEW_JOB_DRAFT_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw) as { job?: unknown; page?: unknown; newSkill?: unknown };
+        const job = parseJobFromDraft(parsed.job);
+        if (!job) return null;
+        const maxStep = 5;
+        const page =
+            typeof parsed.page === 'number' && parsed.page >= 1 && parsed.page <= maxStep ? parsed.page : 1;
+        const newSkill = typeof parsed.newSkill === 'string' ? parsed.newSkill : '';
+        return { job, page, newSkill };
+    } catch {
+        return null;
+    }
+}
+
+export function clearNewJobDraft(): void {
+    if (typeof window === 'undefined') return;
+    try {
+        localStorage.removeItem(ADMIN_NEW_JOB_DRAFT_KEY);
+    } catch (e) {
+        console.error('Failed to clear new job draft', e);
+    }
+}
+
 export const REJECTION_EMAIL_CONTENT = `Dear {applicant_name},
 
 Thank you for applying for the {job_title} position at {company_name}. We appreciate the time and effort you've put into your application.
