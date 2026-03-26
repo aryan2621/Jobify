@@ -11,21 +11,24 @@ import { Skeleton } from '@jobify/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@jobify/ui/dialog';
 import { ScrollArea } from '@jobify/ui/scroll-area';
 import { useToast } from '@jobify/ui/use-toast';
+import { Loader2 } from 'lucide-react';
+import { Node, Edge } from '@xyflow/react';
 
 import { WorkflowExecutionGraph } from './WorkflowExecutionGraph';
 import { ExecutionStatusBadge } from './components/ExecutionStatusBadge';
 import { WorkflowExecution, WorkflowExecutionEvent } from './utils/types';
-import {
-    formatDate,
-    formatDateTime,
-    formatContent,
-    parseContent,
-    getStepDisplayName,
-    describeEvent,
-    formatDuration,
-    hasUsefulPayload,
-    buildEventRuns,
-    getRunTone
+import { deserializeNode } from '@/lib/utils/workflow-utils';
+import { 
+    formatDate, 
+    formatDateTime, 
+    formatContent, 
+    parseContent, 
+    getStepDisplayName, 
+    describeEvent, 
+    formatDuration, 
+    hasUsefulPayload, 
+    buildEventRuns, 
+    getRunTone 
 } from './utils/workflow-execution-utils';
 
 export default function WorkflowExecutionsPage() {
@@ -36,6 +39,10 @@ export default function WorkflowExecutionsPage() {
     const [executionEvents, setExecutionEvents] = useState<WorkflowExecutionEvent[]>([]);
     const [isLoadingEvents, setIsLoadingEvents] = useState(false);
     const [selectedRunKey, setSelectedRunKey] = useState('');
+
+    const [workflowNodes, setWorkflowNodes] = useState<Node[]>([]);
+    const [workflowEdges, setWorkflowEdges] = useState<Edge[]>([]);
+    const [isWorkflowLoading, setIsWorkflowLoading] = useState(false);
 
     const eventRuns = buildEventRuns(executionEvents);
     const selectedRun = eventRuns.find((r) => r.key === selectedRunKey) ?? null;
@@ -51,9 +58,10 @@ export default function WorkflowExecutionsPage() {
                     jobId: String(x.jobId ?? ''),
                     status: x.status as WorkflowExecution['status'],
                     currentNodeId: x.currentNodeId as string | undefined,
+                    workflowId: String(x.workflowId ?? ''),
                     updatedAt: String(x.updatedAt ?? ''),
                 })));
-            } catch {
+            } catch (error) {
                 toast({ title: 'Error', description: 'Could not load workflow executions.', variant: 'destructive' });
             } finally {
                 setIsLoadingExecutions(false);
@@ -65,26 +73,42 @@ export default function WorkflowExecutionsPage() {
     const openExecution = async (execution: WorkflowExecution) => {
         setSelectedExecution(execution);
         setExecutionEvents([]);
+        setWorkflowNodes([]);
+        setWorkflowEdges([]);
         setIsLoadingEvents(true);
+        setIsWorkflowLoading(true);
         setSelectedRunKey('');
+        
         try {
-            const events = await ky
-                .get(`/api/get-workflow-execution-events?executionId=${encodeURIComponent(execution.id)}`)
-                .json<any[]>();
-            setExecutionEvents(events.map((e) => ({
-                id: String(e.id ?? e.$id ?? ''),
-                nodeId: String(e.nodeId ?? ''),
-                stepType: String(e.stepType ?? ''),
-                status: e.status as WorkflowExecutionEvent['status'],
-                input: e.input as string | undefined,
-                output: e.output as string | undefined,
-                error: e.error as string | undefined,
-                createdAt: String(e.createdAt ?? ''),
-            })));
-        } catch {
-            toast({ title: 'Error', description: 'Could not load execution timeline.', variant: 'destructive' });
+            const [eventsResp, workflowResp] = await Promise.allSettled([
+                ky.get(`/api/get-workflow-execution-events?executionId=${encodeURIComponent(execution.id)}`).json<any[]>(),
+                ky.get(`/api/get-workflow?workflowId=${encodeURIComponent(execution.workflowId)}`).json<any>()
+            ]);
+
+            if (eventsResp.status === 'fulfilled') {
+                setExecutionEvents(eventsResp.value.map((e: any) => ({
+                    id: String(e.id ?? e.$id ?? ''),
+                    nodeId: String(e.nodeId ?? ''),
+                    stepType: String(e.stepType ?? ''),
+                    status: e.status as WorkflowExecutionEvent['status'],
+                    input: e.input as string | undefined,
+                    output: e.output as string | undefined,
+                    error: e.error as string | undefined,
+                    createdAt: String(e.createdAt ?? ''),
+                })));
+            }
+
+            if (workflowResp.status === 'fulfilled' && workflowResp.value) {
+                const parsedNodes = JSON.parse(workflowResp.value.nodes).map(deserializeNode);
+                const parsedEdges = JSON.parse(workflowResp.value.edges);
+                setWorkflowNodes(parsedNodes);
+                setWorkflowEdges(parsedEdges);
+            }
+        } catch (error) {
+            toast({ title: 'Error', description: 'Could not load execution timeline fully.', variant: 'destructive' });
         } finally {
             setIsLoadingEvents(false);
+            setIsWorkflowLoading(false);
         }
     };
 
@@ -140,9 +164,6 @@ export default function WorkflowExecutionsPage() {
                             <div className='flex items-center justify-between'>
                                 <div>
                                     <DialogTitle className='text-xl'>Workflow Execution Detail</DialogTitle>
-                                    <p className='text-sm text-muted-foreground mt-1'>
-                                        Execution ID: <span className='font-mono'>{selectedExecution?.id}</span>
-                                    </p>
                                 </div>
                                 {selectedExecution && (
                                     <div className='flex items-center gap-3'>
@@ -156,34 +177,33 @@ export default function WorkflowExecutionsPage() {
                         </DialogHeader>
 
                         <div className='flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-5 divide-x'>
-                            <div className='lg:col-span-3 flex flex-col h-full min-h-0'>
+                            <div className='lg:col-span-3 flex flex-col h-full min-h-0 bg-muted/5'>
                                 <div className='p-4 border-b bg-muted/10 flex items-center justify-between shrink-0'>
-                                    <h3 className='font-medium text-sm'>Execution Path</h3>
+                                    <h3 className='font-medium text-sm'>Execution Graph</h3>
                                     <span className='text-[10px] uppercase tracking-wider text-muted-foreground font-bold'>
-                                        Read-only · Click nodes for details
+                                        Read-only · XYFlow
                                     </span>
                                 </div>
 
                                 <div className='flex-1 relative overflow-hidden'>
-                                    {isLoadingEvents ? (
+                                    {(isLoadingEvents || isWorkflowLoading) ? (
                                         <div className='absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-10'>
                                             <div className='flex flex-col items-center gap-2'>
-                                                <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary' />
-                                                <p className='text-sm text-muted-foreground font-medium'>Loading timeline…</p>
+                                                <Loader2 className='h-8 w-8 animate-spin text-primary' />
+                                                <p className='text-sm text-muted-foreground font-medium'>Loading workflow graph…</p>
                                             </div>
                                         </div>
-                                    ) : executionEvents.length === 0 ? (
+                                    ) : !isWorkflowLoading && workflowNodes.length === 0 ? (
                                         <div className='h-full flex items-center justify-center p-8 text-center'>
                                             <div className='max-w-xs space-y-2'>
-                                                <p className='text-sm font-medium'>No events available</p>
-                                                <p className='text-xs text-muted-foreground'>
-                                                    This execution hasn&apos;t recorded any steps yet.
-                                                </p>
+                                                <p className='text-sm font-medium text-destructive'>Graph not found</p>
                                             </div>
                                         </div>
                                     ) : (
                                         <WorkflowExecutionGraph
-                                            runs={eventRuns}
+                                            workflowNodes={workflowNodes}
+                                            workflowEdges={workflowEdges}
+                                            eventRuns={eventRuns}
                                             selectedRunKey={selectedRunKey}
                                             onSelectRun={(run) => setSelectedRunKey(run.key)}
                                         />
@@ -213,7 +233,6 @@ export default function WorkflowExecutionsPage() {
                                                     </svg>
                                                 </div>
                                                 <p className='text-sm font-medium'>Select a node from the graph</p>
-                                                <p className='text-xs mt-1'>Click any execution step to view detailed input, output, and logs.</p>
                                             </div>
                                         ) : (
                                             <div className='p-6 space-y-6'>
@@ -223,9 +242,6 @@ export default function WorkflowExecutionsPage() {
                                                             <h4 className='text-lg font-bold text-foreground'>
                                                                 {getStepDisplayName(selectedRun.stepType)}
                                                             </h4>
-                                                            <p className='text-xs text-muted-foreground font-mono mt-0.5'>
-                                                                Node ID: {selectedRun.nodeId}
-                                                            </p>
                                                         </div>
                                                     </div>
 
@@ -256,7 +272,7 @@ export default function WorkflowExecutionsPage() {
 
                                                     <p className='text-sm leading-relaxed text-muted-foreground'>
                                                         {describeEvent({
-                                                            id: selectedRun.events[selectedRun.events.length - 1]?.id ?? '',
+                                                            id: '',
                                                             nodeId: selectedRun.nodeId,
                                                             stepType: selectedRun.stepType,
                                                             status: selectedRun.finalStatus,
@@ -276,9 +292,9 @@ export default function WorkflowExecutionsPage() {
                                                         >
                                                             <div className='flex items-center justify-between'>
                                                                 <Badge className={
-                                                                    event.status === 'started' ? 'bg-blue-100 text-blue-800' :
-                                                                        event.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                                                            'bg-red-100 text-red-800'
+                                                                    event.status === 'started'   ? 'bg-blue-100 text-blue-800' :
+                                                                    event.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                                                                                   'bg-red-100 text-red-800'
                                                                 }>
                                                                     {event.status.toUpperCase()}
                                                                 </Badge>

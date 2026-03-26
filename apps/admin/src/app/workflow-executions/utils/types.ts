@@ -4,6 +4,7 @@ export type WorkflowExecution = {
     jobId: string;
     status: 'running' | 'waiting' | 'completed' | 'failed' | 'cancelled';
     currentNodeId?: string;
+    workflowId: string;
     updatedAt: string;
 };
 
