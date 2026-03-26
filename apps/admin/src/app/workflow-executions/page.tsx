@@ -62,14 +62,151 @@ function formatContent(value?: string): string {
     }
 }
 
+function parseContent(value?: string): unknown {
+    if (!value) return null;
+    try {
+        return JSON.parse(value) as unknown;
+    } catch {
+        return value;
+    }
+}
+
+function getStepDisplayName(stepType: string): string {
+    const normalized = stepType.trim().toLowerCase().replace(/[\s-]+/g, '_');
+    const knownLabels: Record<string, string> = {
+        start: 'Workflow Started',
+        end: 'Workflow Completed',
+        notify: 'Candidate Notification',
+        update_status: 'Application Status Update',
+        assignment: 'Assignment Email',
+        interview: 'Interview Scheduling',
+        wait: 'Wait Timer',
+        condition: 'Condition Check',
+    };
+    if (knownLabels[normalized]) return knownLabels[normalized];
+    return stepType
+        .replace(/[_-]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 function describeEvent(event: WorkflowExecutionEvent): string {
+    const stepName = getStepDisplayName(event.stepType);
     if (event.status === 'failed') {
-        return `${event.stepType} failed while processing this workflow step.`;
+        return `${stepName} failed while processing this workflow step.`;
     }
     if (event.status === 'completed') {
-        return `${event.stepType} completed successfully and produced the output below.`;
+        return `${stepName} completed successfully and produced the output below.`;
     }
-    return `${event.stepType} started and is currently processing.`;
+    return `${stepName} started and is currently processing.`;
+}
+
+type EventRun = {
+    key: string;
+    nodeId: string;
+    stepType: string;
+    startedAt?: string;
+    endedAt?: string;
+    finalStatus: WorkflowExecutionEvent['status'];
+    events: WorkflowExecutionEvent[];
+};
+
+function buildEventRuns(events: WorkflowExecutionEvent[]): EventRun[] {
+    const sorted = [...events].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    const runs: EventRun[] = [];
+    const openRunsByNode = new Map<string, EventRun>();
+
+    for (const event of sorted) {
+        if (event.status === 'started') {
+            const run: EventRun = {
+                key: `${event.nodeId}-${event.createdAt}-${event.id}`,
+                nodeId: event.nodeId,
+                stepType: event.stepType,
+                startedAt: event.createdAt,
+                endedAt: undefined,
+                finalStatus: 'started',
+                events: [event],
+            };
+            runs.push(run);
+            openRunsByNode.set(event.nodeId, run);
+            continue;
+        }
+
+        const activeRun = openRunsByNode.get(event.nodeId);
+        if (activeRun) {
+            activeRun.events.push(event);
+            activeRun.finalStatus = event.status;
+            activeRun.endedAt = event.createdAt;
+            openRunsByNode.delete(event.nodeId);
+            continue;
+        }
+
+        runs.push({
+            key: `${event.nodeId}-${event.createdAt}-${event.id}`,
+            nodeId: event.nodeId,
+            stepType: event.stepType,
+            startedAt: undefined,
+            endedAt: event.createdAt,
+            finalStatus: event.status,
+            events: [event],
+        });
+    }
+
+    return runs;
+}
+
+function formatDuration(startedAt?: string, endedAt?: string): string | null {
+    if (!startedAt || !endedAt) return null;
+    const durationMs = new Date(endedAt).getTime() - new Date(startedAt).getTime();
+    if (!Number.isFinite(durationMs) || durationMs < 0) return null;
+    const totalSeconds = Math.round(durationMs / 1000);
+    if (totalSeconds < 60) return `${totalSeconds}s`;
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}m ${seconds}s`;
+}
+
+function hasUsefulPayload(value?: string): boolean {
+    const parsed = parseContent(value);
+    if (parsed == null) return false;
+    if (typeof parsed === 'string') return parsed.trim().length > 0 && parsed.trim() !== '{}';
+    if (typeof parsed === 'object') return JSON.stringify(parsed) !== '{}';
+    return true;
+}
+
+function getRunTone(status: WorkflowExecutionEvent['status']): {
+    dot: string;
+    line: string;
+    cardBorder: string;
+    badgeTone: string;
+    nodeRing: string;
+} {
+    if (status === 'failed') {
+        return {
+            dot: 'bg-red-500',
+            line: 'bg-red-200 dark:bg-red-900/40',
+            cardBorder: 'border-red-200 dark:border-red-900/40',
+            badgeTone: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+            nodeRing: 'ring-red-200 dark:ring-red-900/40',
+        };
+    }
+    if (status === 'completed') {
+        return {
+            dot: 'bg-green-500',
+            line: 'bg-green-200 dark:bg-green-900/40',
+            cardBorder: 'border-green-200 dark:border-green-900/40',
+            badgeTone: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+            nodeRing: 'ring-green-200 dark:ring-green-900/40',
+        };
+    }
+    return {
+        dot: 'bg-blue-500',
+        line: 'bg-blue-200 dark:bg-blue-900/40',
+        cardBorder: 'border-blue-200 dark:border-blue-900/40',
+        badgeTone: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+        nodeRing: 'ring-blue-200 dark:ring-blue-900/40',
+    };
 }
 
 function ExecutionStatusBadge({ status }: { status: WorkflowExecution['status'] }) {
@@ -95,6 +232,7 @@ export default function WorkflowExecutionsPage() {
     const [selectedExecution, setSelectedExecution] = useState<WorkflowExecution | null>(null);
     const [executionEvents, setExecutionEvents] = useState<WorkflowExecutionEvent[]>([]);
     const [isLoadingEvents, setIsLoadingEvents] = useState<boolean>(false);
+    const eventRuns = buildEventRuns(executionEvents);
 
     useEffect(() => {
         const loadExecutions = async () => {
@@ -229,59 +367,98 @@ export default function WorkflowExecutionsPage() {
                                 <div className='text-sm text-muted-foreground'>No events captured yet.</div>
                             ) : (
                                 <ScrollArea className='flex-1 min-h-0 pr-3'>
-                                    <div className='space-y-3'>
-                                        {executionEvents.map((event, index) => (
-                                            <Card key={event.id}>
-                                                <CardHeader className='pb-2'>
+                                    <div className='space-y-6 px-2 pb-4'>
+                                        {eventRuns.map((run, index) => (
+                                            <div key={run.key} className='relative mx-auto max-w-xl'>
+                                                {index !== eventRuns.length - 1 && (
+                                                    <div
+                                                        className={`absolute left-1/2 top-[100%] z-0 h-6 w-0.5 -translate-x-1/2 ${getRunTone(run.finalStatus).line}`}
+                                                    />
+                                                )}
+                                                <div className='absolute left-1/2 top-[-10px] z-20 h-5 w-5 -translate-x-1/2 rounded-full border bg-background shadow-sm'>
+                                                    <div className={`m-auto mt-[5px] h-2 w-2 rounded-full ${getRunTone(run.finalStatus).dot}`} />
+                                                </div>
+                                                <Card className={`relative z-10 border-2 shadow-md ${getRunTone(run.finalStatus).cardBorder} ${getRunTone(run.finalStatus).nodeRing} ring-1`}>
+                                                    <CardHeader className='pb-2'>
                                                     <div className='flex items-center justify-between gap-2'>
                                                         <div className='text-sm font-medium'>
-                                                            Step {index + 1}: {event.stepType}
+                                                            Step {index + 1}: {getStepDisplayName(run.stepType)}
                                                         </div>
-                                                        <Badge variant='outline'>{event.status}</Badge>
+                                                        <Badge variant='outline' className={getRunTone(run.finalStatus).badgeTone}>
+                                                            {run.finalStatus}
+                                                        </Badge>
                                                     </div>
-                                                    <CardDescription>{formatDateTime(event.createdAt)}</CardDescription>
-                                                </CardHeader>
-                                                <CardContent className='space-y-2 text-xs'>
+                                                    <CardDescription>
+                                                        {run.startedAt ? formatDateTime(run.startedAt) : formatDateTime(run.endedAt ?? '')}
+                                                    </CardDescription>
+                                                    </CardHeader>
+                                                    <CardContent className='space-y-2 text-xs'>
                                                     <div>
                                                         <div className='font-medium mb-1'>What Happened</div>
-                                                        <p className='text-muted-foreground'>{describeEvent(event)}</p>
+                                                        <p className='text-muted-foreground'>
+                                                            {describeEvent({
+                                                                id: run.events[run.events.length - 1]?.id ?? '',
+                                                                nodeId: run.nodeId,
+                                                                stepType: run.stepType,
+                                                                status: run.finalStatus,
+                                                                createdAt: run.endedAt ?? run.startedAt ?? '',
+                                                            })}
+                                                        </p>
                                                     </div>
-                                                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-2'>
+                                                    <div className='grid grid-cols-1 sm:grid-cols-3 gap-2'>
                                                         <div className='rounded bg-muted/50 p-2'>
                                                             <div className='font-medium mb-1'>Step Type</div>
-                                                            <div>{event.stepType}</div>
+                                                            <div>{getStepDisplayName(run.stepType)}</div>
                                                         </div>
                                                         <div className='rounded bg-muted/50 p-2'>
-                                                            <div className='font-medium mb-1'>Status</div>
-                                                            <div>{event.status}</div>
+                                                            <div className='font-medium mb-1'>Run Status</div>
+                                                            <div>{run.finalStatus}</div>
+                                                        </div>
+                                                        <div className='rounded bg-muted/50 p-2'>
+                                                            <div className='font-medium mb-1'>Duration</div>
+                                                            <div>{formatDuration(run.startedAt, run.endedAt) ?? '-'}</div>
                                                         </div>
                                                     </div>
-                                                    {event.input && (
-                                                        <div>
-                                                            <div className='font-medium mb-1'>Input</div>
-                                                            <pre className='bg-muted p-2 rounded overflow-auto whitespace-pre-wrap break-all'>
-                                                                {formatContent(event.input)}
-                                                            </pre>
-                                                        </div>
-                                                    )}
-                                                    {event.output && (
-                                                        <div>
-                                                            <div className='font-medium mb-1'>Output</div>
-                                                            <pre className='bg-muted p-2 rounded overflow-auto whitespace-pre-wrap break-all'>
-                                                                {formatContent(event.output)}
-                                                            </pre>
-                                                        </div>
-                                                    )}
-                                                    {event.error && (
-                                                        <div>
-                                                            <div className='font-medium mb-1 text-destructive'>Error</div>
-                                                            <pre className='bg-destructive/10 p-2 rounded overflow-auto whitespace-pre-wrap break-all'>
-                                                                {formatContent(event.error)}
-                                                            </pre>
-                                                        </div>
-                                                    )}
-                                                </CardContent>
-                                            </Card>
+                                                    <div className='space-y-2 pt-1'>
+                                                        {run.events.map((event) => (
+                                                            <div key={event.id} className='rounded border bg-background p-2'>
+                                                                <div className='mb-2 flex items-center justify-between gap-2'>
+                                                                    <div className='font-medium'>Event: {event.status}</div>
+                                                                    <div className='text-muted-foreground'>{formatDateTime(event.createdAt)}</div>
+                                                                </div>
+                                                                {hasUsefulPayload(event.input) && (
+                                                                    <div className='mb-2'>
+                                                                        <div className='font-medium mb-1'>Input</div>
+                                                                        <pre className='bg-muted p-2 rounded overflow-auto whitespace-pre-wrap break-all'>
+                                                                            {formatContent(JSON.stringify(parseContent(event.input)))}
+                                                                        </pre>
+                                                                    </div>
+                                                                )}
+                                                                {hasUsefulPayload(event.output) && (
+                                                                    <div className='mb-2'>
+                                                                        <div className='font-medium mb-1'>Output</div>
+                                                                        <pre className='bg-muted p-2 rounded overflow-auto whitespace-pre-wrap break-all'>
+                                                                            {formatContent(JSON.stringify(parseContent(event.output)))}
+                                                                        </pre>
+                                                                    </div>
+                                                                )}
+                                                                {event.error && (
+                                                                    <div>
+                                                                        <div className='font-medium mb-1 text-destructive'>Error</div>
+                                                                        <pre className='bg-destructive/10 p-2 rounded overflow-auto whitespace-pre-wrap break-all'>
+                                                                            {formatContent(event.error)}
+                                                                        </pre>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    </CardContent>
+                                                </Card>
+                                                <div className='absolute bottom-[-10px] left-1/2 z-20 h-5 w-5 -translate-x-1/2 rounded-full border bg-background shadow-sm'>
+                                                    <div className={`m-auto mt-[5px] h-2 w-2 rounded-full ${getRunTone(run.finalStatus).dot}`} />
+                                                </div>
+                                            </div>
                                         ))}
                                     </div>
                                 </ScrollArea>
