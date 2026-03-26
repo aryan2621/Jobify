@@ -3,8 +3,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { Application } from '@jobify/domain/application';
 import { fetchJobById } from '@jobify/appwrite-server/collections/job-collection';
-import { createApplicationDocument, fetchApplicationById, updateApplicationStatus, hasApplicationByUserAndJob } from '@jobify/appwrite-server/collections/application-collection';
+import {
+    createApplicationDocument,
+    fetchApplicationById,
+    updateApplicationStatus,
+    hasApplicationByUserAndJob,
+    updateApplicationWorkflowState,
+} from '@jobify/appwrite-server/collections/application-collection';
+import {
+    getWorkflowById,
+    getWorkflowsByUserId,
+    updateWorkflowExecutionState,
+} from '@jobify/appwrite-server/collections/workflow-collection';
 import { isRecognisedError, NotFoundError, UnauthorizedError, ForbiddenError } from '@jobify/domain/error';
+import { TaskType } from '@jobify/domain/workflow';
 
 async function triggerWorkflow(applicationId: string, jobId: string) {
     const adminUrl = process.env.ADMIN_APP_URL;
@@ -49,6 +61,50 @@ export async function GET(req: NextRequest) {
         }
         if ((application.createdBy as string) !== userId) {
             throw new ForbiddenError('You are not allowed to access this application');
+        }
+
+        const nodeId = req.nextUrl.searchParams.get('nodeId');
+        if (nodeId) {
+            const job = await fetchJobById(application.jobId as string);
+            if (!job) {
+                throw new NotFoundError('Requested job does not exist');
+            }
+            const recruiterId = job.createdBy as string | undefined;
+            if (!recruiterId) {
+                throw new NotFoundError('Workflow owner not found');
+            }
+
+            const workflows = await getWorkflowsByUserId(recruiterId);
+            const workflowRef = workflows?.[0] as { id?: string; $id?: string } | undefined;
+            const workflowId = workflowRef?.id ?? workflowRef?.$id;
+            if (!workflowId) {
+                throw new NotFoundError('Workflow not found');
+            }
+            const workflow = await getWorkflowById(workflowId);
+            if (!workflow) {
+                throw new NotFoundError('Workflow not found');
+            }
+
+            const rawNodes = typeof workflow.nodes === 'string' ? JSON.parse(workflow.nodes as string) : (workflow.nodes as unknown[]);
+            const node = (rawNodes as Array<Record<string, unknown>>).find((n) => String(n.id ?? '') === nodeId);
+            if (!node) {
+                throw new NotFoundError('Assignment step not found');
+            }
+            if (String(node.type ?? '') !== 'task' || String(node.taskType ?? '') !== TaskType.ASSIGNMENT) {
+                throw new ForbiddenError('Requested node is not an assignment step');
+            }
+
+            return NextResponse.json(
+                {
+                    id: String(node.id ?? ''),
+                    label: String((node.data as { label?: string } | undefined)?.label ?? 'Assignment'),
+                    description: String(node.description ?? ''),
+                    url: String(node.url ?? ''),
+                    deadline: node.deadline ? String(node.deadline) : null,
+                    submissionTracking: String(node.submissionTracking ?? 'none'),
+                },
+                { status: 200 }
+            );
         }
 
         return NextResponse.json(application, { status: 200 });
@@ -107,6 +163,29 @@ export async function PUT(req: NextRequest) {
         const user = jwt.verify(token.value, process.env.JWT_SECRET!);
         const userId = (user as any).id;
         const body = await req.json();
+        const isAssignmentSubmit = body?.action === 'submit-assignment';
+        if (isAssignmentSubmit) {
+            const applicationId = String(body.applicationId ?? '');
+            const nodeId = String(body.nodeId ?? '');
+            if (!applicationId || !nodeId) {
+                throw new NotFoundError('applicationId and nodeId are required');
+            }
+            const application = await fetchApplicationById(applicationId);
+            if (!application) {
+                throw new NotFoundError('Requested application does not exist');
+            }
+            if ((application.createdBy as string) !== userId) {
+                throw new ForbiddenError('You are not allowed to submit for this application');
+            }
+
+            const submittedAt = new Date().toISOString();
+            await Promise.all([
+                updateApplicationWorkflowState(applicationId, nodeId, { submitted: true, submittedAt }),
+                updateWorkflowExecutionState(applicationId, nodeId, { submitted: true, submittedAt }),
+            ]);
+            return NextResponse.json({ message: 'Assignment submitted successfully' }, { status: 200 });
+        }
+
         const { jobId, applicationId, status } = body;
         const [job, application] = await Promise.all([fetchJobById(jobId), fetchApplicationById(applicationId)]);
         if (!job || !application) {
