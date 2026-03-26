@@ -278,7 +278,7 @@ export default function WorkflowExecutionsPage() {
     const [isLoadingEvents, setIsLoadingEvents] = useState<boolean>(false);
     const eventRuns = buildEventRuns(executionEvents);
     const graphNodes = buildExecutionGraphNodes(eventRuns);
-    const [selectedGraphNodeId, setSelectedGraphNodeId] = useState<string>('step-1');
+    const [selectedGraphNodeId, setSelectedGraphNodeId] = useState<string>('');
     const selectedStepIndex =
         selectedGraphNodeId.startsWith('step-') ? Number.parseInt(selectedGraphNodeId.replace('step-', ''), 10) : NaN;
     const selectedRun = Number.isNaN(selectedStepIndex) ? null : eventRuns[selectedStepIndex - 1] ?? null;
@@ -317,7 +317,7 @@ export default function WorkflowExecutionsPage() {
         setSelectedExecution(execution);
         setExecutionEvents([]);
         setIsLoadingEvents(true);
-        setSelectedGraphNodeId('step-1');
+        setSelectedGraphNodeId('');
         try {
             const events = await ky.get(`/api/get-workflow-execution-events?executionId=${encodeURIComponent(execution.id)}`).json<any[]>();
             setExecutionEvents(
@@ -350,7 +350,7 @@ export default function WorkflowExecutionsPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Workflow Executions</CardTitle>
-                        <CardDescription>Recent workflow runs. Click to open timeline drawer.</CardDescription>
+                        <CardDescription>Recent workflow runs. Click to view execution details.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         {isLoadingExecutions ? (
@@ -397,46 +397,71 @@ export default function WorkflowExecutionsPage() {
                 </Card>
 
                 <Dialog open={!!selectedExecution} onOpenChange={(open) => !open && setSelectedExecution(null)}>
-                    <DialogContent className='w-[96vw] max-w-[96vw] h-[92vh] p-0 overflow-hidden'>
-                        <DialogHeader className='px-6 pt-5 pb-0'>
-                            <DialogTitle>Workflow Execution Graph</DialogTitle>
-                        </DialogHeader>
-                        <div className='h-full min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-0'>
-                            <div className='border-r h-full min-h-0 p-4'>
-                                {isLoadingEvents ? (
-                                    <div className='space-y-2'>
-                                        {[1, 2, 3].map((x) => (
-                                            <Skeleton key={x} className='h-20 w-full' />
-                                        ))}
+                    <DialogContent className='max-w-6xl w-[90vw] h-[85vh] p-0 overflow-hidden flex flex-col'>
+                        <DialogHeader className='px-6 pt-6 pb-4 border-b shrink-0'>
+                            <div className='flex items-center justify-between'>
+                                <div>
+                                    <DialogTitle className='text-xl'>Workflow Execution Detail</DialogTitle>
+                                    <p className='text-sm text-muted-foreground mt-1'>
+                                        Execution ID: <span className='font-mono'>{selectedExecution?.id}</span>
+                                    </p>
+                                </div>
+                                {selectedExecution && (
+                                    <div className='flex items-center gap-3'>
+                                        <ExecutionStatusBadge status={selectedExecution.status} />
+                                        <span className='text-xs text-muted-foreground'>Updated {formatDateTime(selectedExecution.updatedAt)}</span>
                                     </div>
-                                ) : executionEvents.length === 0 ? (
-                                    <div className='text-sm text-muted-foreground'>No events captured yet.</div>
-                                ) : (
-                                    <ScrollArea className='h-full pr-2'>
-                                        <Card>
-                                            <CardHeader className='pb-2'>
-                                                <CardTitle className='text-base'>Execution Graph</CardTitle>
-                                                <CardDescription>Click any node to view its details on the right.</CardDescription>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <div className='rounded-md border bg-muted/20 overflow-hidden'>
-                                                    <VegaEmbed
-                                                        onEmbed={(result) => {
-                                                            result.view.addSignalListener('selectedNodeId', (_name: string, value: unknown) => {
-                                                                if (typeof value === 'string' && value.length > 0) {
-                                                                    setSelectedGraphNodeId(value);
-                                                                }
-                                                            });
-                                                        }}
-                                                        spec={{
-                                                        $schema: 'https://vega.github.io/schema/vega/v6.json',
-                                                        width: 680,
-                                                        height: Math.max(220, graphNodes.length * 110),
-                                                        padding: 12,
+                                )}
+                            </div>
+                        </DialogHeader>
+                        
+                        <div className='flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-5 divide-x'>
+                            {/* Left Column: Workflow Tree (3/5 width) */}
+                            <div className='lg:col-span-3 flex flex-col h-full min-h-0 bg-muted/5'>
+                                <div className='p-4 border-b bg-muted/10 flex items-center justify-between'>
+                                    <h3 className='font-medium text-sm'>Execution Path</h3>
+                                    <span className='text-[10px] uppercase tracking-wider text-muted-foreground font-bold'>Interactive Graph</span>
+                                </div>
+                                
+                                <div className='flex-1 relative overflow-hidden'>
+                                    {isLoadingEvents ? (
+                                        <div className='absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-10'>
+                                            <div className='flex flex-col items-center gap-2'>
+                                                <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
+                                                <p className='text-sm text-muted-foreground font-medium'>Loading timeline...</p>
+                                            </div>
+                                        </div>
+                                    ) : null}
+                                    
+                                    {executionEvents.length === 0 && !isLoadingEvents ? (
+                                        <div className='h-full flex items-center justify-center p-8 text-center'>
+                                            <div className='max-w-xs space-y-2'>
+                                                <p className='text-sm font-medium'>No events available</p>
+                                                <p className='text-xs text-muted-foreground'>This execution hasn&apos;t recorded any steps yet, or they are still being processed.</p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <ScrollArea className='h-full'>
+                                            <div className='p-4 flex justify-center'>
+                                                <VegaEmbed
+                                                    onEmbed={(result) => {
+                                                        result.view.addSignalListener('selectedNodeId', (_name: string, value: unknown) => {
+                                                            if (typeof value === 'string' && value.length > 0) {
+                                                                setSelectedGraphNodeId(value);
+                                                            }
+                                                        });
+                                                    }}
+                                                    spec={{
+                                                        $schema: 'https://vega.github.io/schema/vega/v5.json',
+                                                        description: 'Workflow execution tree',
+                                                        width: 600,
+                                                        height: Math.max(400, graphNodes.length * 80),
+                                                        padding: { top: 20, left: 10, right: 10, bottom: 20 },
+                                                        autosize: 'none',
                                                         signals: [
                                                             {
                                                                 name: 'selectedNodeId',
-                                                                value: 'step-1',
+                                                                value: selectedGraphNodeId,
                                                                 on: [{ events: '@nodeMarks:click', update: 'datum.id' }],
                                                             },
                                                         ],
@@ -449,8 +474,8 @@ export default function WorkflowExecutionsPage() {
                                                                     {
                                                                         type: 'tree',
                                                                         method: 'tidy',
-                                                                        size: [{ signal: 'height - 30' }, { signal: 'width - 40' }],
-                                                                        separation: false,
+                                                                        size: [{ signal: 'height - 40' }, { signal: 'width - 150' }],
+                                                                        separation: true,
                                                                         as: ['y', 'x', 'depth', 'children'],
                                                                     },
                                                                 ],
@@ -458,12 +483,15 @@ export default function WorkflowExecutionsPage() {
                                                             {
                                                                 name: 'links',
                                                                 source: 'tree',
-                                                                transform: [{ type: 'treelinks' }, { type: 'linkpath', orient: 'horizontal', shape: 'diagonal' }],
+                                                                transform: [
+                                                                    { type: 'treelinks' },
+                                                                    { type: 'linkpath', orient: 'horizontal', shape: 'diagonal' }
+                                                                ],
                                                             },
                                                         ],
                                                         scales: [
                                                             {
-                                                                name: 'statusColor',
+                                                                name: 'color',
                                                                 type: 'ordinal',
                                                                 domain: ['started', 'completed', 'failed'],
                                                                 range: ['#3b82f6', '#22c55e', '#ef4444'],
@@ -473,125 +501,195 @@ export default function WorkflowExecutionsPage() {
                                                             {
                                                                 type: 'path',
                                                                 from: { data: 'links' },
-                                                                encode: { update: { path: { field: 'path' }, stroke: { value: '#94a3b8' }, strokeWidth: { value: 2 } } },
+                                                                encode: {
+                                                                    update: {
+                                                                        path: { field: 'path' },
+                                                                        stroke: { value: '#cbd5e1' },
+                                                                        strokeWidth: { value: 2 },
+                                                                        opacity: { value: 0.6 }
+                                                                    }
+                                                                },
                                                             },
                                                             {
                                                                 type: 'symbol',
                                                                 name: 'nodeMarks',
                                                                 from: { data: 'tree' },
                                                                 encode: {
-                                                                    enter: { size: { value: 220 }, stroke: { value: '#ffffff' }, strokeWidth: { value: 2 } },
-                                                                    update: { x: { field: 'x' }, y: { field: 'y' }, fill: { scale: 'statusColor', field: 'status' } },
+                                                                    enter: {
+                                                                        size: { value: 350 },
+                                                                        stroke: { value: '#fff' },
+                                                                        strokeWidth: { value: 2 },
+                                                                        cursor: { value: 'pointer' },
+                                                                        tooltip: { signal: "datum.name + ' (' + datum.status + ')'" }
+                                                                    },
+                                                                    update: {
+                                                                        x: { field: 'x' },
+                                                                        y: { field: 'y' },
+                                                                        fill: { scale: 'color', field: 'status' },
+                                                                        stroke: [
+                                                                            { test: "datum.id === selectedNodeId", value: '#0f172a' },
+                                                                            { value: '#fff' }
+                                                                        ],
+                                                                        strokeWidth: [
+                                                                            { test: "datum.id === selectedNodeId", value: 3 },
+                                                                            { value: 2 }
+                                                                        ]
+                                                                    },
+                                                                    hover: {
+                                                                        size: { value: 450 }
+                                                                    }
                                                                 },
                                                             },
                                                             {
                                                                 type: 'text',
                                                                 from: { data: 'tree' },
                                                                 encode: {
-                                                                    enter: { fontSize: { value: 12 }, baseline: { value: 'middle' }, fontWeight: { value: 600 } },
+                                                                    enter: {
+                                                                        fontSize: { value: 12 },
+                                                                        fontWeight: { value: 'bold' },
+                                                                        baseline: { value: 'middle' },
+                                                                        font: { value: 'Inter, system-ui, sans-serif' }
+                                                                    },
                                                                     update: {
                                                                         x: { field: 'x' },
                                                                         y: { field: 'y' },
-                                                                        dx: { signal: "datum.children ? -14 : 14" },
+                                                                        dx: { signal: "datum.children ? -15 : 15" },
                                                                         align: { signal: "datum.children ? 'right' : 'left'" },
-                                                                        fill: { value: '#0f172a' },
-                                                                        text: { signal: "datum.stepIndex > 0 ? 'Step ' + datum.stepIndex + ': ' + datum.name : datum.name" },
-                                                                    },
+                                                                        text: { field: 'name' },
+                                                                        fill: { value: '#334155' },
+                                                                        opacity: [
+                                                                            { test: "datum.id === selectedNodeId", value: 1 },
+                                                                            { value: 0.8 }
+                                                                        ]
+                                                                    }
                                                                 },
                                                             },
                                                         ],
-                                                        }}
-                                                    />
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    </ScrollArea>
-                                )}
+                                                    }}
+                                                />
+                                            </div>
+                                        </ScrollArea>
+                                    )}
+                                </div>
                             </div>
-                            <div className='h-full min-h-0 p-4'>
-                                <ScrollArea className='h-full pr-2'>
-                                    {!selectedRun ? (
-                                        <div className='text-sm text-muted-foreground'>Select a graph node to see step details.</div>
-                                    ) : (
-                                        <Card className={`border-2 ${getRunTone(selectedRun.finalStatus).cardBorder}`}>
-                                            <CardHeader className='pb-2'>
-                                                <div className='flex items-center justify-between gap-2'>
-                                                    <div className='text-sm font-medium'>
-                                                        Step {selectedStepIndex}: {getStepDisplayName(selectedRun.stepType)}
-                                                    </div>
-                                                    <Badge variant='outline' className={getRunTone(selectedRun.finalStatus).badgeTone}>
-                                                        {selectedRun.finalStatus}
-                                                    </Badge>
+
+                            {/* Right Column: Node Details (2/5 width) */}
+                            <div className='lg:col-span-2 flex flex-col h-full min-h-0 bg-background'>
+                                <div className='p-4 border-b bg-muted/10 flex items-center justify-between'>
+                                    <h3 className='font-medium text-sm'>Step Details</h3>
+                                    {selectedRun && (
+                                        <Badge variant='outline' className={getRunTone(selectedRun.finalStatus).badgeTone}>
+                                            {selectedRun.finalStatus}
+                                        </Badge>
+                                    )}
+                                </div>
+                                
+                                <div className='flex-1 min-h-0'>
+                                    <ScrollArea className='h-full'>
+                                        {!selectedRun ? (
+                                            <div className='h-full flex flex-col items-center justify-center p-8 text-center text-muted-foreground opacity-60'>
+                                                <div className='mb-4 p-4 rounded-full bg-muted'>
+                                                    {/* Custom simple SVG for "Select a node" */}
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                                                 </div>
-                                                <CardDescription>
-                                                    {selectedRun.startedAt ? formatDateTime(selectedRun.startedAt) : formatDateTime(selectedRun.endedAt ?? '')}
-                                                </CardDescription>
-                                            </CardHeader>
-                                            <CardContent className='space-y-2 text-xs'>
-                                                <div>
-                                                    <div className='font-medium mb-1'>What Happened</div>
-                                                    <p className='text-muted-foreground'>
-                                                        {describeEvent({
-                                                            id: selectedRun.events[selectedRun.events.length - 1]?.id ?? '',
-                                                            nodeId: selectedRun.nodeId,
-                                                            stepType: selectedRun.stepType,
-                                                            status: selectedRun.finalStatus,
-                                                            createdAt: selectedRun.endedAt ?? selectedRun.startedAt ?? '',
-                                                        })}
-                                                    </p>
+                                                <p className='text-sm font-medium'>Select a node from the graph</p>
+                                                <p className='text-xs mt-1'>Click any execution step to view detailed input, output, and logs.</p>
+                                            </div>
+                                        ) : (
+                                            <div className='p-6 space-y-6'>
+                                                <div className='space-y-4'>
+                                                    <div className='flex items-start justify-between'>
+                                                        <div>
+                                                            <h4 className='text-lg font-bold text-foreground'>{getStepDisplayName(selectedRun.stepType)}</h4>
+                                                            <p className='text-xs text-muted-foreground font-mono mt-0.5'>Node ID: {selectedRun.nodeId}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className='grid grid-cols-2 gap-4'>
+                                                        <Card className='bg-muted/30 border-none shadow-none'>
+                                                            <CardHeader className='p-3 pb-0'>
+                                                                <CardDescription className='text-[10px] uppercase font-bold tracking-tight'>Time</CardDescription>
+                                                            </CardHeader>
+                                                            <CardContent className='p-3 pt-1'>
+                                                                <p className='text-sm font-medium'>{selectedRun.startedAt ? formatDateTime(selectedRun.startedAt) : formatDateTime(selectedRun.endedAt ?? '')}</p>
+                                                            </CardContent>
+                                                        </Card>
+                                                        <Card className='bg-muted/30 border-none shadow-none'>
+                                                            <CardHeader className='p-3 pb-0'>
+                                                                <CardDescription className='text-[10px] uppercase font-bold tracking-tight'>Duration</CardDescription>
+                                                            </CardHeader>
+                                                            <CardContent className='p-3 pt-1'>
+                                                                <p className='text-sm font-medium'>{formatDuration(selectedRun.startedAt, selectedRun.endedAt) ?? '-'}</p>
+                                                            </CardContent>
+                                                        </Card>
+                                                    </div>
+
+                                                    <div>
+                                                        <p className='text-sm leading-relaxed text-muted-foreground'>
+                                                            {describeEvent({
+                                                                id: selectedRun.events[selectedRun.events.length - 1]?.id ?? '',
+                                                                nodeId: selectedRun.nodeId,
+                                                                stepType: selectedRun.stepType,
+                                                                status: selectedRun.finalStatus,
+                                                                createdAt: selectedRun.endedAt ?? selectedRun.startedAt ?? '',
+                                                            })}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div className='grid grid-cols-1 sm:grid-cols-3 gap-2'>
-                                                    <div className='rounded bg-muted/50 p-2'>
-                                                        <div className='font-medium mb-1'>Step Type</div>
-                                                        <div>{getStepDisplayName(selectedRun.stepType)}</div>
-                                                    </div>
-                                                    <div className='rounded bg-muted/50 p-2'>
-                                                        <div className='font-medium mb-1'>Run Status</div>
-                                                        <div>{selectedRun.finalStatus}</div>
-                                                    </div>
-                                                    <div className='rounded bg-muted/50 p-2'>
-                                                        <div className='font-medium mb-1'>Duration</div>
-                                                        <div>{formatDuration(selectedRun.startedAt, selectedRun.endedAt) ?? '-'}</div>
-                                                    </div>
-                                                </div>
-                                                <div className='space-y-2 pt-1'>
-                                                    {selectedRun.events.map((event) => (
-                                                        <div key={event.id} className='rounded border bg-background p-2'>
-                                                            <div className='mb-2 flex items-center justify-between gap-2'>
-                                                                <div className='font-medium'>Event: {event.status}</div>
-                                                                <div className='text-muted-foreground'>{formatDateTime(event.createdAt)}</div>
+
+                                                <div className='space-y-4'>
+                                                    {selectedRun.events.map((event, idx) => (
+                                                        <div key={event.id} className={`rounded-xl border p-4 space-y-4 ${event.status === 'failed' ? 'bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-900/20' : 'bg-background'}`}>
+                                                            <div className='flex items-center justify-between'>
+                                                                <Badge className={
+                                                                    event.status === 'started' ? 'bg-blue-100 text-blue-800' :
+                                                                    event.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                                                    'bg-red-100 text-red-800'
+                                                                }>
+                                                                    {event.status.toUpperCase()}
+                                                                </Badge>
+                                                                <span className='text-[10px] text-muted-foreground font-mono'>{formatDateTime(event.createdAt)}</span>
                                                             </div>
+
                                                             {hasUsefulPayload(event.input) && (
-                                                                <div className='mb-2'>
-                                                                    <div className='font-medium mb-1'>Input</div>
-                                                                    <pre className='bg-muted p-2 rounded overflow-auto whitespace-pre-wrap break-all'>
+                                                                <div className='space-y-1.5'>
+                                                                    <div className='flex items-center gap-2'>
+                                                                        <span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground'>Input</span>
+                                                                    </div>
+                                                                    <pre className='bg-muted/50 p-3 rounded-lg overflow-auto text-[11px] font-mono whitespace-pre-wrap break-all border group relative'>
                                                                         {formatContent(JSON.stringify(parseContent(event.input)))}
                                                                     </pre>
                                                                 </div>
                                                             )}
+
                                                             {hasUsefulPayload(event.output) && (
-                                                                <div className='mb-2'>
-                                                                    <div className='font-medium mb-1'>Output</div>
-                                                                    <pre className='bg-muted p-2 rounded overflow-auto whitespace-pre-wrap break-all'>
+                                                                <div className='space-y-1.5'>
+                                                                    <div className='flex items-center gap-2'>
+                                                                        <span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground'>Output</span>
+                                                                    </div>
+                                                                    <pre className='bg-muted/50 p-3 rounded-lg overflow-auto text-[11px] font-mono whitespace-pre-wrap break-all border'>
                                                                         {formatContent(JSON.stringify(parseContent(event.output)))}
                                                                     </pre>
                                                                 </div>
                                                             )}
+
                                                             {event.error && (
-                                                                <div>
-                                                                    <div className='font-medium mb-1 text-destructive'>Error</div>
-                                                                    <pre className='bg-destructive/10 p-2 rounded overflow-auto whitespace-pre-wrap break-all'>
-                                                                        {formatContent(event.error)}
+                                                                <div className='space-y-1.5'>
+                                                                    <div className='flex items-center gap-2'>
+                                                                        <span className='text-[10px] font-bold uppercase tracking-wider text-red-600'>Error</span>
+                                                                    </div>
+                                                                    <pre className='bg-red-50 p-3 rounded-lg overflow-auto text-[11px] font-mono whitespace-pre-wrap break-all border border-red-100 text-red-700'>
+                                                                        {event.error}
                                                                     </pre>
                                                                 </div>
                                                             )}
                                                         </div>
                                                     ))}
                                                 </div>
-                                            </CardContent>
-                                        </Card>
-                                    )}
-                                </ScrollArea>
+                                            </div>
+                                        )}
+                                    </ScrollArea>
+                                </div>
                             </div>
                         </div>
                     </DialogContent>
