@@ -15,29 +15,29 @@ import { useToast } from '@jobify/ui/use-toast';
 import { WorkflowExecutionGraph } from './WorkflowExecutionGraph';
 import { ExecutionStatusBadge } from './components/ExecutionStatusBadge';
 import { WorkflowExecution, WorkflowExecutionEvent } from './utils/types';
-import { 
-    formatDate, 
-    formatDateTime, 
-    formatContent, 
-    parseContent, 
-    getStepDisplayName, 
-    describeEvent, 
-    formatDuration, 
-    hasUsefulPayload, 
-    buildEventRuns, 
-    getRunTone 
+import {
+    formatDate,
+    formatDateTime,
+    formatContent,
+    parseContent,
+    getStepDisplayName,
+    describeEvent,
+    formatDuration,
+    hasUsefulPayload,
+    buildEventRuns,
+    getRunTone
 } from './utils/workflow-execution-utils';
 
 export default function WorkflowExecutionsPage() {
     const { toast } = useToast();
-    const [executions, setExecutions]             = useState<WorkflowExecution[]>([]);
+    const [executions, setExecutions] = useState<WorkflowExecution[]>([]);
     const [isLoadingExecutions, setIsLoadingExecutions] = useState(true);
-    const [selectedExecution, setSelectedExecution]     = useState<WorkflowExecution | null>(null);
-    const [executionEvents, setExecutionEvents]         = useState<WorkflowExecutionEvent[]>([]);
-    const [isLoadingEvents, setIsLoadingEvents]         = useState(false);
-    const [selectedRunKey, setSelectedRunKey]           = useState('');
+    const [selectedExecution, setSelectedExecution] = useState<WorkflowExecution | null>(null);
+    const [executionEvents, setExecutionEvents] = useState<WorkflowExecutionEvent[]>([]);
+    const [isLoadingEvents, setIsLoadingEvents] = useState(false);
+    const [selectedRunKey, setSelectedRunKey] = useState('');
 
-    const eventRuns  = buildEventRuns(executionEvents);
+    const eventRuns = buildEventRuns(executionEvents);
     const selectedRun = eventRuns.find((r) => r.key === selectedRunKey) ?? null;
 
     useEffect(() => {
@@ -110,7 +110,6 @@ export default function WorkflowExecutionsPage() {
                                         <TableHead>Application</TableHead>
                                         <TableHead>Job</TableHead>
                                         <TableHead>Status</TableHead>
-                                        <TableHead>Current Node</TableHead>
                                         <TableHead>Updated</TableHead>
                                         <TableHead className='text-right'>Action</TableHead>
                                     </TableRow>
@@ -121,7 +120,6 @@ export default function WorkflowExecutionsPage() {
                                             <TableCell className='font-medium'>{execution.applicationId.slice(0, 8)}</TableCell>
                                             <TableCell>{execution.jobId.slice(0, 8)}</TableCell>
                                             <TableCell><ExecutionStatusBadge status={execution.status} /></TableCell>
-                                            <TableCell className='max-w-[220px] truncate'>{execution.currentNodeId ?? '-'}</TableCell>
                                             <TableCell>{formatDate(execution.updatedAt)}</TableCell>
                                             <TableCell className='text-right'>
                                                 <Button variant='outline' size='sm' onClick={() => openExecution(execution)}>
@@ -209,9 +207,9 @@ export default function WorkflowExecutionsPage() {
                                             <div className='h-full flex flex-col items-center justify-center p-8 text-center text-muted-foreground opacity-60'>
                                                 <div className='mb-4 p-4 rounded-full bg-muted'>
                                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <circle cx="12" cy="12" r="10"/>
-                                                        <path d="M12 16v-4"/>
-                                                        <path d="M12 8h.01"/>
+                                                        <circle cx="12" cy="12" r="10" />
+                                                        <path d="M12 16v-4" />
+                                                        <path d="M12 8h.01" />
                                                     </svg>
                                                 </div>
                                                 <p className='text-sm font-medium'>Select a node from the graph</p>
@@ -271,17 +269,16 @@ export default function WorkflowExecutionsPage() {
                                                     {selectedRun.events.map((event) => (
                                                         <div
                                                             key={event.id}
-                                                            className={`rounded-xl border p-4 space-y-4 ${
-                                                                event.status === 'failed'
+                                                            className={`rounded-xl border p-4 space-y-4 ${event.status === 'failed'
                                                                     ? 'bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-900/20'
                                                                     : 'bg-background'
-                                                            }`}
+                                                                }`}
                                                         >
                                                             <div className='flex items-center justify-between'>
                                                                 <Badge className={
-                                                                    event.status === 'started'   ? 'bg-blue-100 text-blue-800' :
-                                                                    event.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                                                                                   'bg-red-100 text-red-800'
+                                                                    event.status === 'started' ? 'bg-blue-100 text-blue-800' :
+                                                                        event.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                                                            'bg-red-100 text-red-800'
                                                                 }>
                                                                     {event.status.toUpperCase()}
                                                                 </Badge>
