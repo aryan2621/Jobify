@@ -25,6 +25,11 @@ import { SkillsForm } from '../../_lib/components/form-steps/skills-form';
 import { ExperienceForm } from '../../_lib/components/form-steps/experience-form';
 import { EducationForm } from '../../_lib/components/form-steps/education-form';
 const createEmptyApplication = (jobId: string): Application => new Application(uuidv4(), '', '', '', '', '', Gender.Male, [new Education('', '', DegreeType.BACHELOR, 0)], [new Experience('', '', '', false, '', '', 0)], [], JobSource.ANGEL_LIST, '', [''], '', ApplicationStatus.APPLIED, jobId, new Date().toISOString(), '');
+type AccountIdentity = {
+    firstName: string;
+    lastName: string;
+    email: string;
+};
 export default function JobApplicationForm({ params }: {
     params: {
         id: string;
@@ -36,12 +41,13 @@ export default function JobApplicationForm({ params }: {
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
-    const [selectedCountry, setSelectedCountry] = useState('+1');
+    const [selectedCountry, setSelectedCountry] = useState('+91');
     const [page, setPage] = useState(1);
     const [formData, setFormData] = useState<Application>(createEmptyApplication(id));
     const [validation, setValidation] = useState<FormValidation>({});
     const [showPreviewMode, setShowPreviewMode] = useState(false);
     const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+    const [accountIdentity, setAccountIdentity] = useState<AccountIdentity | null>(null);
     const autoSaveTimerRef = React.useRef<NodeJS.Timeout | null>(null);
     const validationErrors = useMemo(() => {
         return Object.entries(validation)
@@ -49,6 +55,18 @@ export default function JobApplicationForm({ params }: {
             .map(([key, field]) => field.errorMessage);
     }, [validation]);
     const handleFieldChange = useCallback((field: string, value: any, index = -1) => {
+        if (accountIdentity && index < 0 && (field === 'firstName' || field === 'lastName' || field === 'email')) {
+            setValidation((prev) => ({
+                ...prev,
+                [field]: {
+                    value,
+                    isValid: true,
+                    errorMessage: '',
+                    touched: true,
+                },
+            }));
+            return;
+        }
         setFormData((prev) => {
             let newData = { ...prev };
             if (field === 'education' && index >= 0) {
@@ -71,31 +89,103 @@ export default function JobApplicationForm({ params }: {
             }
             return newData;
         });
-        const fieldKey = index >= 0 ? `${field}_${index}` : field;
+        const fieldKey =
+            field === 'socialLinks' && index >= 0
+                ? `socialLink_${index}`
+                : index >= 0
+                  ? `${field}_${index}`
+                  : field;
         if ((field === 'education' || field === 'experience') && index >= 0) {
             Object.keys(value).forEach((nestedField) => {
                 if (['college', 'degree'].includes(nestedField) || ['profile', 'company', 'startDate'].includes(nestedField)) {
+                    const raw = value[nestedField];
+                    const str = typeof raw === 'string' ? raw.trim() : raw;
+                    const filled = Boolean(str);
                     setValidation((prev) => ({
                         ...prev,
                         [`${field}_${index}_${nestedField}`]: {
                             ...prev[`${field}_${index}_${nestedField}`],
                             touched: true,
-                            value: value[nestedField],
-                            isValid: Boolean(value[nestedField]),
-                            errorMessage: `${nestedField.charAt(0).toUpperCase() + nestedField.slice(1)} is required`,
+                            value: raw,
+                            isValid: filled,
+                            errorMessage: filled ? '' : `${nestedField.charAt(0).toUpperCase() + nestedField.slice(1)} is required`,
                         },
                     }));
                 }
             });
         }
-        else {
+        else if (field === 'socialLinks' && index >= 0) {
+            const link = typeof value === 'string' ? value.trim() : '';
+            let linkIsValid = true;
+            if (link) {
+                try {
+                    new URL(link);
+                }
+                catch {
+                    try {
+                        new URL(`https://${link}`);
+                    }
+                    catch {
+                        linkIsValid = false;
+                    }
+                }
+            }
             setValidation((prev) => ({
                 ...prev,
                 [fieldKey]: {
-                    ...prev[fieldKey],
+                    value,
+                    isValid: !link || linkIsValid,
+                    errorMessage: link && !linkIsValid ? 'Please enter a valid URL' : '',
                     touched: true,
                 },
             }));
+        }
+        else {
+            setValidation((prev) => {
+                const strVal = typeof value === 'string' ? value : String(value ?? '');
+                const trimmed = strVal.trim();
+                let isValid = true;
+                let errorMessage = '';
+                if (field === 'email') {
+                    if (!trimmed) {
+                        isValid = false;
+                        errorMessage = 'Email is required';
+                    }
+                    else {
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        isValid = emailRegex.test(trimmed);
+                        errorMessage = isValid ? '' : 'Please enter a valid email address';
+                    }
+                }
+                else if (['firstName', 'lastName', 'phone', 'currentLocation'].includes(field)) {
+                    isValid = trimmed.length > 0;
+                    const labels: Record<string, string> = {
+                        firstName: 'First Name',
+                        lastName: 'Last Name',
+                        phone: 'Phone Number',
+                        currentLocation: 'Current Location',
+                    };
+                    errorMessage = isValid ? '' : `${labels[field] ?? field} is required`;
+                }
+                else if (field === 'coverLetter') {
+                    isValid = trimmed.length > 0;
+                    errorMessage = isValid ? '' : 'Please write a cover letter';
+                }
+                else {
+                    isValid = true;
+                    errorMessage = '';
+                }
+                return {
+                    ...prev,
+                    [fieldKey]: {
+                        ...prev[fieldKey],
+                        touched: true,
+                        value,
+                        isValid,
+                        errorMessage,
+                    },
+                };
+            });
         }
         if (autoSaveEnabled) {
             if (autoSaveTimerRef.current) {
@@ -118,10 +208,10 @@ export default function JobApplicationForm({ params }: {
                 saveFormDraft(updatedFormData);
             }, 1500);
         }
-    }, [formData, autoSaveEnabled]);
+    }, [formData, autoSaveEnabled, accountIdentity]);
     const validateForm = useCallback(() => {
         let isValid = true;
-        const newValidation: FormValidation = { ...validation };
+        const newValidation: FormValidation = {};
         const requiredFields = [
             { key: 'firstName', label: 'First Name' },
             { key: 'lastName', label: 'Last Name' },
@@ -214,15 +304,25 @@ export default function JobApplicationForm({ params }: {
         if (!skillsValid)
             isValid = false;
         const socialLinksValid = formData.socialLinks.some((link) => Boolean(link && link.trim()));
+        const isValidSocialUrl = (raw: string): boolean => {
+            const link = raw.trim();
+            try {
+                new URL(link);
+                return true;
+            }
+            catch {
+                try {
+                    new URL(`https://${link}`);
+                    return true;
+                }
+                catch {
+                    return false;
+                }
+            }
+        };
         formData.socialLinks.forEach((link, index) => {
             if (link && link.trim()) {
-                let linkIsValid = true;
-                try {
-                    new URL(link);
-                }
-                catch (e) {
-                    linkIsValid = false;
-                }
+                const linkIsValid = isValidSocialUrl(link);
                 newValidation[`socialLink_${index}`] = {
                     value: link,
                     isValid: linkIsValid,
@@ -253,7 +353,7 @@ export default function JobApplicationForm({ params }: {
             isValid = false;
         setValidation(newValidation);
         return isValid;
-    }, [formData, validation]);
+    }, [formData]);
     const handleFiles = useCallback(async (files: FileList | null) => {
         if (!files || files.length === 0) {
             return;
@@ -311,44 +411,21 @@ export default function JobApplicationForm({ params }: {
             });
         }
     }, [formData, autoSaveEnabled]);
-    const goToNextPage = useCallback(() => {
-        const isPageValid = validatePage(page);
-        if (isPageValid) {
-            setPage((prev) => Math.min(prev + 1, FORM_STEPS.length));
-            window.scrollTo(0, 0);
-        }
-    }, [page]);
-    const goToPrevPage = useCallback(() => {
-        setPage((prev) => Math.max(prev - 1, 1));
-        window.scrollTo(0, 0);
-    }, []);
-    const goToPage = useCallback((pageNum: number) => {
-        if (pageNum <= page || pageNum === page + 1) {
-            setPage(pageNum);
-            window.scrollTo(0, 0);
-        }
-        else {
-            const isCurrentValid = validatePage(page);
-            if (isCurrentValid) {
-                setPage(pageNum);
-                window.scrollTo(0, 0);
-            }
-        }
-    }, [page]);
     const validatePage = useCallback((pageNum: number): boolean => {
         switch (pageNum) {
-            case 1:
+            case 1: {
                 const personalFields = ['firstName', 'lastName', 'email', 'phone', 'currentLocation'];
                 personalFields.forEach((field) => {
                     handleFieldChange(field, (formData as any)[field]);
                 });
                 return personalFields.every((field) => {
                     const val = (formData as any)[field];
-                    return Boolean(val && val.trim());
+                    return Boolean(val && String(val).trim());
                 });
+            }
             case 2:
                 return formData.education.every((edu, index) => {
-                    if (!edu.college || !edu.degree) {
+                    if (!edu.college?.trim() || !edu.degree?.trim()) {
                         handleFieldChange('education', {
                             ...edu,
                             college: edu.college,
@@ -360,7 +437,7 @@ export default function JobApplicationForm({ params }: {
                 });
             case 3:
                 return formData.experience.every((exp, index) => {
-                    if (!exp.profile || !exp.company || !exp.startDate) {
+                    if (!exp.profile?.trim() || !exp.company?.trim() || !exp.startDate?.trim()) {
                         handleFieldChange('experience', {
                             ...exp,
                             profile: exp.profile,
@@ -395,6 +472,30 @@ export default function JobApplicationForm({ params }: {
                 return true;
         }
     }, [formData, handleFieldChange]);
+    const goToNextPage = useCallback(() => {
+        const isPageValid = validatePage(page);
+        if (isPageValid) {
+            setPage((prev) => Math.min(prev + 1, FORM_STEPS.length));
+            window.scrollTo(0, 0);
+        }
+    }, [page, validatePage]);
+    const goToPrevPage = useCallback(() => {
+        setPage((prev) => Math.max(prev - 1, 1));
+        window.scrollTo(0, 0);
+    }, []);
+    const goToPage = useCallback((pageNum: number) => {
+        if (pageNum <= page || pageNum === page + 1) {
+            setPage(pageNum);
+            window.scrollTo(0, 0);
+        }
+        else {
+            const isCurrentValid = validatePage(page);
+            if (isCurrentValid) {
+                setPage(pageNum);
+                window.scrollTo(0, 0);
+            }
+        }
+    }, [page, validatePage]);
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const isValid = validateForm();
@@ -464,18 +565,38 @@ export default function JobApplicationForm({ params }: {
         const fetchJob = async () => {
             try {
                 setLoading(true);
-                const res = (await ky.get(`/api/post?id=${id}`).json()) as Job;
-                setJob(res);
+                const [jobRes, meRes] = await Promise.all([
+                    ky.get(`/api/post?id=${id}`).json() as Promise<Job>,
+                    ky.get('/api/me').json<AccountIdentity & { id?: string }>().catch(() => null),
+                ]);
+                setJob(jobRes);
                 const savedDraft = loadFormDraft(id);
+                let nextApp: Application = savedDraft
+                    ? { ...savedDraft, jobId: id }
+                    : createEmptyApplication(id);
+                nextApp = { ...nextApp, jobId: id };
+                if (meRes) {
+                    setAccountIdentity({
+                        firstName: meRes.firstName ?? '',
+                        lastName: meRes.lastName ?? '',
+                        email: meRes.email ?? '',
+                    });
+                    nextApp = {
+                        ...nextApp,
+                        firstName: meRes.firstName ?? '',
+                        lastName: meRes.lastName ?? '',
+                        email: meRes.email ?? '',
+                    };
+                }
+                else {
+                    setAccountIdentity(null);
+                }
+                setFormData(nextApp);
                 if (savedDraft) {
-                    setFormData({ ...savedDraft, jobId: id });
                     toast({
                         title: 'Draft Loaded',
                         description: 'Your previously saved application has been loaded.',
                     });
-                }
-                else {
-                    setFormData((prev) => ({ ...prev, jobId: id }));
                 }
             }
             catch (error) {
@@ -587,7 +708,7 @@ export default function JobApplicationForm({ params }: {
 
                                                         <AnimatePresence mode='wait'>
                                                             <motion.div key={`page-${page}`} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}>
-                                                                {page === 1 && (<PersonalInfoForm formData={formData} validation={validation} setFormData={setFormData} onFieldChange={handleFieldChange} selectedCountry={selectedCountry} setSelectedCountry={setSelectedCountry}/>)}
+                                                                {page === 1 && (<PersonalInfoForm formData={formData} validation={validation} setFormData={setFormData} onFieldChange={handleFieldChange} selectedCountry={selectedCountry} setSelectedCountry={setSelectedCountry} accountIdentity={accountIdentity}/>)}
 
                                                                 {page === 2 && (<div className='space-y-6'>
                                                                         <FormSectionTitle title='Education' subtitle='Add your educational background' icon={<GraduationCap className='w-5 h-5 text-primary'/>}/>

@@ -9,40 +9,47 @@ import { Gender } from '@jobify/domain/application';
 import { FormValidation } from '../../utils';
 import { FormField, FormSectionTitle } from '..';
 import { countries } from '@/lib/utils/joconnect-utils';
-export const PersonalInfoForm = memo(({ formData, validation, setFormData, onFieldChange, selectedCountry, setSelectedCountry, }: {
+export const PersonalInfoForm = memo(({ formData, validation, setFormData, onFieldChange, selectedCountry, setSelectedCountry, accountIdentity, }: {
     formData: Application;
     validation: FormValidation;
     setFormData: (data: Application) => void;
     onFieldChange: (field: string, value: any) => void;
     selectedCountry: string;
     setSelectedCountry: (country: string) => void;
-}) => (<div className='space-y-6'>
+    accountIdentity?: {
+        firstName: string;
+        lastName: string;
+        email: string;
+    } | null;
+}) => {
+    const lockNameEmail = Boolean(accountIdentity);
+    return (<div className='space-y-6'>
             <FormSectionTitle title='Personal Information' subtitle='Tell us about yourself' icon={<User className='w-5 h-5 text-primary'/>}/>
 
             <div className='grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4'>
-                <FormField label='First Name' error={validation.firstName?.errorMessage} touched={validation.firstName?.touched} required>
-                    <Input id='first-name' placeholder='Enter your first name' value={formData.firstName} onChange={(e) => onFieldChange('firstName', e.target.value)} aria-invalid={validation.firstName?.touched && !validation.firstName?.isValid} className={validation.firstName?.touched && !validation.firstName?.isValid ? 'border-destructive' : ''}/>
+                <FormField label='First Name' error={validation.firstName?.errorMessage} touched={validation.firstName?.touched} required helpText={lockNameEmail ? 'From your account' : undefined}>
+                    <Input id='first-name' placeholder='Enter your first name' value={formData.firstName} onChange={(e) => onFieldChange('firstName', e.target.value)} aria-invalid={validation.firstName?.touched && !validation.firstName?.isValid} disabled={lockNameEmail} className={`${lockNameEmail ? 'bg-muted/60 cursor-not-allowed' : ''} ${validation.firstName?.touched && !validation.firstName?.isValid ? 'border-destructive' : ''}`}/>
                 </FormField>
 
-                <FormField label='Last Name' error={validation.lastName?.errorMessage} touched={validation.lastName?.touched} required>
-                    <Input id='last-name' placeholder='Enter your last name' value={formData.lastName} onChange={(e) => onFieldChange('lastName', e.target.value)} aria-invalid={validation.lastName?.touched && !validation.lastName?.isValid} className={validation.lastName?.touched && !validation.lastName?.isValid ? 'border-destructive' : ''}/>
+                <FormField label='Last Name' error={validation.lastName?.errorMessage} touched={validation.lastName?.touched} required helpText={lockNameEmail ? 'From your account' : undefined}>
+                    <Input id='last-name' placeholder='Enter your last name' value={formData.lastName} onChange={(e) => onFieldChange('lastName', e.target.value)} aria-invalid={validation.lastName?.touched && !validation.lastName?.isValid} disabled={lockNameEmail} className={`${lockNameEmail ? 'bg-muted/60 cursor-not-allowed' : ''} ${validation.lastName?.touched && !validation.lastName?.isValid ? 'border-destructive' : ''}`}/>
                 </FormField>
             </div>
 
-            <FormField label='Email Address' error={validation.email?.errorMessage} touched={validation.email?.touched} required>
+            <FormField label='Email Address' error={validation.email?.errorMessage} touched={validation.email?.touched} required helpText={lockNameEmail ? 'From your account' : undefined}>
                 <div className='relative'>
                     <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
                         <AtSign className='h-4 w-4 text-muted-foreground'/>
                     </div>
-                    <Input id='email' type='email' placeholder='name@example.com' value={formData.email} onChange={(e) => onFieldChange('email', e.target.value)} aria-invalid={validation.email?.touched && !validation.email?.isValid} className={`pl-10 ${validation.email?.touched && !validation.email?.isValid ? 'border-destructive' : ''}`}/>
+                    <Input id='email' type='email' placeholder='name@example.com' value={formData.email} onChange={(e) => onFieldChange('email', e.target.value)} aria-invalid={validation.email?.touched && !validation.email?.isValid} disabled={lockNameEmail} className={`pl-10 ${lockNameEmail ? 'bg-muted/60 cursor-not-allowed' : ''} ${validation.email?.touched && !validation.email?.isValid ? 'border-destructive' : ''}`}/>
                 </div>
             </FormField>
 
             <FormField label='Phone Number' error={validation.phone?.errorMessage} touched={validation.phone?.touched} required>
                 <div className='flex gap-2'>
-                    <select value={selectedCountry} onChange={(e) => setSelectedCountry(e.target.value)} className='w-[120px] p-2 border rounded-md focus:ring-2 focus:ring-ring focus:ring-offset-1' aria-label='Country Code'>
+                    <select value={selectedCountry} onChange={(e) => setSelectedCountry(e.target.value)} className='min-w-[200px] max-w-[min(100%,280px)] p-2 border rounded-md focus:ring-2 focus:ring-ring focus:ring-offset-1 text-sm' aria-label='Country Code'>
                         {countries.map((country, index) => (<option key={index} value={country.dial_code}>
-                                {country.flag} {country.dial_code}
+                                {country.flag} {country.name} ({country.dial_code})
                             </option>))}
                     </select>
 
@@ -91,5 +98,6 @@ export const PersonalInfoForm = memo(({ formData, validation, setFormData, onFie
                     </Select>
                 </FormField>
             </div>
-        </div>));
+        </div>);
+});
 PersonalInfoForm.displayName = 'PersonalInfoForm';
