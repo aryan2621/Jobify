@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import ky from 'ky';
-import dynamic from 'next/dynamic';
 import NavbarLayout from '@/layouts/navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@jobify/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@jobify/ui/table';
@@ -12,11 +11,22 @@ import { Skeleton } from '@jobify/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@jobify/ui/dialog';
 import { ScrollArea } from '@jobify/ui/scroll-area';
 import { useToast } from '@jobify/ui/use-toast';
+import { TooltipProvider } from '@jobify/ui/tooltip';
+import { Loader2 } from 'lucide-react';
+
+import { ReactFlow, Controls, Background, BackgroundVariant, MiniMap, ConnectionLineType, Edge, Node } from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+
+import { NodeType, TaskType, WorkflowNode } from '@jobify/domain/workflow';
+import { CustomNode } from '@/components/workflows/components/customNode';
+import { CustomEdge } from '@/components/workflows/components/customEdge';
+import { deserializeNode } from '@/lib/utils/workflow-utils';
 
 type WorkflowExecution = {
     id: string;
     applicationId: string;
     jobId: string;
+    workflowId: string;
     status: 'running' | 'waiting' | 'completed' | 'failed' | 'cancelled';
     currentNodeId?: string;
     updatedAt: string;
@@ -113,20 +123,6 @@ type EventRun = {
     events: WorkflowExecutionEvent[];
 };
 
-type ExecutionGraphNode = {
-    id: string;
-    parent: string | null;
-    name: string;
-    status: WorkflowExecutionEvent['status'];
-    stepIndex: number;
-    time: string;
-    duration: string;
-};
-
-const VegaEmbed = dynamic(() => import('react-vega').then((mod) => mod.VegaEmbed), {
-    ssr: false,
-});
-
 function buildEventRuns(events: WorkflowExecutionEvent[]): EventRun[] {
     const sorted = [...events].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
     const runs: EventRun[] = [];
@@ -190,67 +186,23 @@ function hasUsefulPayload(value?: string): boolean {
     return true;
 }
 
-function getRunTone(status: WorkflowExecutionEvent['status']): {
-    dot: string;
-    line: string;
-    cardBorder: string;
-    badgeTone: string;
-    nodeRing: string;
-} {
+function getRunTone(status: WorkflowExecutionEvent['status']): { cardBorder: string; badgeTone: string } {
     if (status === 'failed') {
         return {
-            dot: 'bg-red-500',
-            line: 'bg-red-200 dark:bg-red-900/40',
             cardBorder: 'border-red-200 dark:border-red-900/40',
             badgeTone: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-            nodeRing: 'ring-red-200 dark:ring-red-900/40',
         };
     }
     if (status === 'completed') {
         return {
-            dot: 'bg-green-500',
-            line: 'bg-green-200 dark:bg-green-900/40',
             cardBorder: 'border-green-200 dark:border-green-900/40',
             badgeTone: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-            nodeRing: 'ring-green-200 dark:ring-green-900/40',
         };
     }
     return {
-        dot: 'bg-blue-500',
-        line: 'bg-blue-200 dark:bg-blue-900/40',
         cardBorder: 'border-blue-200 dark:border-blue-900/40',
         badgeTone: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-        nodeRing: 'ring-blue-200 dark:ring-blue-900/40',
     };
-}
-
-function buildExecutionGraphNodes(runs: EventRun[]): ExecutionGraphNode[] {
-    const root: ExecutionGraphNode = {
-        id: 'root',
-        parent: null,
-        name: 'Workflow Started',
-        status: 'completed',
-        stepIndex: 0,
-        time: '',
-        duration: '',
-    };
-
-    const nodes: ExecutionGraphNode[] = [root];
-    let parentId = root.id;
-    runs.forEach((run, index) => {
-        const currentId = `step-${index + 1}`;
-        nodes.push({
-            id: currentId,
-            parent: parentId,
-            name: getStepDisplayName(run.stepType),
-            status: run.finalStatus,
-            stepIndex: index + 1,
-            time: formatDateTime(run.startedAt ?? run.endedAt ?? ''),
-            duration: formatDuration(run.startedAt, run.endedAt) ?? '-',
-        });
-        parentId = currentId;
-    });
-    return nodes;
 }
 
 function ExecutionStatusBadge({ status }: { status: WorkflowExecution['status'] }) {
@@ -269,6 +221,18 @@ function ExecutionStatusBadge({ status }: { status: WorkflowExecution['status'] 
     );
 }
 
+const nodeTypesConfig = {
+    [NodeType.START]: CustomNode,
+    [NodeType.END]: CustomNode,
+    [NodeType.TASK]: CustomNode,
+    custom: CustomNode,
+};
+
+const edgeTypesConfig = {
+    default: CustomEdge,
+    'custom-edge': CustomEdge,
+};
+
 export default function WorkflowExecutionsPage() {
     const { toast } = useToast();
     const [executions, setExecutions] = useState<WorkflowExecution[]>([]);
@@ -276,12 +240,62 @@ export default function WorkflowExecutionsPage() {
     const [selectedExecution, setSelectedExecution] = useState<WorkflowExecution | null>(null);
     const [executionEvents, setExecutionEvents] = useState<WorkflowExecutionEvent[]>([]);
     const [isLoadingEvents, setIsLoadingEvents] = useState<boolean>(false);
+    const [isWorkflowLoading, setIsWorkflowLoading] = useState<boolean>(false);
+
+    const [workflowNodes, setWorkflowNodes] = useState<Node[]>([]);
+    const [workflowEdges, setWorkflowEdges] = useState<Edge[]>([]);
+
     const eventRuns = buildEventRuns(executionEvents);
-    const graphNodes = buildExecutionGraphNodes(eventRuns);
     const [selectedGraphNodeId, setSelectedGraphNodeId] = useState<string>('');
-    const selectedStepIndex =
-        selectedGraphNodeId.startsWith('step-') ? Number.parseInt(selectedGraphNodeId.replace('step-', ''), 10) : NaN;
-    const selectedRun = Number.isNaN(selectedStepIndex) ? null : eventRuns[selectedStepIndex - 1] ?? null;
+
+    // Sort active runs to extract the latest outcome per node ID for rendering graph node colors
+    const latestRunsMap = useMemo(() => {
+        const map = new Map<string, EventRun>();
+        eventRuns.forEach((run) => {
+            map.set(run.nodeId, run);
+        });
+        return map;
+    }, [eventRuns]);
+
+    const displayNodes = useMemo(() => {
+        return workflowNodes.map((node) => {
+            const run = latestRunsMap.get(node.id);
+            let borderColor = 'transparent';
+            let shadow = 'none';
+
+            if (run) {
+                if (run.finalStatus === 'failed') {
+                    borderColor = '#ef4444';
+                    shadow = '0 0 0 3px rgba(239, 68, 68, 0.5)';
+                } else if (run.finalStatus === 'completed') {
+                    borderColor = '#22c55e';
+                    shadow = '0 0 0 3px rgba(34, 197, 94, 0.5)';
+                } else {
+                    borderColor = '#3b82f6';
+                    shadow = '0 0 0 3px rgba(59, 130, 246, 0.5)';
+                }
+            }
+
+            const isSelected = selectedGraphNodeId === node.id;
+            if (isSelected) {
+                // Thicker shadow if selected
+                shadow = `0 0 0 5px ${borderColor === 'transparent' ? '#64748b' : borderColor}`;
+            }
+
+            return {
+                ...node,
+                style: {
+                    ...node.style,
+                    boxShadow: shadow !== 'none' ? shadow : undefined,
+                    transition: 'all 0.2s ease',
+                    borderRadius: '0.65rem', // Match CustomNode slightly outer
+                    cursor: 'pointer',
+                },
+            };
+        });
+    }, [workflowNodes, latestRunsMap, selectedGraphNodeId]);
+
+    const selectedRun = eventRuns.findLast((r) => r.nodeId === selectedGraphNodeId) ?? null;
 
     useEffect(() => {
         const loadExecutions = async () => {
@@ -293,6 +307,7 @@ export default function WorkflowExecutionsPage() {
                         id: String(x.id ?? x.$id ?? ''),
                         applicationId: String(x.applicationId ?? ''),
                         jobId: String(x.jobId ?? ''),
+                        workflowId: String(x.workflowId ?? ''),
                         status: x.status as WorkflowExecution['status'],
                         currentNodeId: x.currentNodeId as string | undefined,
                         updatedAt: String(x.updatedAt ?? ''),
@@ -316,31 +331,74 @@ export default function WorkflowExecutionsPage() {
     const openExecution = async (execution: WorkflowExecution) => {
         setSelectedExecution(execution);
         setExecutionEvents([]);
+        setWorkflowNodes([]);
+        setWorkflowEdges([]);
         setIsLoadingEvents(true);
+        setIsWorkflowLoading(true);
         setSelectedGraphNodeId('');
+        
         try {
-            const events = await ky.get(`/api/get-workflow-execution-events?executionId=${encodeURIComponent(execution.id)}`).json<any[]>();
-            setExecutionEvents(
-                events.map((e) => ({
-                    id: String(e.id ?? e.$id ?? ''),
-                    nodeId: String(e.nodeId ?? ''),
-                    stepType: String(e.stepType ?? ''),
-                    status: e.status as WorkflowExecutionEvent['status'],
-                    input: e.input as string | undefined,
-                    output: e.output as string | undefined,
-                    error: e.error as string | undefined,
-                    createdAt: String(e.createdAt ?? ''),
-                }))
-            );
+            const [eventsResp, workflowResp] = await Promise.allSettled([
+                ky.get(`/api/get-workflow-execution-events?executionId=${encodeURIComponent(execution.id)}`).json<any[]>(),
+                ky.get(`/api/get-workflow?workflowId=${encodeURIComponent(execution.workflowId)}`).json<any>()
+            ]);
+
+            if (eventsResp.status === 'fulfilled') {
+                setExecutionEvents(
+                    eventsResp.value.map((e: any) => ({
+                        id: String(e.id ?? e.$id ?? ''),
+                        nodeId: String(e.nodeId ?? ''),
+                        stepType: String(e.stepType ?? ''),
+                        status: e.status as WorkflowExecutionEvent['status'],
+                        input: e.input as string | undefined,
+                        output: e.output as string | undefined,
+                        error: e.error as string | undefined,
+                        createdAt: String(e.createdAt ?? ''),
+                    }))
+                );
+            }
+
+            if (workflowResp.status === 'fulfilled' && workflowResp.value) {
+                const parsedNodes = JSON.parse(workflowResp.value.nodes).map(deserializeNode);
+                const parsedEdges = JSON.parse(workflowResp.value.edges);
+                setWorkflowNodes(parsedNodes);
+                setWorkflowEdges(parsedEdges);
+            }
+
         } catch (error) {
-            console.error('Error loading execution events:', error);
+            console.error('Error loading execution timeline or workflow:', error);
             toast({
                 title: 'Error',
-                description: 'Could not load execution timeline.',
+                description: 'Could not load execution timeline fully.',
                 variant: 'destructive',
             });
         } finally {
             setIsLoadingEvents(false);
+            setIsWorkflowLoading(false);
+        }
+    };
+
+    const handleNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
+        setSelectedGraphNodeId(node.id);
+    }, []);
+
+    const getNodeColorForMinimap = (node: Node) => {
+        switch (node.type) {
+            case NodeType.START:
+                return '#10b981';
+            case NodeType.END:
+                return '#ef4444';
+            case NodeType.TASK:
+                const taskNode = node as WorkflowNode;
+                if (taskNode.taskType === TaskType.NOTIFY) return '#3b82f6';
+                if (taskNode.taskType === TaskType.ASSIGNMENT) return '#f59e0b';
+                if (taskNode.taskType === TaskType.INTERVIEW) return '#8b5cf6';
+                if (taskNode.taskType === TaskType.WAIT) return '#36c2e3';
+                if (taskNode.taskType === TaskType.CONDITION) return '#0d9488';
+                if (taskNode.taskType === TaskType.UPDATE_STATUS) return '#ea580c';
+                return '#9ca3af';
+            default:
+                return '#9ca3af';
         }
     };
 
@@ -419,157 +477,64 @@ export default function WorkflowExecutionsPage() {
                             {/* Left Column: Workflow Tree (3/5 width) */}
                             <div className='lg:col-span-3 flex flex-col h-full min-h-0 bg-muted/5'>
                                 <div className='p-4 border-b bg-muted/10 flex items-center justify-between'>
-                                    <h3 className='font-medium text-sm'>Execution Path</h3>
-                                    <span className='text-[10px] uppercase tracking-wider text-muted-foreground font-bold'>Interactive Graph</span>
+                                    <h3 className='font-medium text-sm'>Execution Graph</h3>
+                                    <span className='text-[10px] uppercase tracking-wider text-muted-foreground font-bold'>Read-only View</span>
                                 </div>
                                 
                                 <div className='flex-1 relative overflow-hidden'>
-                                    {isLoadingEvents ? (
-                                        <div className='absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-10'>
-                                            <div className='flex flex-col items-center gap-2'>
-                                                <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
-                                                <p className='text-sm text-muted-foreground font-medium'>Loading timeline...</p>
+                                    <TooltipProvider>
+                                        {(isLoadingEvents || isWorkflowLoading) && (
+                                            <div className='absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-50'>
+                                                <div className='flex flex-col items-center gap-2'>
+                                                    <Loader2 className='h-8 w-8 animate-spin text-primary' />
+                                                    <p className='text-sm text-muted-foreground font-medium'>Loading workflow graph...</p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ) : null}
-                                    
-                                    {executionEvents.length === 0 && !isLoadingEvents ? (
-                                        <div className='h-full flex items-center justify-center p-8 text-center'>
-                                            <div className='max-w-xs space-y-2'>
-                                                <p className='text-sm font-medium'>No events available</p>
-                                                <p className='text-xs text-muted-foreground'>This execution hasn&apos;t recorded any steps yet, or they are still being processed.</p>
+                                        )}
+                                        
+                                        {!isWorkflowLoading && workflowNodes.length === 0 ? (
+                                            <div className='h-full flex items-center justify-center p-8 text-center'>
+                                                <div className='max-w-xs space-y-2'>
+                                                    <p className='text-sm font-medium text-destructive'>Graph not found</p>
+                                                    <p className='text-xs text-muted-foreground'>Unable to load the workflow definition that created this execution.</p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ) : (
-                                        <ScrollArea className='h-full'>
-                                            <div className='p-4 flex justify-center'>
-                                                <VegaEmbed
-                                                    onEmbed={(result) => {
-                                                        result.view.addSignalListener('selectedNodeId', (_name: string, value: unknown) => {
-                                                            if (typeof value === 'string' && value.length > 0) {
-                                                                setSelectedGraphNodeId(value);
-                                                            }
-                                                        });
-                                                    }}
-                                                    spec={{
-                                                        $schema: 'https://vega.github.io/schema/vega/v5.json',
-                                                        description: 'Workflow execution tree',
-                                                        width: 600,
-                                                        height: Math.max(400, graphNodes.length * 80),
-                                                        padding: { top: 20, left: 10, right: 10, bottom: 20 },
-                                                        autosize: 'none',
-                                                        signals: [
-                                                            {
-                                                                name: 'selectedNodeId',
-                                                                value: selectedGraphNodeId,
-                                                                on: [{ events: '@nodeMarks:click', update: 'datum.id' }],
-                                                            },
-                                                        ],
-                                                        data: [
-                                                            {
-                                                                name: 'tree',
-                                                                values: graphNodes,
-                                                                transform: [
-                                                                    { type: 'stratify', key: 'id', parentKey: 'parent' },
-                                                                    {
-                                                                        type: 'tree',
-                                                                        method: 'tidy',
-                                                                        size: [{ signal: 'height - 40' }, { signal: 'width - 150' }],
-                                                                        separation: true,
-                                                                        as: ['y', 'x', 'depth', 'children'],
-                                                                    },
-                                                                ],
-                                                            },
-                                                            {
-                                                                name: 'links',
-                                                                source: 'tree',
-                                                                transform: [
-                                                                    { type: 'treelinks' },
-                                                                    { type: 'linkpath', orient: 'horizontal', shape: 'diagonal' }
-                                                                ],
-                                                            },
-                                                        ],
-                                                        scales: [
-                                                            {
-                                                                name: 'color',
-                                                                type: 'ordinal',
-                                                                domain: ['started', 'completed', 'failed'],
-                                                                range: ['#3b82f6', '#22c55e', '#ef4444'],
-                                                            },
-                                                        ],
-                                                        marks: [
-                                                            {
-                                                                type: 'path',
-                                                                from: { data: 'links' },
-                                                                encode: {
-                                                                    update: {
-                                                                        path: { field: 'path' },
-                                                                        stroke: { value: '#cbd5e1' },
-                                                                        strokeWidth: { value: 2 },
-                                                                        opacity: { value: 0.6 }
-                                                                    }
-                                                                },
-                                                            },
-                                                            {
-                                                                type: 'symbol',
-                                                                name: 'nodeMarks',
-                                                                from: { data: 'tree' },
-                                                                encode: {
-                                                                    enter: {
-                                                                        size: { value: 350 },
-                                                                        stroke: { value: '#fff' },
-                                                                        strokeWidth: { value: 2 },
-                                                                        cursor: { value: 'pointer' },
-                                                                        tooltip: { signal: "datum.name + ' (' + datum.status + ')'" }
-                                                                    },
-                                                                    update: {
-                                                                        x: { field: 'x' },
-                                                                        y: { field: 'y' },
-                                                                        fill: { scale: 'color', field: 'status' },
-                                                                        stroke: [
-                                                                            { test: "datum.id === selectedNodeId", value: '#0f172a' },
-                                                                            { value: '#fff' }
-                                                                        ],
-                                                                        strokeWidth: [
-                                                                            { test: "datum.id === selectedNodeId", value: 3 },
-                                                                            { value: 2 }
-                                                                        ]
-                                                                    },
-                                                                    hover: {
-                                                                        size: { value: 450 }
-                                                                    }
-                                                                },
-                                                            },
-                                                            {
-                                                                type: 'text',
-                                                                from: { data: 'tree' },
-                                                                encode: {
-                                                                    enter: {
-                                                                        fontSize: { value: 12 },
-                                                                        fontWeight: { value: 'bold' },
-                                                                        baseline: { value: 'middle' },
-                                                                        font: { value: 'Inter, system-ui, sans-serif' }
-                                                                    },
-                                                                    update: {
-                                                                        x: { field: 'x' },
-                                                                        y: { field: 'y' },
-                                                                        dx: { signal: "datum.children ? -15 : 15" },
-                                                                        align: { signal: "datum.children ? 'right' : 'left'" },
-                                                                        text: { field: 'name' },
-                                                                        fill: { value: '#334155' },
-                                                                        opacity: [
-                                                                            { test: "datum.id === selectedNodeId", value: 1 },
-                                                                            { value: 0.8 }
-                                                                        ]
-                                                                    }
-                                                                },
-                                                            },
-                                                        ],
-                                                    }}
+                                        ) : (
+                                            <ReactFlow
+                                                nodes={displayNodes}
+                                                edges={workflowEdges}
+                                                nodeTypes={nodeTypesConfig}
+                                                edgeTypes={edgeTypesConfig}
+                                                defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
+                                                minZoom={0.1}
+                                                maxZoom={2}
+                                                fitView
+                                                fitViewOptions={{ padding: 0.2 }}
+                                                nodesDraggable={false}
+                                                nodesConnectable={false}
+                                                elementsSelectable={true}
+                                                onNodeClick={handleNodeClick}
+                                                connectionLineType={ConnectionLineType.Bezier}
+                                                className='react-flow-readonly'
+                                            >
+                                                <Background
+                                                    variant={BackgroundVariant.Dots}
+                                                    gap={12}
+                                                    size={1}
+                                                    color='rgba(0, 0, 0, 0.1)'
                                                 />
-                                            </div>
-                                        </ScrollArea>
-                                    )}
+                                                <MiniMap
+                                                    nodeStrokeWidth={3}
+                                                    zoomable
+                                                    pannable
+                                                    position='bottom-right'
+                                                    nodeColor={getNodeColorForMinimap}
+                                                    maskColor='rgba(255, 255, 255, 0.6)'
+                                                />
+                                                <Controls showInteractive={false} />
+                                            </ReactFlow>
+                                        )}
+                                    </TooltipProvider>
                                 </div>
                             </div>
 
@@ -589,7 +554,6 @@ export default function WorkflowExecutionsPage() {
                                         {!selectedRun ? (
                                             <div className='h-full flex flex-col items-center justify-center p-8 text-center text-muted-foreground opacity-60'>
                                                 <div className='mb-4 p-4 rounded-full bg-muted'>
-                                                    {/* Custom simple SVG for "Select a node" */}
                                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                                                 </div>
                                                 <p className='text-sm font-medium'>Select a node from the graph</p>
