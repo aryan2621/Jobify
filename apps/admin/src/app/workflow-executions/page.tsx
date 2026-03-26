@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import ky from 'ky';
-import { VegaEmbed } from 'react-vega';
+import dynamic from 'next/dynamic';
 import NavbarLayout from '@/layouts/navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@jobify/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@jobify/ui/table';
@@ -122,6 +122,10 @@ type ExecutionGraphNode = {
     time: string;
     duration: string;
 };
+
+const VegaEmbed = dynamic(() => import('react-vega').then((mod) => mod.VegaEmbed), {
+    ssr: false,
+});
 
 function buildEventRuns(events: WorkflowExecutionEvent[]): EventRun[] {
     const sorted = [...events].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
