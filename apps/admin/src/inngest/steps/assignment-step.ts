@@ -23,6 +23,9 @@ export async function runAssignmentStep(ctx: WorkflowRunContext, node: Assignmen
     const deadlineStr = node.deadline && !Number.isNaN(node.deadline.getTime()) ? node.deadline.toUTCString() : '';
 
     const base = getUserAppBaseUrl();
+    const applicationPage = base
+        ? `${base}/applications/${encodeURIComponent(applicationId)}`
+        : '';
     const submitOnPortal = base
         ? `${base}/applications/${encodeURIComponent(applicationId)}/assignment/${encodeURIComponent(node.id)}`
         : '';
@@ -32,14 +35,19 @@ export async function runAssignmentStep(ctx: WorkflowRunContext, node: Assignmen
     const role = EmailService.escapeHtml(job.profile ?? 'the role');
     const deadlineHtml = EmailService.escapeHtml(deadlineStr);
     const briefUrlEscaped = EmailService.escapeHtml(url);
+    const applicationPageEscaped = applicationPage ? EmailService.escapeHtml(applicationPage) : '';
     const submitEscaped = submitOnPortal ? EmailService.escapeHtml(submitOnPortal) : '';
     const descHtml = EmailService.escapeHtml(node.description || '').replace(/\n/g, '<br/>');
 
     const submitBlock = submitOnPortal
         ? [
               `<p><strong>Where to submit your work:</strong></p>`,
-              `<p>Open this page, sign in with the same email you used to apply, and upload your submission before the deadline:</p>`,
-              `<p><a href="${submitEscaped}">${submitEscaped}</a></p>`,
+              `<p>Use the links below after signing in with the same email you used to apply:</p>`,
+              applicationPageEscaped
+                  ? `<p><strong>1) Application page:</strong> <a href="${applicationPageEscaped}">${applicationPageEscaped}</a></p>`
+                  : '',
+              `<p><strong>2) Direct submission page:</strong> <a href="${submitEscaped}">${submitEscaped}</a></p>`,
+              `<p>Upload your submission before the deadline.</p>`,
           ].join('')
         : `<p><strong>Where to submit:</strong> Log in to the candidate portal, open <strong>My applications</strong>, select this job, and use the assignment submission page for this task. (Ask the employer if you need the portal link.)</p>`;
 
