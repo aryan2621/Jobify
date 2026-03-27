@@ -62,14 +62,14 @@ export const Editor = ({ workflowId }: EditorProps) => {
     nodes: [
         {
             id: 'start-1',
-            type: 'start',
+            type: NodeType.START,
             position: { x: 250, y: 50 },
             data: { label: 'Start' },
             sourcePosition: Position.Bottom,
         } as any,
         {
             id: 'end-1',
-            type: 'end',
+            type: NodeType.END,
             position: { x: 250, y: 300 },
             data: { label: 'End' },
             targetPosition: Position.Top,
@@ -298,14 +298,14 @@ export const Editor = ({ workflowId }: EditorProps) => {
     nodes: [
         {
             id: 'start-1',
-            type: 'start',
+            type: NodeType.START,
             position: { x: 250, y: 50 },
             data: { label: 'Start' },
             sourcePosition: Position.Bottom,
         } as any,
         {
             id: 'end-1',
-            type: 'end',
+            type: NodeType.END,
             position: { x: 250, y: 300 },
             data: { label: 'End' },
             targetPosition: Position.Top,
