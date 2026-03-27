@@ -59,31 +59,31 @@ type EditorProps = {
 export const Editor = ({ workflowId }: EditorProps) => {
     const router = useRouter();
     const defaultTemplate = useMemo(() => ({
-    nodes: [
-        {
-            id: 'start-1',
-            type: NodeType.START,
-            position: { x: 250, y: 50 },
-            data: { label: 'Start' },
-            sourcePosition: Position.Bottom,
-        } as any,
-        {
-            id: 'end-1',
-            type: NodeType.END,
-            position: { x: 250, y: 300 },
-            data: { label: 'End' },
-            targetPosition: Position.Top,
-        } as any,
-    ],
-    edges: [
-        {
-            id: 'start-to-end',
-            source: 'start-1',
-            target: 'end-1',
-            type: ConnectionLineType.SmoothStep,
-        },
-    ],
-}), []);
+        nodes: [
+            {
+                id: 'start-1',
+                type: NodeType.START,
+                position: { x: 250, y: 50 },
+                data: { label: 'Start' },
+                sourcePosition: Position.Bottom,
+            } as any,
+            {
+                id: 'end-1',
+                type: NodeType.END,
+                position: { x: 250, y: 300 },
+                data: { label: 'End' },
+                targetPosition: Position.Top,
+            } as any,
+        ],
+        edges: [
+            {
+                id: 'start-to-end',
+                source: 'start-1',
+                target: 'end-1',
+                type: ConnectionLineType.SmoothStep,
+            },
+        ],
+    }), []);
 
     const [nodes, setNodes, onNodesChange] = useNodesState(defaultTemplate.nodes as any[]);
     const [edges, setEdges, onEdgesChange] = useEdgesState(defaultTemplate.edges as any[]);
@@ -295,31 +295,31 @@ export const Editor = ({ workflowId }: EditorProps) => {
             )
         ) {
             const fresh = {
-    nodes: [
-        {
-            id: 'start-1',
-            type: NodeType.START,
-            position: { x: 250, y: 50 },
-            data: { label: 'Start' },
-            sourcePosition: Position.Bottom,
-        } as any,
-        {
-            id: 'end-1',
-            type: NodeType.END,
-            position: { x: 250, y: 300 },
-            data: { label: 'End' },
-            targetPosition: Position.Top,
-        } as any,
-    ],
-    edges: [
-        {
-            id: 'start-to-end',
-            source: 'start-1',
-            target: 'end-1',
-            type: ConnectionLineType.SmoothStep,
-        },
-    ],
-};
+                nodes: [
+                    {
+                        id: 'start-1',
+                        type: NodeType.START,
+                        position: { x: 250, y: 50 },
+                        data: { label: 'Start' },
+                        sourcePosition: Position.Bottom,
+                    } as any,
+                    {
+                        id: 'end-1',
+                        type: NodeType.END,
+                        position: { x: 250, y: 300 },
+                        data: { label: 'End' },
+                        targetPosition: Position.Top,
+                    } as any,
+                ],
+                edges: [
+                    {
+                        id: 'start-to-end',
+                        source: 'start-1',
+                        target: 'end-1',
+                        type: ConnectionLineType.SmoothStep,
+                    },
+                ],
+            };
             setNodes(fresh.nodes as any[]);
             setEdges(fresh.edges);
             setHistory([{ nodes: fresh.nodes, edges: fresh.edges }]);
@@ -442,54 +442,12 @@ export const Editor = ({ workflowId }: EditorProps) => {
                             multiSelectionKeyCode='Control'
                             className={`${isDarkMode ? 'react-flow-dark' : ''}`}
                         >
-                            { }
                             <Background
                                 variant={BackgroundVariant.Dots}
                                 gap={12}
                                 size={1}
                                 color={isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}
                             />
-
-
-                            <MiniMap
-                                nodeStrokeWidth={3}
-                                zoomable
-                                pannable
-                                position='bottom-right'
-                                nodeColor={(node) => {
-                                    switch (node.type) {
-                                        case NodeType.START:
-                                            return '#10b981';
-                                        case NodeType.END:
-                                            return '#ef4444';
-                                        case NodeType.TASK:
-
-                                            const taskNode = node as WorkflowNode;
-                                            if (taskNode.taskType === TaskType.NOTIFY) {
-                                                return '#3b82f6';
-                                            } else if (taskNode.taskType === TaskType.ASSIGNMENT) {
-                                                return '#f59e0b';
-                                            } else if (taskNode.taskType === TaskType.INTERVIEW) {
-                                                return '#8b5cf6';
-                                            } else if (taskNode.taskType === TaskType.WAIT) {
-                                                return '#36c2e3';
-                                            } else if (taskNode.taskType === TaskType.CONDITION) {
-                                                return '#0d9488';
-                                            } else if (taskNode.taskType === TaskType.UPDATE_STATUS) {
-                                                return '#ea580c';
-                                            }
-                                            return '#9ca3af';
-                                        default:
-                                            return '#9ca3af';
-                                    }
-                                }}
-                                maskColor={isDarkMode ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.6)'}
-                            />
-
-                            { }
-                            <Controls showInteractive={true} />
-
-
                             <Panel position='top-center' className='flex bg-background border rounded-md shadow-sm overflow-hidden'>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -597,11 +555,7 @@ export const Editor = ({ workflowId }: EditorProps) => {
                                 </Tooltip>
                             </Panel>
                         </ReactFlow>
-
-                        { }
                         {isSidebarVisible && <Sidebar nodes={nodes} edges={edges} workflowId={workflowId} />}
-
-
                         <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
                             <SheetContent>
 
