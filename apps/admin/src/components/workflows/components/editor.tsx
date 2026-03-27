@@ -58,7 +58,34 @@ type EditorProps = {
 
 export const Editor = ({ workflowId }: EditorProps) => {
     const router = useRouter();
-    const defaultTemplate = useMemo(() => ({ nodes: [], edges: [] }), []);
+    const defaultTemplate = useMemo(() => ({
+    nodes: [
+        {
+            id: 'start-1',
+            type: 'start',
+            position: { x: 100, y: 100 },
+            data: { label: 'Start' },
+            sourcePosition: Position.Right,
+            targetPosition: undefined,
+        } as any,
+        {
+            id: 'end-1',
+            type: 'end',
+            position: { x: 400, y: 100 },
+            data: { label: 'End' },
+            sourcePosition: undefined,
+            targetPosition: Position.Left,
+        } as any,
+    ],
+    edges: [
+        {
+            id: 'start-to-end',
+            source: 'start-1',
+            target: 'end-1',
+            type: ConnectionLineType.SmoothStep,
+        },
+    ],
+}), []);
 
     const [nodes, setNodes, onNodesChange] = useNodesState(defaultTemplate.nodes as any[]);
     const [edges, setEdges, onEdgesChange] = useEdgesState(defaultTemplate.edges as any[]);
@@ -269,7 +296,34 @@ export const Editor = ({ workflowId }: EditorProps) => {
                 'Reset this workflow to the default recruitment template? All current nodes and edges will be replaced.'
             )
         ) {
-            const fresh = { nodes: [], edges: [] };
+            const fresh = {
+    nodes: [
+        {
+            id: 'start-1',
+            type: 'start',
+            position: { x: 100, y: 100 },
+            data: { label: 'Start' },
+            sourcePosition: Position.Right,
+            targetPosition: undefined,
+        } as any,
+        {
+            id: 'end-1',
+            type: 'end',
+            position: { x: 400, y: 100 },
+            data: { label: 'End' },
+            sourcePosition: undefined,
+            targetPosition: Position.Left,
+        } as any,
+    ],
+    edges: [
+        {
+            id: 'start-to-end',
+            source: 'start-1',
+            target: 'end-1',
+            type: ConnectionLineType.SmoothStep,
+        },
+    ],
+};
             setNodes(fresh.nodes as any[]);
             setEdges(fresh.edges);
             setHistory([{ nodes: fresh.nodes, edges: fresh.edges }]);
