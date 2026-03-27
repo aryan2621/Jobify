@@ -5,10 +5,8 @@ import {
     addEdge,
     useNodesState,
     useEdgesState,
-    Controls,
     Background,
     BackgroundVariant,
-    MiniMap,
     useReactFlow,
     Position,
     Edge,
@@ -39,7 +37,7 @@ import { Sheet, SheetContent } from '@jobify/ui/sheet';
 import { Button } from '@jobify/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@jobify/ui/tooltip';
 import { toast } from '@jobify/ui/use-toast';
-import { Maximize, ZoomIn, ZoomOut, RotateCcw, Save, Trash2, FileDown, Undo2, Redo2, PanelLeft } from 'lucide-react';
+import { Maximize, ZoomIn, ZoomOut, RotateCcw, Trash2, Undo2, Redo2, PanelLeft } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 
 
@@ -76,12 +74,7 @@ export const Editor = ({ workflowId }: EditorProps) => {
             } as any,
         ],
         edges: [
-            {
-                id: 'start-to-end',
-                source: 'start-1',
-                target: 'end-1',
-                type: ConnectionLineType.SmoothStep,
-            },
+           
         ],
     }), []);
 
@@ -312,12 +305,6 @@ export const Editor = ({ workflowId }: EditorProps) => {
                     } as any,
                 ],
                 edges: [
-                    {
-                        id: 'start-to-end',
-                        source: 'start-1',
-                        target: 'end-1',
-                        type: ConnectionLineType.SmoothStep,
-                    },
                 ],
             };
             setNodes(fresh.nodes as any[]);
@@ -331,24 +318,6 @@ export const Editor = ({ workflowId }: EditorProps) => {
             });
         }
     }, [setNodes, setEdges]);
-
-
-    const handleExportImage = useCallback(() => {
-        const downloadImage = (dataUrl: string) => {
-            const a = document.createElement('a');
-            a.setAttribute('download', 'workflow.png');
-            a.setAttribute('href', dataUrl);
-            a.click();
-        };
-
-
-
-        toast({
-            title: 'Export Image',
-            description: 'Image export would happen here (placeholder)',
-        });
-    }, []);
-
 
     const toggleSidebar = useCallback(() => {
         setIsSidebarVisible((prev) => !prev);
@@ -529,20 +498,6 @@ export const Editor = ({ workflowId }: EditorProps) => {
                                         <p>Reset to default template</p>
                                     </TooltipContent>
                                 </Tooltip>
-
-                                <div className='h-6 w-px bg-border mx-1' />
-
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button variant='ghost' size='icon' onClick={handleExportImage}>
-                                            <FileDown className='h-4 w-4' />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Export as Image</p>
-                                    </TooltipContent>
-                                </Tooltip>
-
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <Button variant='ghost' size='icon' onClick={toggleSidebar}>
