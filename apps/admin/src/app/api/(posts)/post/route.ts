@@ -4,6 +4,7 @@ import { Job } from '@jobify/domain/job';
 import { createJobDocument, deleteJobDocument, fetchJobById, updateJobDocument } from '@jobify/appwrite-server/collections/job-collection';
 import jwt from 'jsonwebtoken';
 import { isRecognisedError, UnauthorizedError } from '@jobify/domain/error';
+import { toPublicJob } from '@jobify/domain/api-serializers';
 
 export async function POST(req: NextRequest) {
     const token = req.cookies.get(ADMIN_AUTH_COOKIE_NAME);
@@ -33,9 +34,10 @@ export async function POST(req: NextRequest) {
         await createJobDocument(job);
         return NextResponse.json({ message: 'Job created' }, { status: 201 });
     } catch (error) {
+        const err = error as any;
         console.log('Error while creating job', error);
         if (isRecognisedError(error)) {
-            return NextResponse.json({ message: error.message }, { status: error.statusCode });
+            return NextResponse.json({ message: err.message }, { status: err.statusCode });
         }
         return NextResponse.json({ message: 'Error while creating job' }, { status: 500 });
     }
@@ -62,8 +64,7 @@ export async function GET(req: NextRequest) {
         if (createdBy !== userId) {
             throw new UnauthorizedError('You do not have access to this job');
         }
-        const jobId = (job.$id ?? job.id) as string;
-        return NextResponse.json({ ...job, id: jobId }, { status: 200 });
+        return NextResponse.json(toPublicJob(job as unknown as Record<string, unknown>), { status: 200 });
     } catch (error) {
         if (isRecognisedError(error)) {
             const err = error as { message?: string; statusCode?: number };
@@ -111,7 +112,7 @@ export async function PUT(req: NextRequest) {
             userId,
         );
         await updateJobDocument(job);
-        return NextResponse.json(job, { status: 200 });
+        return NextResponse.json(toPublicJob(job), { status: 200 });
     } catch (error) {
         console.log('Error while updating job', error);
         if (isRecognisedError(error)) {

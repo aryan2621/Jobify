@@ -4,6 +4,7 @@ import { fetchApplicationsByJobId } from '@jobify/appwrite-server/collections/ap
 import { BadRequestError, isRecognisedError, UnauthorizedError } from '@jobify/domain/error';
 import { fetchJobById } from '@jobify/appwrite-server/collections/job-collection';
 import jwt from 'jsonwebtoken';
+import { toPublicApplication } from '@jobify/domain/api-serializers';
 
 export async function GET(req: NextRequest) {
     const token = req.cookies.get(ADMIN_AUTH_COOKIE_NAME);
@@ -27,7 +28,10 @@ export async function GET(req: NextRequest) {
             throw new UnauthorizedError('You do not have access to this job\'s applications');
         }
         const applications = await fetchApplicationsByJobId(jobId);
-        return NextResponse.json(applications, { status: 200 });
+        return NextResponse.json(
+            applications.map((doc) => toPublicApplication(doc as unknown as Record<string, unknown>)),
+            { status: 200 }
+        );
     } catch (error: unknown) {
         console.log('Error while fetching job applications', error);
         if (isRecognisedError(error)) {

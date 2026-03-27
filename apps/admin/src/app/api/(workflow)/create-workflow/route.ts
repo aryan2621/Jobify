@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { createWorkflow, getWorkflowsByUserId } from '@jobify/appwrite-server/collections/workflow-collection';
 import { Workflow } from '@jobify/domain/workflow';
+import { toPublicWorkflow } from '@jobify/domain/api-serializers';
 
 export async function POST(req: NextRequest) {
     const token = req.cookies.get(ADMIN_AUTH_COOKIE_NAME);
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
         };
 
         const created = await createWorkflow(workflow);
-        return NextResponse.json(created, { status: 200 });
+        return NextResponse.json(toPublicWorkflow(created as unknown as Record<string, unknown>), { status: 200 });
     } catch (error) {
         console.log('Error while saving workflow', error);
         const err = error as any;

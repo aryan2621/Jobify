@@ -13,7 +13,7 @@ import { Alert, AlertTitle, AlertDescription } from '@jobify/ui/alert';
 import { Skeleton } from '@jobify/ui/skeleton';
 import { Application, ApplicationStatus } from '@jobify/domain/application';
 import { Job } from '@jobify/domain/job';
-import { downloadResume, formatDate } from '@/app/applications/_lib/utils';
+import { downloadResume, formatDate, jsonArrayFromApi } from '@/app/applications/_lib/utils';
 import { ApplicationTimeline, JobDetails, StatusBadge } from '@/app/applications/_lib/components';
 export default function UserApplicationDetailPage({ params }: {
     params: {
@@ -39,12 +39,12 @@ export default function UserApplicationDetailPage({ params }: {
                 response.phone,
                 response.currentLocation,
                 response.gender,
-                JSON.parse(response.education),
-                JSON.parse(response.experience),
-                JSON.parse(response.skills),
+                jsonArrayFromApi(response.education),
+                jsonArrayFromApi(response.experience),
+                jsonArrayFromApi<string>(response.skills),
                 response.source,
                 response.resume,
-                JSON.parse(response.socialLinks),
+                jsonArrayFromApi<string>(response.socialLinks),
                 response.coverLetter,
                 response.status,
                 response.jobId,

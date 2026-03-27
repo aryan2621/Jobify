@@ -31,13 +31,14 @@ import ConditionNodeBuilderComponent from '../builder/condition';
 import UpdateStatusNodeBuilderComponent from '../builder/update-status';
 import Sidebar from './siderbar';
 import { nodeFactory } from '@/lib/utils/node-factory-utils';
-import ky from 'ky';
+import ky, { HTTPError } from 'ky';
+import { nanoid } from 'nanoid';
 
 import { Sheet, SheetContent } from '@jobify/ui/sheet';
 import { Button } from '@jobify/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@jobify/ui/tooltip';
 import { toast } from '@jobify/ui/use-toast';
-import { Maximize, ZoomIn, ZoomOut, RotateCcw, Trash2, Undo2, Redo2, PanelLeft } from 'lucide-react';
+import { Maximize, ZoomIn, ZoomOut, RotateCcw, Trash2, Undo2, Redo2, PanelLeft, Save } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 
 
@@ -106,6 +107,79 @@ export const Editor = ({ workflowId }: EditorProps) => {
 
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [workflowName, setWorkflowName] = useState('New Workflow');
+    const [isSaving, setIsSaving] = useState(false);
+
+    const persistWorkflow = useCallback(
+        async (status: 'draft' | 'active') => {
+            const payload = {
+                name: workflowName.trim() || 'New Workflow',
+                description: '',
+                nodes,
+                edges,
+                status,
+            };
+            if (workflowId) {
+                await ky.post('/api/update-workflow', {
+                    json: { id: workflowId, ...payload },
+                });
+                toast({
+                    title: status === 'draft' ? 'Draft saved' : 'Workflow updated',
+                    description:
+                        status === 'draft'
+                            ? 'You can continue editing or validate when ready to publish.'
+                            : 'Your workflow has been saved successfully.',
+                });
+                return;
+            }
+            const newWorkflowId = nanoid();
+            await ky.post('/api/create-workflow', {
+                json: { id: newWorkflowId, ...payload },
+            });
+            toast({
+                title: status === 'draft' ? 'Draft saved' : 'Workflow saved',
+                description:
+                    status === 'draft'
+                        ? 'You can keep editing from here.'
+                        : 'Your workflow has been saved successfully.',
+            });
+            if (status === 'draft') {
+                router.replace(`/workflow/${newWorkflowId}`);
+            } else {
+                router.push('/workflows');
+            }
+        },
+        [nodes, edges, workflowId, workflowName, router]
+    );
+
+    const handleSaveDraft = useCallback(async () => {
+        setIsSaving(true);
+        try {
+            await persistWorkflow('draft');
+        } catch (err: unknown) {
+            let description = 'Failed to save draft';
+            if (err instanceof HTTPError) {
+                try {
+                    const body = (await err.response.json()) as { message?: string };
+                    if (body?.message) description = body.message;
+                    else if (err.message) description = err.message;
+                } catch {
+                    if (err.message) description = err.message;
+                }
+            } else if (err instanceof Error) {
+                description = err.message;
+            }
+            toast({
+                title: 'Save failed',
+                description,
+                variant: 'destructive',
+            });
+        } finally {
+            setIsSaving(false);
+        }
+    }, [persistWorkflow]);
+
+    const persistActive = useCallback(() => persistWorkflow('active'), [persistWorkflow]);
 
 
     const nodeTypes = {
@@ -350,14 +424,16 @@ export const Editor = ({ workflowId }: EditorProps) => {
                 setIsLoading(true);
 
                 const response = await ky.get(`/api/get-workflow?workflowId=${workflowId}`).json();
-                const parsedNodes = JSON.parse((response as any).nodes);
-                const parsedEdges = JSON.parse((response as any).edges);
+                const parsedNodes = JSON.parse((response as { nodes: string }).nodes);
+                const parsedEdges = JSON.parse((response as { edges: string }).edges);
                 const nodes = parsedNodes.map((node: any) => deserializeNode(node));
 
                 console.log(nodes);
 
                 setNodes(nodes);
                 setEdges(parsedEdges);
+                const name = (response as { name?: string }).name;
+                setWorkflowName(typeof name === 'string' && name.trim() ? name : 'New Workflow');
 
                 setIsModified(false);
             } catch (error) {
@@ -417,7 +493,31 @@ export const Editor = ({ workflowId }: EditorProps) => {
                                 size={1}
                                 color={isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}
                             />
-                            <Panel position='top-center' className='flex bg-background border rounded-md shadow-sm overflow-hidden'>
+                            <Panel position='top-center' className='flex items-center bg-background border rounded-md shadow-sm overflow-hidden'>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant='outline'
+                                            size='sm'
+                                            className='h-9 rounded-none border-0 border-r px-3 gap-1.5 shrink-0'
+                                            onClick={handleSaveDraft}
+                                            disabled={isSaving}
+                                        >
+                                            {isSaving ? (
+                                                <Loader2 className='h-4 w-4 animate-spin' />
+                                            ) : (
+                                                <Save className='h-4 w-4' />
+                                            )}
+                                            Save draft
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Save as draft without validating the graph</p>
+                                    </TooltipContent>
+                                </Tooltip>
+
+                                <div className='h-6 w-px bg-border mx-1' />
+
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <Button variant='ghost' size='icon' onClick={handleUndo} disabled={historyIndex <= 0}>
@@ -510,7 +610,17 @@ export const Editor = ({ workflowId }: EditorProps) => {
                                 </Tooltip>
                             </Panel>
                         </ReactFlow>
-                        {isSidebarVisible && <Sidebar nodes={nodes} edges={edges} workflowId={workflowId} />}
+                        {isSidebarVisible && (
+                            <Sidebar
+                                nodes={nodes}
+                                edges={edges}
+                                workflowName={workflowName}
+                                onWorkflowNameChange={setWorkflowName}
+                                onPersistActive={persistActive}
+                                isSaving={isSaving}
+                                onSavingChange={setIsSaving}
+                            />
+                        )}
                         <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
                             <SheetContent>
 

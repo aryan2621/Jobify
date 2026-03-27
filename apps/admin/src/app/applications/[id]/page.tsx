@@ -65,6 +65,16 @@ const formatDate = (dateString: string): string => {
     });
 };
 
+function jsonArrayFromApi<T>(raw: unknown): T[] {
+    if (Array.isArray(raw)) return raw as T[];
+    if (typeof raw === 'string') {
+        const s = raw.trim();
+        if (!s) return [];
+        return JSON.parse(s) as T[];
+    }
+    return [];
+}
+
 const DetailSection = ({
     title,
     icon,
@@ -733,12 +743,12 @@ export default function JobApplicationsPage({ params }: { params: { id: string }
                         app.phone,
                         app.currentLocation,
                         app.gender,
-                        JSON.parse(app.education),
-                        JSON.parse(app.experience),
-                        JSON.parse(app.skills),
+                        jsonArrayFromApi(app.education),
+                        jsonArrayFromApi(app.experience),
+                        jsonArrayFromApi<string>(app.skills),
                         app.source,
                         app.resume,
-                        JSON.parse(app.socialLinks),
+                        jsonArrayFromApi<string>(app.socialLinks),
                         app.coverLetter,
                         app.status,
                         app.jobId,

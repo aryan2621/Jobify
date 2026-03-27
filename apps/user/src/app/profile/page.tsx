@@ -19,6 +19,7 @@ import { UserSummary } from './components/summary';
 import ProfilePersonalTab from './components/profile-personal-tab';
 import ProfileSecurityTab from './components/profile-security-tab';
 import UserDashboard from './components/user-dashboard';
+import { jsonArrayFromApi } from '@/app/applications/_lib/utils';
 function ProfilePageContent() {
     const [profile, setProfile] = useState<Profile>(new Profile('', '', '', '', '', ''));
     const [submitting, setSubmitting] = useState(false);
@@ -84,12 +85,12 @@ function ProfilePageContent() {
                         application.phone,
                         application.currentLocation,
                         application.gender,
-                        JSON.parse(application.education),
-                        JSON.parse(application.experience),
-                        JSON.parse(application.skills),
+                        jsonArrayFromApi(application.education),
+                        jsonArrayFromApi(application.experience),
+                        jsonArrayFromApi<string>(application.skills),
                         application.source,
                         application.resume,
-                        JSON.parse(application.socialLinks),
+                        jsonArrayFromApi<string>(application.socialLinks),
                         application.coverLetter,
                         application.status,
                         application.jobId,

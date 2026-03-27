@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button, buttonVariants } from '@jobify/ui/button';
 import { useDnD } from '@/context/workflow';
 import { WorkflowNode } from '@jobify/domain/workflow';
@@ -21,25 +20,33 @@ import { BellRing, FileText, GitBranch, Flag, Info, Video, Clock, Save, Loader2 
 import { cn } from '@/lib/utils';
 import { TaskType, NodeType } from '@jobify/domain/workflow';
 import { toast } from '@jobify/ui/use-toast';
-import ky, { HTTPError } from 'ky';
-import { nanoid } from 'nanoid';
+import { HTTPError } from 'ky';
 
 interface SidebarProps {
     nodes: WorkflowNode[];
     edges: Edge[];
-    workflowId?: string;
+    workflowName: string;
+    onWorkflowNameChange: (name: string) => void;
+    onPersistActive: () => Promise<void>;
+    isSaving: boolean;
+    onSavingChange: (saving: boolean) => void;
 }
-export default function Sidebar({ nodes, edges, workflowId }: SidebarProps) {
+export default function Sidebar({
+    nodes,
+    edges,
+    workflowName,
+    onWorkflowNameChange,
+    onPersistActive,
+    isSaving,
+    onSavingChange,
+}: SidebarProps) {
     const [, setType] = useDnD();
 
-    const router = useRouter();
     const [isValidationOpen, setIsValidationOpen] = useState(false);
     const [validationResults, setValidationResults] = useState<{
         valid: boolean;
         messages: { type: 'error' | 'warning' | 'success'; message: string }[];
     }>({ valid: true, messages: [] });
-    const [workflowName, setWorkflowName] = useState<string>('New Workflow');
-    const [isSaving, setIsSaving] = useState(false);
 
     
     const onDragStart = (event: React.DragEvent<HTMLDivElement>, nodeType: NodeType | TaskType) => {
@@ -140,47 +147,26 @@ export default function Sidebar({ nodes, edges, workflowId }: SidebarProps) {
             isValid = false;
         }
 
-        
-        const nodesWithMultipleIncoming = nodes.filter((node) => inDegree[node.id] > 1);
-
-        const nodesWithMultipleOutgoing = nodes.filter((node) => {
-            const out = outDegree[node.id];
-            if (out > 1 && node.type === NodeType.TASK && (node as any).taskType === TaskType.CONDITION) return false; 
-            return out > 1;
-        });
-
-        if (nodesWithMultipleIncoming.length > 0) {
-            validationMessages.push({
-                type: 'error',
-                message: `Found ${nodesWithMultipleIncoming.length} node(s) with multiple incoming connections. Each node should have at most one incoming edge.`,
-            });
-            isValid = false;
+        for (const sn of startNodes) {
+            if (inDegree[sn.id] !== 0) {
+                validationMessages.push({
+                    type: 'error',
+                    message: 'Start node(s) must not have incoming edges',
+                });
+                isValid = false;
+                break;
+            }
         }
 
-        if (nodesWithMultipleOutgoing.length > 0) {
-            validationMessages.push({
-                type: 'error',
-                message: `Found ${nodesWithMultipleOutgoing.length} node(s) with multiple outgoing connections. Only Condition nodes may have multiple outgoing edges.`,
-            });
-            isValid = false;
-        }
-
-        
-        if (startNodes.length === 1 && inDegree[startNodes[0].id] !== 0) {
-            validationMessages.push({
-                type: 'error',
-                message: 'Start node should not have any incoming edges',
-            });
-            isValid = false;
-        }
-
-        
-        if (endNodes.length === 1 && outDegree[endNodes[0].id] !== 0) {
-            validationMessages.push({
-                type: 'error',
-                message: 'End node should not have any outgoing edges',
-            });
-            isValid = false;
+        for (const en of endNodes) {
+            if (outDegree[en.id] !== 0) {
+                validationMessages.push({
+                    type: 'error',
+                    message: 'End node(s) must not have outgoing edges',
+                });
+                isValid = false;
+                break;
+            }
         }
 
         
@@ -235,56 +221,29 @@ export default function Sidebar({ nodes, edges, workflowId }: SidebarProps) {
             setIsValidationOpen(true);
             return;
         }
-        setIsSaving(true);
-        const payload = {
-            name: workflowName.trim() || 'New Workflow',
-            description: '',
-            nodes,
-            edges,
-            status: 'active' as const,
-        };
+        onSavingChange(true);
         try {
-            if (workflowId) {
-                await ky.post('/api/update-workflow', {
-                    json: { id: workflowId, ...payload },
-                });
-                toast({
-                    title: 'Workflow updated',
-                    description: 'Your workflow has been saved successfully.',
-                });
-            } else {
-                const newWorkflowId = nanoid();
-                await ky.post('/api/create-workflow', {
-                    json: { id: newWorkflowId, ...payload },
-                });
-                toast({
-                    title: 'Workflow saved',
-                    description: 'Your workflow has been saved successfully.',
-                });
-                router.push('/workflows');
-            }
+            await onPersistActive();
         } catch (err: unknown) {
-            (async () => {
-                let description = 'Failed to save workflow';
-                if (err instanceof HTTPError) {
-                    try {
-                        const body = (await err.response.json()) as { message?: string };
-                        if (body?.message) description = body.message;
-                        else if (err.message) description = err.message;
-                    } catch {
-                        if (err.message) description = err.message;
-                    }
-                } else if (err instanceof Error) {
-                    description = err.message;
+            let description = 'Failed to save workflow';
+            if (err instanceof HTTPError) {
+                try {
+                    const body = (await err.response.json()) as { message?: string };
+                    if (body?.message) description = body.message;
+                    else if (err.message) description = err.message;
+                } catch {
+                    if (err.message) description = err.message;
                 }
-                toast({
-                    title: 'Save failed',
-                    description,
-                    variant: 'destructive',
-                });
-            })();
+            } else if (err instanceof Error) {
+                description = err.message;
+            }
+            toast({
+                title: 'Save failed',
+                description,
+                variant: 'destructive',
+            });
         } finally {
-            setIsSaving(false);
+            onSavingChange(false);
         }
     };
 
@@ -293,7 +252,7 @@ export default function Sidebar({ nodes, edges, workflowId }: SidebarProps) {
             <div className='p-4 border-b'>
                 <Input
                     value={workflowName}
-                    onChange={(e) => setWorkflowName(e.target.value)}
+                    onChange={(e) => onWorkflowNameChange(e.target.value)}
                     className='font-medium text-base'
                     placeholder='Workflow Name'
                 />
@@ -359,26 +318,27 @@ export default function Sidebar({ nodes, edges, workflowId }: SidebarProps) {
                         <span>Update Status</span>
                     </div>
                 </div>
-            </div>
-            <div className='p-4 border-t'>
-                <Button
-                    className='w-full'
-                    variant='default'
-                    onClick={handleSave}
-                    disabled={isSaving}
-                >
-                    {isSaving ? (
-                        <>
-                            <Loader2 className='h-4 w-4 mr-2 animate-spin' />
-                            Saving...
-                        </>
-                    ) : (
-                        <>
-                            <Save className='h-4 w-4 mr-2' />
-                            Validate and Save
-                        </>
-                    )}
-                </Button>
+
+                <div className='pt-4 border-t'>
+                    <Button
+                        className='w-full'
+                        variant='default'
+                        onClick={handleSave}
+                        disabled={isSaving}
+                    >
+                        {isSaving ? (
+                            <>
+                                <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                                Saving...
+                            </>
+                        ) : (
+                            <>
+                                <Save className='h-4 w-4 mr-2' />
+                                Validate and publish
+                            </>
+                        )}
+                    </Button>
+                </div>
             </div>
 
             

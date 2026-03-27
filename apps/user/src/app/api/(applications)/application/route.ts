@@ -8,7 +8,6 @@ import {
     fetchApplicationById,
     updateApplicationStatus,
     hasApplicationByUserAndJob,
-    updateApplicationWorkflowState,
 } from '@jobify/appwrite-server/collections/application-collection';
 import {
     getWorkflowById,
@@ -16,6 +15,7 @@ import {
     updateWorkflowExecutionState,
 } from '@jobify/appwrite-server/collections/workflow-collection';
 import { isRecognisedError, NotFoundError, UnauthorizedError, ForbiddenError } from '@jobify/domain/error';
+import { toPublicApplication } from '@jobify/domain/api-serializers';
 import { TaskType } from '@jobify/domain/workflow';
 
 async function triggerWorkflow(applicationId: string, jobId: string) {
@@ -107,7 +107,7 @@ export async function GET(req: NextRequest) {
             );
         }
 
-        return NextResponse.json(application, { status: 200 });
+        return NextResponse.json(toPublicApplication(application as unknown as Record<string, unknown>), { status: 200 });
     } catch (error: any) {
         console.log('Error while fetching application', error);
         if (isRecognisedError(error)) {
@@ -179,10 +179,7 @@ export async function PUT(req: NextRequest) {
             }
 
             const submittedAt = new Date().toISOString();
-            await Promise.all([
-                updateApplicationWorkflowState(applicationId, nodeId, { submitted: true, submittedAt }),
-                updateWorkflowExecutionState(applicationId, nodeId, { submitted: true, submittedAt }),
-            ]);
+            await updateWorkflowExecutionState(applicationId, nodeId, { submitted: true, submittedAt });
             return NextResponse.json({ message: 'Assignment submitted successfully' }, { status: 200 });
         }
 

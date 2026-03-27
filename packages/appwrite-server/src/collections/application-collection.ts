@@ -102,42 +102,6 @@ async function hasApplicationByUserAndJob(userId: string, jobId: string): Promis
 
 const DEFAULT_APPLICATIONS_LIMIT = 5000;
 
-async function updateApplicationWorkflowProgress(
-    applicationId: string,
-    updates: { currentNodeId?: string; stage?: string }
-) {
-    try {
-        const payload: Record<string, string> = {};
-        if (updates.currentNodeId !== undefined) payload.currentNodeId = updates.currentNodeId;
-        if (updates.stage !== undefined) payload.stage = updates.stage;
-        if (Object.keys(payload).length === 0) return await fetchApplicationById(applicationId);
-        return await database.updateDocument(DB_NAME, APPLICATION_COLLECTION, applicationId, payload);
-    } catch (error) {
-        console.log('Error updating application workflow progress', error);
-        throw error;
-    }
-}
-
-async function updateApplicationWorkflowState(
-    applicationId: string,
-    nodeId: string,
-    payload: { submitted: boolean; submittedAt?: string }
-) {
-    try {
-        const doc = await database.getDocument(DB_NAME, APPLICATION_COLLECTION, applicationId);
-        const workflowState: Record<string, { submitted?: boolean; submittedAt?: string }> = doc.workflowState
-            ? JSON.parse(doc.workflowState as string)
-            : {};
-        workflowState[nodeId] = { ...workflowState[nodeId], ...payload };
-        return await database.updateDocument(DB_NAME, APPLICATION_COLLECTION, applicationId, {
-            workflowState: JSON.stringify(workflowState),
-        });
-    } catch (error) {
-        console.log('Error updating application workflow state', error);
-        throw error;
-    }
-}
-
 async function fetchApplicationsByJobIds(jobIds: string[], limit: number = DEFAULT_APPLICATIONS_LIMIT) {
     if (jobIds.length === 0) return [];
     const jobIdSet = new Set(jobIds);
@@ -159,6 +123,4 @@ export {
     fetchApplicationsByUserId,
     hasApplicationByUserAndJob,
     updateApplicationStatus,
-    updateApplicationWorkflowProgress,
-    updateApplicationWorkflowState,
 };

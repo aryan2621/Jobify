@@ -12,6 +12,17 @@ export const formatDate = (dateString: string): string => {
         day: 'numeric',
     });
 };
+
+/** API returns arrays from public serializers; legacy payloads used JSON strings. */
+export function jsonArrayFromApi<T>(raw: unknown): T[] {
+    if (Array.isArray(raw)) return raw as T[];
+    if (typeof raw === 'string') {
+        const s = raw.trim();
+        if (!s) return [];
+        return JSON.parse(s) as T[];
+    }
+    return [];
+}
 export const downloadResume = async (resumeId: string, filename: string = 'resume.pdf', onError?: (error: unknown) => void): Promise<void> => {
     try {
         const file = await getResume(resumeId);

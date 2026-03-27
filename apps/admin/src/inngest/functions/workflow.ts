@@ -77,9 +77,8 @@ export const runWorkflowStep = inngest.createFunction(
             const workflow = await getWorkflowById(recruiterWorkflowId);
             if (!workflow) return [null, application, job, null];
 
-            const executionId = `exec-${applicationId}`.slice(0, 50);
             await upsertWorkflowExecution({
-                id: executionId,
+                id: applicationId,
                 applicationId,
                 jobId: applicationJobId,
                 recruiterId,
@@ -116,7 +115,7 @@ export const runWorkflowStep = inngest.createFunction(
         });
 
         const ctx = { applicationId, jobId: job.id, application, execution: executionSnapshot, job };
-        const executionId = String(execution?.id ?? execution?.$id ?? `exec-${applicationId}`);
+        const executionId = String(execution?.id ?? execution?.$id ?? applicationId);
         const recruiterId = String(job.createdBy ?? '');
         const workflowId = String(workflowDoc.id ?? workflowDoc.$id ?? '');
 

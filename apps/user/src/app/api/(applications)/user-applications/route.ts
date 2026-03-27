@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { fetchApplicationsByUserId } from '@jobify/appwrite-server/collections/application-collection';
 import { UserApplicationsRequest } from '@jobify/domain/request';
+import { toPublicApplication } from '@jobify/domain/api-serializers';
 const MAX_LIMIT = 100;
 export async function GET(req: NextRequest) {
     const token = req.cookies.get(USER_AUTH_COOKIE_NAME);
@@ -24,12 +25,16 @@ export async function GET(req: NextRequest) {
         }
         const limit = Math.min(parsedLimit, MAX_LIMIT);
         const applications = await fetchApplicationsByUserId(id, new UserApplicationsRequest(lastId, limit));
-        return NextResponse.json(applications, { status: 200 });
+        return NextResponse.json(
+            applications.map((doc) => toPublicApplication(doc as unknown as Record<string, unknown>)),
+            { status: 200 }
+        );
     }
     catch (error) {
         console.log('Error while fetching user applications', error);
+        const err = error as any;
         if (isRecognisedError(error)) {
-            return NextResponse.json({ message: error.message }, { status: error.statusCode });
+            return NextResponse.json({ message: err.message }, { status: err.statusCode });
         }
         return NextResponse.json({ message: 'Error while fetching user applications' }, { status: 500 });
     }

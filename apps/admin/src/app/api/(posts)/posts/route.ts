@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { fetchJobsByUserIdPaginated } from '@jobify/appwrite-server/collections/job-collection';
 import { isRecognisedError, UnauthorizedError } from '@jobify/domain/error';
+import { toPublicJob } from '@jobify/domain/api-serializers';
 
 export async function GET(req: NextRequest) {
     const token = req.cookies.get(ADMIN_AUTH_COOKIE_NAME);
@@ -24,12 +25,15 @@ export async function GET(req: NextRequest) {
         }
 
         const jobs = await fetchJobsByUserIdPaginated(userId, lastId, parsedLimit);
-        const normalized = jobs.map((doc) => ({ ...doc, id: (doc.$id ?? doc.id) as string }));
-        return NextResponse.json(normalized, { status: 200 });
+        return NextResponse.json(
+            jobs.map((doc) => toPublicJob(doc as unknown as Record<string, unknown>)),
+            { status: 200 }
+        );
     } catch (error) {
+        const err = error as any;
         console.log('Error while fetching jobs', error);
         if (isRecognisedError(error)) {
-            return NextResponse.json({ message: error.message }, { status: error.statusCode });
+            return NextResponse.json({ message: err.message }, { status: err.statusCode });
         }
         return NextResponse.json({ message: 'Error while fetching jobs' }, { status: 500 });
     }

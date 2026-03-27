@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchJobsByUserId } from '@jobify/appwrite-server/collections/job-collection';
 import { fetchApplicationsByJobIds } from '@jobify/appwrite-server/collections/application-collection';
 import { isRecognisedError, UnauthorizedError } from '@jobify/domain/error';
+import { toPublicApplication } from '@jobify/domain/api-serializers';
 import jwt from 'jsonwebtoken';
 
 export async function GET(req: NextRequest) {
@@ -21,7 +22,10 @@ export async function GET(req: NextRequest) {
         }
 
         const applications = await fetchApplicationsByJobIds(jobIds);
-        return NextResponse.json(applications, { status: 200 });
+        return NextResponse.json(
+            applications.map((doc) => toPublicApplication(doc as unknown as Record<string, unknown>)),
+            { status: 200 }
+        );
     } catch (error) {
         if (isRecognisedError(error)) {
             const err = error as { message?: string; statusCode?: number };

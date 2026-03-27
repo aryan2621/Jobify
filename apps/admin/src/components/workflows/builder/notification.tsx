@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { Label } from '@jobify/ui/label';
 import { Input } from '@jobify/ui/input';
 import { Button } from '@jobify/ui/button';
 import { Textarea } from '@jobify/ui/textarea';
-import { NotificationNode, NotificationOption } from '@jobify/domain/workflow';
+import { NotificationNode, NotificationOption, NOTIFY_TEMPLATE_VARS } from '@jobify/domain/workflow';
 import { Badge } from '@jobify/ui/badge';
 import ky from 'ky';
 import { useToast } from '@jobify/ui/use-toast';
@@ -15,12 +16,10 @@ import { Check, Mail, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 
-const EMAIL_BODY_VARIABLES: { value: string; label: string }[] = [
-    { value: '{{candidate.name}}', label: 'candidate.name' },
-    { value: '{{candidate.email}}', label: 'candidate.email' },
-    { value: '{{job.title}}', label: 'job.title' },
-    { value: '{{job.company}}', label: 'job.company' },
-];
+const NOTIFY_FIELD_VARIABLES: { value: string; label: string }[] = NOTIFY_TEMPLATE_VARS.map((key) => ({
+    value: `{{${key}}}`,
+    label: key,
+}));
 
 interface BodyFieldWithMentionsProps {
     value: string;
@@ -39,8 +38,10 @@ function BodyFieldWithMentions({ value, onChange, placeholder, invalid }: BodyFi
     const [atIndex, setAtIndex] = useState(-1);
     const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
-    const filtered = EMAIL_BODY_VARIABLES.filter((v) =>
-        v.label.toLowerCase().includes(filter.toLowerCase())
+    const filtered = NOTIFY_FIELD_VARIABLES.filter(
+        (v) =>
+            v.label.toLowerCase().includes(filter.toLowerCase()) ||
+            v.value.toLowerCase().includes(filter.toLowerCase())
     );
 
     useEffect(() => { setSelectedIndex(0); }, [filter]);
@@ -202,6 +203,219 @@ function BodyFieldWithMentions({ value, onChange, placeholder, invalid }: BodyFi
         </div>
     );
 }
+
+interface SingleLineFieldWithMentionsProps {
+    value: string;
+    onChange: (value: string) => void;
+    placeholder?: string;
+    invalid?: boolean;
+}
+
+function SingleLineFieldWithMentions({ value, onChange, placeholder, invalid }: SingleLineFieldWithMentionsProps) {
+    const inputRef = useRef<HTMLInputElement>(null);
+    const cursorAfterInsertRef = useRef<number | null>(null);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [filter, setFilter] = useState('');
+    const [selectedIndex, setSelectedIndex] = useState(0);
+    const [atIndex, setAtIndex] = useState(-1);
+    const [menuRect, setMenuRect] = useState({ top: 0, left: 0, width: 240 });
+
+    const filtered = NOTIFY_FIELD_VARIABLES.filter(
+        (v) =>
+            v.label.toLowerCase().includes(filter.toLowerCase()) ||
+            v.value.toLowerCase().includes(filter.toLowerCase())
+    );
+
+    useEffect(() => {
+        setSelectedIndex(0);
+    }, [filter]);
+
+    useEffect(() => {
+        if (inputRef.current && cursorAfterInsertRef.current !== null) {
+            const pos = cursorAfterInsertRef.current;
+            inputRef.current.setSelectionRange(pos, pos);
+            inputRef.current.focus();
+            cursorAfterInsertRef.current = null;
+        }
+    }, [value]);
+
+    useLayoutEffect(() => {
+        if (!dropdownOpen || !inputRef.current) return;
+        const r = inputRef.current.getBoundingClientRect();
+        setMenuRect({ top: r.bottom + 4, left: r.left, width: r.width });
+    }, [dropdownOpen, filter, value]);
+
+    const closeDropdown = useCallback(() => {
+        setDropdownOpen(false);
+        setFilter('');
+        setAtIndex(-1);
+    }, []);
+
+    const insertVariable = useCallback(
+        (variable: { value: string; label: string }, currentAtIndex: number) => {
+            if (!inputRef.current) return;
+            const pos = inputRef.current.selectionStart ?? value.length;
+            const before = value.slice(0, currentAtIndex);
+            const after = value.slice(pos);
+            const newValue = before + variable.value + after;
+            cursorAfterInsertRef.current = currentAtIndex + variable.value.length;
+            onChange(newValue);
+            closeDropdown();
+        },
+        [value, onChange, closeDropdown]
+    );
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newValue = e.target.value;
+        const cursorPos = e.target.selectionStart ?? newValue.length;
+        onChange(newValue);
+
+        const textBeforeCursor = newValue.slice(0, cursorPos);
+        const lastAt = textBeforeCursor.lastIndexOf('@');
+        if (lastAt === -1) {
+            closeDropdown();
+            return;
+        }
+
+        const fragment = textBeforeCursor.slice(lastAt + 1);
+        if (/[\s,;]/.test(fragment)) {
+            closeDropdown();
+            return;
+        }
+
+        setAtIndex(lastAt);
+        setFilter(fragment);
+        setDropdownOpen(true);
+        setSelectedIndex(0);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (!dropdownOpen || filtered.length === 0) return;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setSelectedIndex((i) => (i + 1) % filtered.length);
+            return;
+        }
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setSelectedIndex((i) => (filtered.length + i - 1) % filtered.length);
+            return;
+        }
+        if (e.key === 'Enter' || e.key === 'Tab') {
+            e.preventDefault();
+            insertVariable(filtered[selectedIndex], atIndex);
+            return;
+        }
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            closeDropdown();
+        }
+    };
+
+    const list =
+        dropdownOpen &&
+        filtered.length > 0 &&
+        typeof document !== 'undefined' &&
+        createPortal(
+            <ul
+                className='fixed z-[500] max-h-40 min-w-[14rem] overflow-auto rounded-md border bg-popover py-1 text-popover-foreground shadow-md'
+                style={{
+                    top: menuRect.top,
+                    left: menuRect.left,
+                    width: Math.max(menuRect.width, 224),
+                }}
+                role='listbox'
+            >
+                {filtered.map((v, i) => (
+                    <li
+                        key={v.value}
+                        role='option'
+                        aria-selected={i === selectedIndex}
+                        className={cn(
+                            'cursor-pointer px-3 py-2 text-sm font-mono',
+                            i === selectedIndex ? 'bg-accent text-accent-foreground' : ''
+                        )}
+                        onPointerDown={(e) => {
+                            e.preventDefault();
+                            insertVariable(v, atIndex);
+                        }}
+                    >
+                        {v.label}
+                    </li>
+                ))}
+            </ul>,
+            document.body
+        );
+
+    return (
+        <div className='relative'>
+            <Input
+                ref={inputRef}
+                type='text'
+                inputMode='email'
+                autoComplete='off'
+                spellCheck={false}
+                value={value}
+                onChange={handleChange}
+                onKeyDown={handleKeyDown}
+                onBlur={() => setTimeout(closeDropdown, 200)}
+                placeholder={placeholder}
+                className={cn(invalid && 'border-destructive')}
+            />
+            {list}
+        </div>
+    );
+}
+
+interface MentionFormFieldProps {
+    label: string;
+    placeholder?: string;
+    value: string;
+    onChange: (value: string) => void;
+    required?: boolean;
+    showError?: boolean;
+    errorMessage?: string;
+    useMentions?: boolean;
+}
+
+const MentionFormField = ({
+    label,
+    placeholder,
+    value,
+    onChange,
+    required,
+    showError,
+    errorMessage,
+    useMentions,
+}: MentionFormFieldProps) => {
+    const invalid = Boolean(showError && errorMessage);
+    return (
+        <div>
+            <Label className={cn('mb-2 block', invalid && 'text-destructive')}>
+                {label}
+                {required && <span className='text-destructive ml-0.5'>*</span>}
+            </Label>
+            {useMentions ? (
+                <SingleLineFieldWithMentions
+                    value={value}
+                    onChange={onChange}
+                    placeholder={placeholder}
+                    invalid={invalid}
+                />
+            ) : (
+                <Input
+                    type='text'
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder={placeholder}
+                    className={cn(invalid && 'border-destructive')}
+                />
+            )}
+            {invalid && <p className='text-destructive text-xs mt-1'>{errorMessage}</p>}
+        </div>
+    );
+};
+
 interface NotificationNodeBuilderProps {
     node: NotificationNode;
     onSubmit: (node: NotificationNode) => void;
@@ -253,35 +467,40 @@ const EmailConfig = ({
     validation: NotificationValidationState;
 }) => (
     <div className='flex flex-col gap-3'>
-        <FormInput
+        <p className='text-xs text-muted-foreground'>
+            In To, CC, BCC, Subject, and Body, type <kbd className='rounded border px-1 font-mono'>@</kbd> for template
+            variables (↑↓ and Enter to choose).
+        </p>
+        <MentionFormField
             label='To'
-            type='email'
+            useMentions
             value={node.data.emailConfig?.to || ''}
             onChange={(value) => handleEmailConfigChange('to', value)}
-            placeholder='e.g. {{candidate.email}} or recipient@example.com'
+            placeholder='e.g. @ for {{candidate.email}} or user@example.com'
             required
             showError={formSubmitted}
             errorMessage={!validation.to.valid ? validation.to.message : undefined}
         />
-        <FormInput
+        <MentionFormField
             label='CC (optional)'
-            type='email'
+            useMentions
             value={node.data.emailConfig?.cc || ''}
             onChange={(value) => handleEmailConfigChange('cc', value)}
-            placeholder='CC'
+            placeholder='CC — use @ for variables'
         />
-        <FormInput
+        <MentionFormField
             label='BCC (optional)'
-            type='email'
+            useMentions
             value={node.data.emailConfig?.bcc || ''}
             onChange={(value) => handleEmailConfigChange('bcc', value)}
-            placeholder='BCC'
+            placeholder='BCC — use @ for variables'
         />
-        <FormInput
+        <MentionFormField
             label='Subject'
+            useMentions
             value={node.data.emailConfig?.subject || ''}
             onChange={(value) => handleEmailConfigChange('subject', value)}
-            placeholder='Subject'
+            placeholder='Subject — use @ for variables'
             required
             showError={formSubmitted}
             errorMessage={!validation.subject.valid ? validation.subject.message : undefined}

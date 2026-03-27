@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getWorkflowById } from '@jobify/appwrite-server/collections/workflow-collection';
 import jwt from 'jsonwebtoken';
 import { isRecognisedError } from '@jobify/domain/error';
+import { toPublicWorkflow } from '@jobify/domain/api-serializers';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest) {
             throw new UnauthorizedError('You do not have access to this workflow');
         }
 
-        return NextResponse.json(workflow);
+        return NextResponse.json(toPublicWorkflow(workflow as unknown as Record<string, unknown>), { status: 200 });
     } catch (error) {
         if (isRecognisedError(error)) {
             const err = error as { message?: string; statusCode?: number };

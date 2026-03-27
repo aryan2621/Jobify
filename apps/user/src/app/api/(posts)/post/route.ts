@@ -4,6 +4,7 @@ import { Job, JobState } from '@jobify/domain/job';
 import { createJobDocument, fetchJobById, deleteJobDocument } from '@jobify/appwrite-server/collections/job-collection';
 import jwt from 'jsonwebtoken';
 import { isRecognisedError, NotFoundError, UnauthorizedError } from '@jobify/domain/error';
+import { toPublicJob } from '@jobify/domain/api-serializers';
 export async function POST(req: NextRequest) {
     const token = req.cookies.get(USER_AUTH_COOKIE_NAME);
     try {
@@ -34,8 +35,9 @@ export async function POST(req: NextRequest) {
     }
     catch (error) {
         console.log('Error while creating job', error);
+        const err = error as any;
         if (isRecognisedError(error)) {
-            return NextResponse.json({ message: error.message }, { status: error.statusCode });
+            return NextResponse.json({ message: err.message }, { status: err.statusCode });
         }
         return NextResponse.json({ message: 'Error while creating job' }, { status: 500 });
     }
@@ -59,7 +61,7 @@ export async function GET(req: NextRequest) {
         if (!isOwner && job.state !== JobState.PUBLISHED) {
             throw new NotFoundError('Job not found');
         }
-        return NextResponse.json(job, { status: 200 });
+        return NextResponse.json(toPublicJob(job as unknown as Record<string, unknown>), { status: 200 });
     }
     catch (error) {
         console.log('Error while fetching job', error);

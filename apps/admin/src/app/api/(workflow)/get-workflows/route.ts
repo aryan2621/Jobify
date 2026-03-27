@@ -3,6 +3,7 @@ import { isRecognisedError, UnauthorizedError } from '@jobify/domain/error';
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { getWorkflowsByUserId } from '@jobify/appwrite-server/collections/workflow-collection';
+import { toPublicWorkflow } from '@jobify/domain/api-serializers';
 
 export async function GET(req: NextRequest) {
     const token = req.cookies.get(ADMIN_AUTH_COOKIE_NAME);
@@ -14,7 +15,10 @@ export async function GET(req: NextRequest) {
         const payload = jwt.verify(token.value, process.env.JWT_SECRET!) as { id: string };
         const workflows = await getWorkflowsByUserId(payload.id);
 
-        return NextResponse.json(workflows, { status: 200 });
+        return NextResponse.json(
+            workflows.map((w) => toPublicWorkflow(w as unknown as Record<string, unknown>)),
+            { status: 200 }
+        );
     } catch (error) {
         console.log('Error while fetching workflows', error);
         const err = error as any;

@@ -7,9 +7,7 @@
     "STRIPE_SECRET_KEY",
     "GEMINI_API_KEY",
     "INNGEST_EVENT_KEY",
-    "INNGEST_SIGNING_KEY",
-    "INNGEST_DEV",
-    "INNGEST_SERVE_ORIGIN"
+    "INNGEST_SIGNING_KEY"
   ],
   "tasks": {
     "build": {

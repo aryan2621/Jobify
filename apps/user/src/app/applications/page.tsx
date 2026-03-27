@@ -20,6 +20,7 @@ import { getResume } from '@jobify/appwrite-server/storage';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import FiltersPage from '@/components/elements/filters';
 import { formatDate } from '@/lib/job-utils/utils';
+import { jsonArrayFromApi } from '@/app/applications/_lib/utils';
 type SortOption = 'newest' | 'oldest' | 'nameAsc' | 'nameDesc';
 type FilterOptions = {
     status: ApplicationStatus | 'all';
@@ -525,12 +526,12 @@ export default function ApplicationsPage() {
                         application.phone,
                         application.currentLocation,
                         application.gender,
-                        JSON.parse(application.education),
-                        JSON.parse(application.experience),
-                        JSON.parse(application.skills),
+                        jsonArrayFromApi(application.education),
+                        jsonArrayFromApi(application.experience),
+                        jsonArrayFromApi<string>(application.skills),
                         application.source,
                         application.resume,
-                        JSON.parse(application.socialLinks),
+                        jsonArrayFromApi<string>(application.socialLinks),
                         application.coverLetter,
                         application.status,
                         application.jobId,
