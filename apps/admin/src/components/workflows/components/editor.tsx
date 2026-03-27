@@ -44,7 +44,7 @@ import { Loader2 } from 'lucide-react';
 
 
 import '@xyflow/react/dist/style.css';
-import { createDefaultRecruitmentWorkflow, deserializeNode } from '@/lib/utils/workflow-utils';
+import { deserializeNode } from '@/lib/utils/workflow-utils';
 
 
 type HistoryState = {
@@ -58,10 +58,10 @@ type EditorProps = {
 
 export const Editor = ({ workflowId }: EditorProps) => {
     const router = useRouter();
-    const defaultTemplate = useMemo(() => createDefaultRecruitmentWorkflow(), []);
+    const defaultTemplate = useMemo(() => ({ nodes: [], edges: [] }), []);
 
     const [nodes, setNodes, onNodesChange] = useNodesState(defaultTemplate.nodes as any[]);
-    const [edges, setEdges, onEdgesChange] = useEdgesState(defaultTemplate.edges);
+    const [edges, setEdges, onEdgesChange] = useEdgesState(defaultTemplate.edges as any[]);
     const { screenToFlowPosition, fitView, zoomIn, zoomOut } = useReactFlow();
 
 
@@ -269,7 +269,7 @@ export const Editor = ({ workflowId }: EditorProps) => {
                 'Reset this workflow to the default recruitment template? All current nodes and edges will be replaced.'
             )
         ) {
-            const fresh = createDefaultRecruitmentWorkflow();
+            const fresh = { nodes: [], edges: [] };
             setNodes(fresh.nodes as any[]);
             setEdges(fresh.edges);
             setHistory([{ nodes: fresh.nodes, edges: fresh.edges }]);
