@@ -61,6 +61,29 @@ export enum ApplicationStage {
     WITHDRAWN = 'withdrawn',
 }
 
+const APPLICATION_STAGE_VALUES = new Set<string>(Object.values(ApplicationStage));
+
+/** Normalizes persisted / API stage strings for workflow execution (conditions: `application.stage`). */
+export function parseApplicationStage(raw: unknown): ApplicationStage {
+    if (typeof raw !== 'string') return ApplicationStage.APPLIED;
+    const v = raw.trim();
+    return APPLICATION_STAGE_VALUES.has(v) ? (v as ApplicationStage) : ApplicationStage.APPLIED;
+}
+
+/** Typical funnel order for recruiter-facing dropdowns (subset first; remaining enum values appended). */
+export const APPLICATION_STAGE_PIPELINE_ORDER: ApplicationStage[] = [
+    ApplicationStage.APPLIED,
+    ApplicationStage.SHORTLISTED,
+    ApplicationStage.ASSIGNMENT_SENT,
+    ApplicationStage.ASSIGNMENT_SUBMITTED,
+    ApplicationStage.INTERVIEW_SCHEDULED,
+    ApplicationStage.INTERVIEW_DONE,
+    ApplicationStage.OFFER_SENT,
+    ApplicationStage.HIRED,
+    ApplicationStage.REJECTED,
+    ApplicationStage.WITHDRAWN,
+];
+
 
 export enum ConditionOperator {
     EQ = 'eq',

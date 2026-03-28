@@ -57,7 +57,14 @@ export const nodeFactory = (
         case TaskType.CONDITION:
             return new ConditionNode(id, nodeData, position, [], sourcePosition, targetPosition);
         case TaskType.UPDATE_STATUS:
-            return new UpdateStatusNode(id, nodeData, position, ApplicationStage.APPLIED, sourcePosition, targetPosition);
+            return new UpdateStatusNode(
+                id,
+                { ...nodeData, label: nodeData.label || 'Set stage' },
+                position,
+                ApplicationStage.APPLIED,
+                sourcePosition,
+                targetPosition
+            );
         default:
             throw new Error(`Unsupported node type: ${type}`);
     }

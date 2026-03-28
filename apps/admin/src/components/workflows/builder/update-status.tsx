@@ -1,21 +1,32 @@
 'use client';
 
 import { useState } from 'react';
-import { UpdateStatusNode, ApplicationStage } from '@jobify/domain/workflow';
+import {
+    APPLICATION_STAGE_PIPELINE_ORDER,
+    ApplicationStage,
+    parseApplicationStage,
+    UpdateStatusNode,
+} from '@jobify/domain/workflow';
 import { Label } from '@jobify/ui/label';
 import { Input } from '@jobify/ui/input';
 import { Button } from '@jobify/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@jobify/ui/select';
-import { Flag } from 'lucide-react';
 
 interface UpdateStatusNodeBuilderProps {
     node: UpdateStatusNode;
     onSubmit: (node: UpdateStatusNode) => void;
 }
 
-const STAGE_OPTIONS = Object.values(ApplicationStage).map((s) => ({
-    value: s,
-    label: s.replace(/_/g, ' '),
+function stageOptionLabel(value: ApplicationStage): string {
+    return value
+        .split('_')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+}
+
+const STAGE_OPTIONS = APPLICATION_STAGE_PIPELINE_ORDER.map((value) => ({
+    value,
+    label: stageOptionLabel(value),
 }));
 
 const UpdateStatusNodeBuilderComponent = ({ node, onSubmit }: UpdateStatusNodeBuilderProps) => {
@@ -25,7 +36,7 @@ const UpdateStatusNodeBuilderComponent = ({ node, onSubmit }: UpdateStatusNodeBu
             n.id,
             { ...n.data },
             { ...n.position },
-            n.stage ?? ApplicationStage.APPLIED,
+            parseApplicationStage(n.stage),
             n.sourcePosition,
             n.targetPosition
         );
@@ -33,7 +44,12 @@ const UpdateStatusNodeBuilderComponent = ({ node, onSubmit }: UpdateStatusNodeBu
 
     return (
         <div className='p-4'>
-            <h2 className='font-bold text-lg mb-4'>Configure Update Status</h2>
+            <h2 className='font-bold text-lg mb-4'>Set pipeline stage</h2>
+            <p className='text-sm text-muted-foreground mb-4'>
+                Writes the workflow <span className='font-medium text-foreground'>stage</span> on this application’s execution. Condition nodes use it as{' '}
+                <span className='font-medium text-foreground'>Application stage</span> (<code className='text-xs'>application.stage</code>). That is separate from{' '}
+                <span className='font-medium text-foreground'>Application status</span> on the candidate record (Applied / Rejected / Selected).
+            </p>
 
             <div className='flex flex-col gap-4'>
                 <div>
@@ -53,7 +69,7 @@ const UpdateStatusNodeBuilderComponent = ({ node, onSubmit }: UpdateStatusNodeBu
                     />
                 </div>
                 <div>
-                    <Label className='mb-2 block'>Stage</Label>
+                    <Label className='mb-2 block'>Pipeline stage</Label>
                     <Select
                         value={newNode.stage}
                         onValueChange={(v) => setNewNode({ ...newNode, stage: v as ApplicationStage })}
@@ -73,7 +89,7 @@ const UpdateStatusNodeBuilderComponent = ({ node, onSubmit }: UpdateStatusNodeBu
             </div>
 
             <Button onClick={() => onSubmit(newNode)} className="mt-4 w-full">
-                Save Update Status Configuration
+                Save configuration
             </Button>
         </div>
     );

@@ -2,7 +2,13 @@
 
 import { useMemo, useState } from 'react';
 import { ApplicationStatus } from '@jobify/domain/application';
-import { ConditionNode, ConditionBranch, ConditionOperator, ApplicationStage } from '@jobify/domain/workflow';
+import {
+    APPLICATION_STAGE_PIPELINE_ORDER,
+    ApplicationStage,
+    ConditionBranch,
+    ConditionNode,
+    ConditionOperator,
+} from '@jobify/domain/workflow';
 import { Label } from '@jobify/ui/label';
 import { Input } from '@jobify/ui/input';
 import { Button } from '@jobify/ui/button';
@@ -90,7 +96,11 @@ function getValueOptionsForField(field: string, assignmentIds: Set<string>): { v
             { value: 'false', label: 'false' },
         ];
     }
-    if (field === 'application.stage') return Object.values(ApplicationStage).map((s) => ({ value: s, label: s }));
+    if (field === 'application.stage')
+        return APPLICATION_STAGE_PIPELINE_ORDER.map((s) => ({
+            value: s,
+            label: s.replace(/_/g, ' '),
+        }));
     if (field === 'application.status') return Object.values(ApplicationStatus).map((s) => ({ value: s, label: s }));
     return [];
 }

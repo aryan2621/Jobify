@@ -31,7 +31,7 @@ export function getStepDisplayName(stepType: string): string {
         start: 'Workflow Started',
         end: 'Workflow Completed',
         notify: 'Candidate Notification',
-        update_status: 'Application Status Update',
+        update_status: 'Set pipeline stage',
         assignment: 'Assignment Email',
         interview: 'Interview Scheduling',
         wait: 'Wait Timer',

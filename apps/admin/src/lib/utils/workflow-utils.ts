@@ -1,5 +1,6 @@
 import {
     ApplicationStage,
+    parseApplicationStage,
     AssignmentNode,
     ConditionNode,
     EndNode,
@@ -63,7 +64,14 @@ export function createNode(
             return new ConditionNode(id, nodeData, position, [], sourcePosition, targetPosition);
 
         case TaskType.UPDATE_STATUS:
-            return new UpdateStatusNode(id, nodeData, position, ApplicationStage.APPLIED, sourcePosition, targetPosition);
+            return new UpdateStatusNode(
+                id,
+                { ...nodeData, label: nodeData.label || 'Set stage' },
+                position,
+                ApplicationStage.APPLIED,
+                sourcePosition,
+                targetPosition
+            );
 
         default:
             throw new Error(`Unknown node type: ${type}`);
@@ -145,7 +153,7 @@ export function cloneNode(node: WorkflowNode): WorkflowNode {
                 node.id,
                 { ...node.data },
                 { ...node.position },
-                updateNode.stage ?? ApplicationStage.APPLIED,
+                parseApplicationStage(updateNode.stage),
                 node.sourcePosition,
                 node.targetPosition
             );
@@ -231,7 +239,7 @@ export function deserializeNode(node: any): WorkflowNode {
                 node.id,
                 nodeData,
                 node.position,
-                node.stage ?? ApplicationStage.APPLIED,
+                parseApplicationStage(node.stage),
                 node.sourcePosition,
                 node.targetPosition
             );

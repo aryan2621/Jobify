@@ -315,7 +315,7 @@ export default function Sidebar({
                         onDragEnd={onDragEnd}
                     >
                         <Flag className='h-4 w-4 mr-2 text-orange-500' />
-                        <span>Update Status</span>
+                        <span>Set stage</span>
                     </div>
                 </div>
 
