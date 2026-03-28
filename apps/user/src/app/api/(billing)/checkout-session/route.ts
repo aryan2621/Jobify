@@ -3,7 +3,6 @@ import Stripe from 'stripe';
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { SubscriptionType, subscriptionPrices, yearlySubscriptionPrices } from '@jobify/domain/subscription';
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {});
 function isValidPlan(plan: string): plan is SubscriptionType {
     return Object.values(SubscriptionType).includes(plan as SubscriptionType);
 }
@@ -31,6 +30,7 @@ export async function POST(request: NextRequest) {
         }
         const planName = plan.charAt(0).toUpperCase() + plan.slice(1);
         const description = `${planName} Plan - ${isYearly ? 'Yearly' : 'Monthly'} Subscription`;
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {});
         const checkoutSession: Stripe.Checkout.Session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [
