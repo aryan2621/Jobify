@@ -1,18 +1,14 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalPassThroughEnv": [
-    "JWT_SECRET",
-    "APPWRITE_API_KEY",
-    "GOOGLE_CLIENT_SECRET",
-    "STRIPE_SECRET_KEY",
-    "GEMINI_API_KEY",
-    "INNGEST_EVENT_KEY",
-    "INNGEST_SIGNING_KEY"
-  ],
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**"
+      ]
     },
     "dev": {
       "cache": false,
@@ -25,4 +21,3 @@
     }
   }
 }
-
