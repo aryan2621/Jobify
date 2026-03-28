@@ -6,17 +6,27 @@ import { Label } from '@jobify/ui/label';
 import { Input } from '@jobify/ui/input';
 import { Button } from '@jobify/ui/button';
 import Link from 'next/link';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useState, useRef, useEffect } from 'react';
 import { LoginUserRequest } from '@jobify/domain/request';
 import { toast } from '@jobify/ui/use-toast';
 import { userStore } from '@/store';
 import { Eye, EyeOff, Building2, Lock, User as UserIcon, Loader2, ArrowRight } from 'lucide-react';
+import ReCAPTCHA from 'react-google-recaptcha';
+import { useTheme } from 'next-themes';
 
 export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [req, setReq] = useState<LoginUserRequest>(new LoginUserRequest('', ''));
+    const [recaptchaResolved, setRecaptchaResolved] = useState(false);
+    const [req, setReq] = useState<LoginUserRequest>(new LoginUserRequest('', '', ''));
+    const [mounted, setMounted] = useState(false);
+    const { resolvedTheme } = useTheme();
+    const recaptchaRef = useRef<ReCAPTCHA>(null);
     const login = userStore((state) => state.login);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const validateReq = (req: LoginUserRequest) => {
         if (!req.username) {
@@ -32,7 +42,14 @@ export default function LoginPage() {
         setLoading(true);
         try {
             validateReq(req);
-            await login(req);
+            setRecaptchaResolved(false);
+            const recaptchaToken = recaptchaRef.current?.getValue();
+            if (!recaptchaToken) {
+                throw new Error('Please complete the reCAPTCHA verification.');
+            }
+
+            const loginReq = new LoginUserRequest(req.username, req.password, recaptchaToken);
+            await login(loginReq);
             toast({
                 title: 'Welcome back!',
                 description: 'You have successfully signed in.',
@@ -59,11 +76,12 @@ export default function LoginPage() {
             });
         } finally {
             setLoading(false);
+            recaptchaRef.current?.reset();
         }
     };
 
     return (
-        <div className='min-h-screen bg-background flex items-center justify-center py-10 px-4'>
+        <div className='min-h-screen bg-background flex flex-col items-center justify-center py-10 px-4'>
             <div className='w-full max-w-md'>
                 <div className='text-center mb-8'>
                     <Badge variant='outline' className='mb-4 border-border bg-muted/40 text-muted-foreground'>
@@ -135,7 +153,24 @@ export default function LoginPage() {
                                 </div>
                             </div>
 
-                            <Button disabled={loading} type='submit' className='w-full mt-2' size='lg'>
+                            <div className="flex justify-center py-2">
+                                {mounted && (
+                                    <ReCAPTCHA
+                                        ref={recaptchaRef}
+                                        sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+                                        size="normal"
+                                        theme={resolvedTheme === 'dark' ? 'dark' : 'light'}
+                                        onChange={(token) => {
+                                            setRecaptchaResolved(!!token);
+                                        }}
+                                        onExpired={() => {
+                                            setRecaptchaResolved(false);
+                                        }}
+                                    />
+                                )}
+                            </div>
+
+                            <Button disabled={loading || !recaptchaResolved} type='submit' className='w-full mt-2' size='lg'>
                                 {loading ? (
                                     <>
                                         <Loader2 className='mr-2 h-4 w-4 animate-spin' />
@@ -162,6 +197,12 @@ export default function LoginPage() {
                         </div>
                     </CardFooter>
                 </Card>
+
+                <p className="text-xs text-muted-foreground text-center mt-8">
+                    This site is protected by reCAPTCHA and the Google 
+                    <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline ml-1">Privacy Policy</a> and 
+                    <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline ml-1">Terms of Service</a> apply.
+                </p>
             </div>
         </div>
     );

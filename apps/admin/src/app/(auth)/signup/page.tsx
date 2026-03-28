@@ -7,11 +7,13 @@ import { Input } from '@jobify/ui/input';
 import { Button } from '@jobify/ui/button';
 import Link from 'next/link';
 import { v4 as uuidv4 } from 'uuid';
-import { ChangeEvent, FormEvent, useState } from 'react';
+import { ChangeEvent, FormEvent, useState, useRef, useEffect } from 'react';
 import { User } from '@jobify/domain/user';
 import { toast } from '@jobify/ui/use-toast';
 import { Eye, EyeOff, Building2, User as UserIcon, Loader2, Lock, Mail } from 'lucide-react';
 import { userStore } from '@/store';
+import ReCAPTCHA from 'react-google-recaptcha';
+import { useTheme } from 'next-themes';
 
 export default function SignupPage() {
     const [formData, setFormData] = useState<User>(
@@ -20,6 +22,14 @@ export default function SignupPage() {
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [recaptchaResolved, setRecaptchaResolved] = useState(false);
+    const [mounted, setMounted] = useState(false);
+    const { resolvedTheme } = useTheme();
+    const recaptchaRef = useRef<ReCAPTCHA>(null);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const signUp = userStore((state) => state.signup);
 
@@ -56,14 +66,19 @@ export default function SignupPage() {
 
         try {
             validateForm();
-
             setLoading(true);
+            setRecaptchaResolved(false);
+            const recaptchaToken = recaptchaRef.current?.getValue();
+            if (!recaptchaToken) {
+                throw new Error('Please complete the reCAPTCHA verification.');
+            }
             await signUp({
                 ...formData,
                 firstName: formData.firstName.trim(),
                 lastName: formData.lastName.trim(),
                 username: formData.username.trim(),
                 email: formData.email.trim(),
+                recaptchaToken,
             });
 
             toast({
@@ -93,6 +108,7 @@ export default function SignupPage() {
             });
         } finally {
             setLoading(false);
+            recaptchaRef.current?.reset();
         }
     };
 
@@ -260,7 +276,26 @@ export default function SignupPage() {
                                 </div>
                             </div>
 
-                            <Button disabled={loading} type='submit' className='w-full mt-6' size='lg'>
+                             <div className="flex justify-center py-2">
+                                {mounted && (
+                                    <ReCAPTCHA
+                                        ref={recaptchaRef}
+                                        sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+                                        size="normal"
+                                        theme={resolvedTheme === 'dark' ? 'dark' : 'light'}
+                                        onChange={(token) => {
+                                            setRecaptchaResolved(!!token);
+                                        }}
+                                        onExpired={() => {
+                                            setRecaptchaResolved(false);
+                                        }}
+                                    />
+                                )}
+                             </div>
+
+
+
+                            <Button disabled={loading || !recaptchaResolved} type='submit' className='w-full mt-6' size='lg'>
                                 {loading ? (
                                     <>
                                         <Loader2 className='mr-2 h-4 w-4 animate-spin' />
@@ -286,6 +321,12 @@ export default function SignupPage() {
                         </div>
                     </CardFooter>
                 </Card>
+
+                <p className="text-xs text-muted-foreground text-center mt-8">
+                    This site is protected by reCAPTCHA and the Google 
+                    <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline ml-1">Privacy Policy</a> and 
+                    <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline ml-1">Terms of Service</a> apply.
+                </p>
             </div>
         </div>
     );

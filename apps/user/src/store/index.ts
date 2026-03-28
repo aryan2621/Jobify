@@ -11,6 +11,7 @@ export type SignupPayload = {
     email: string;
     password: string;
     confirmPassword: string;
+    recaptchaToken: string;
 };
 
 type LoginResponseUser = Pick<User, 'id' | 'firstName' | 'lastName' | 'username' | 'email'>;

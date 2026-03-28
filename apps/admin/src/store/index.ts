@@ -11,7 +11,7 @@ export type SessionUser = Omit<User, 'password' | 'confirmPassword'> & {
 interface Auth {
     user: SessionUser | null;
     login: (req: LoginUserRequest) => Promise<void>;
-    signup: (user: User) => Promise<void>;
+    signup: (user: User & { recaptchaToken: string }) => Promise<void>;
     logout: () => Promise<void>;
     updateUser: (profile: Partial<Profile>) => Promise<void>;
     setAvatarUrl: (avatarUrl: string | null) => void;

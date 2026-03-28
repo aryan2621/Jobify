@@ -3,16 +3,26 @@ import { fetchAdminByUsername } from '@jobify/appwrite-server/collections/admin-
 import { countJobsByUserId } from '@jobify/appwrite-server/collections/job-collection';
 import { countWorkflowsByUserId } from '@jobify/appwrite-server/collections/workflow-collection';
 import { getAvatarViewUrl } from '@jobify/appwrite-server/storage';
-import { isRecognisedError, UnauthorizedError } from '@jobify/domain/error';
+import { isRecognisedError, UnauthorizedError, BadRequestError } from '@jobify/domain/error';
 import { LoginUserRequest } from '@jobify/domain/request';
 import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyRecaptcha } from '@/lib/recaptcha';
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { username, password } = body as LoginUserRequest;
+        const { username, password, recaptchaToken } = body as LoginUserRequest & { recaptchaToken: string };
+
+        if (!recaptchaToken) {
+            throw new BadRequestError('reCAPTCHA token is required');
+        }
+
+        const isValidRecaptcha = await verifyRecaptcha(recaptchaToken);
+        if (!isValidRecaptcha) {
+            throw new BadRequestError('Invalid reCAPTCHA verification. Please try again.');
+        }
         const admins = await fetchAdminByUsername(username);
         if (admins.documents.length === 0) {
             throw new UnauthorizedError('Invalid username or password');

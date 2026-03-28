@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcryptjs from 'bcryptjs';
 import { BadRequestError, isRecognisedError } from '@jobify/domain/error';
 import { randomUUID } from 'crypto';
+import { verifyRecaptcha } from '@/lib/recaptcha';
 
 export async function POST(req: NextRequest) {
     try {
@@ -13,6 +14,16 @@ export async function POST(req: NextRequest) {
         const username = typeof body.username === 'string' ? body.username.trim() : '';
         const email = typeof body.email === 'string' ? body.email.trim() : '';
         const password = typeof body.password === 'string' ? body.password : '';
+        const recaptchaToken = typeof body.recaptchaToken === 'string' ? body.recaptchaToken : '';
+
+        if (!recaptchaToken) {
+            throw new BadRequestError('reCAPTCHA token is required');
+        }
+
+        const isValidRecaptcha = await verifyRecaptcha(recaptchaToken);
+        if (!isValidRecaptcha) {
+            throw new BadRequestError('Invalid reCAPTCHA verification. Please try again.');
+        }
 
         if (!firstName || !lastName || !username || !email || !password) {
             throw new BadRequestError('firstName, lastName, username, email, and password are required');
