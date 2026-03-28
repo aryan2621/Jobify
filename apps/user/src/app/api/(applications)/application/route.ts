@@ -12,11 +12,12 @@ import {
 import {
     getWorkflowById,
     getWorkflowsByUserId,
+    updateWorkflowExecutionProgress,
     updateWorkflowExecutionState,
 } from '@jobify/appwrite-server/collections/workflow-collection';
 import { isRecognisedError, NotFoundError, UnauthorizedError, ForbiddenError } from '@jobify/domain/error';
 import { toPublicApplication } from '@jobify/domain/api-serializers';
-import { TaskType } from '@jobify/domain/workflow';
+import { ApplicationStage, TaskType } from '@jobify/domain/workflow';
 
 async function triggerWorkflow(applicationId: string, jobId: string) {
     const adminUrl = process.env.ADMIN_APP_URL;
@@ -180,6 +181,7 @@ export async function PUT(req: NextRequest) {
 
             const submittedAt = new Date().toISOString();
             await updateWorkflowExecutionState(applicationId, nodeId, { submitted: true, submittedAt });
+            await updateWorkflowExecutionProgress(applicationId, { stage: ApplicationStage.ASSIGNMENT_SUBMITTED });
             return NextResponse.json({ message: 'Assignment submitted successfully' }, { status: 200 });
         }
 
