@@ -12,7 +12,6 @@ export type WorkflowExecution = {
     error?: string;
     startedAt?: string;
     completedAt?: string;
-    state?: Record<string, unknown>;
 };
 
 export type WorkflowExecutionEvent = {
