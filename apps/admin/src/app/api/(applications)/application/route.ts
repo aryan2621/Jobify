@@ -36,16 +36,17 @@ export async function PUT(req: NextRequest) {
             .replace('{interviewMode}', 'Online');
         const html = `<p>${EmailService.escapeHtml(content.replace(/\n/g, '<br/>'))}</p>`;
 
-        const sendResult = await EmailService.sendEmail({
+        const sendResultPromise = EmailService.sendEmail({
             userId,
             to: application.email,
             subject: EMAIL_SUBJECT,
             html,
         });
+        const updateStatusPromise = updateApplicationStatus(jobId, applicationId, status);
+        const [sendResult] = await Promise.all([sendResultPromise, updateStatusPromise]);
         if (sendResult.error) {
             throw new Error(sendResult.error.message);
         }
-        await updateApplicationStatus(jobId, applicationId, status);
         return NextResponse.json({ message: 'Application updated successfully' }, { status: 200 });
     } catch (error: any) {
         console.log('Error while updating application', error);
