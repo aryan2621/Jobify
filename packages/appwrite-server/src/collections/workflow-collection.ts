@@ -160,6 +160,18 @@ export async function getWorkflowExecutionByApplicationId(applicationId: string)
         throw error;
     }
 }
+export async function getWorkflowExecutionByExecutionKey(executionKey: string) {
+    try {
+        return await database.getDocument(DB_NAME, WORKFLOW_EXECUTIONS_COLLECTION, executionKey);
+    } catch (error) {
+        const code = (error as { code?: number })?.code;
+        if (code !== 404) {
+            console.log('Error fetching workflow execution by id', error);
+            throw error;
+        }
+    }
+    return await getWorkflowExecutionByApplicationId(executionKey);
+}
 
 export async function upsertWorkflowExecution(record: WorkflowExecutionRecord) {
     const now = new Date().toISOString();

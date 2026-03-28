@@ -11,7 +11,7 @@ import {
 import { fetchApplicationById } from '@jobify/appwrite-server/collections/application-collection';
 import { fetchJobById as getJobById } from '@jobify/appwrite-server/collections/job-collection';
 import { deserializeNode } from '@/lib/utils/workflow-utils';
-import { NodeType, TaskType, type WaitNode, type WorkflowNode } from '@jobify/domain/workflow';
+import { NodeType, TaskType, type ConditionNode, type WaitNode, type WorkflowNode } from '@jobify/domain/workflow';
 import {
     applicationFromDocument,
     executionFromDocument,
@@ -213,7 +213,8 @@ export const runWorkflowStep = inngest.createFunction(
         const nextNodeId = resolveNextNodeId(edges, currentNodeId, node, executionSnapshot);
 
         if (node.type === NodeType.TASK && node.taskType === TaskType.CONDITION && nextNodeId === null) {
-            const conditionOutgoing = getConditionOutgoingEdges(edges, currentNodeId);
+            const branchCount = ((node as ConditionNode).conditions ?? []).length;
+            const conditionOutgoing = getConditionOutgoingEdges(edges, currentNodeId, branchCount);
             if (conditionOutgoing.length === 0) {
                 throw new Error('Condition node has no outgoing edges');
             }

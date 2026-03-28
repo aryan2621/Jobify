@@ -55,6 +55,11 @@ type EditorProps = {
     workflowId?: string;
 };
 
+function edgesWithValidEndpoints(nodeList: { id: string }[], edgeList: Edge[]): Edge[] {
+    const ids = new Set(nodeList.map((n) => n.id));
+    return edgeList.filter((e) => ids.has(e.source) && ids.has(e.target));
+}
+
 export const Editor = ({ workflowId }: EditorProps) => {
     const router = useRouter();
     const defaultTemplate = useMemo(() => ({
@@ -111,7 +116,6 @@ export const Editor = ({ workflowId }: EditorProps) => {
 
     const undoPressed = useKeyPress(['z']);
     const redoPressed = useKeyPress(['y']);
-    const deletePressed = useKeyPress(['Delete', 'Backspace']);
 
 
     const [isModified, setIsModified] = useState(false);
@@ -245,13 +249,6 @@ export const Editor = ({ workflowId }: EditorProps) => {
     }, [redoPressed]);
 
     useEffect(() => {
-        if (deletePressed) {
-            handleDeleteSelected();
-        }
-    }, [deletePressed]);
-
-
-    useEffect(() => {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
             if (isModified) {
                 e.preventDefault();
@@ -335,14 +332,22 @@ export const Editor = ({ workflowId }: EditorProps) => {
     );
 
 
-    const onNodeClick = useCallback((event: React.MouseEvent, node: WorkflowNode) => {
-        const isStartOrEnd = node.type === NodeType.START || node.type === NodeType.END;
-        if (isStartOrEnd) {
-            return;
-        }
-        setSelectedNode(node);
-        setSheetOpen(true);
-    }, []);
+    const onNodeClick = useCallback(
+        (event: React.MouseEvent, node: WorkflowNode) => {
+            setNodes((nds) => nds.map((n) => ({ ...n, selected: n.id === node.id })));
+            const isStartOrEnd = node.type === NodeType.START || node.type === NodeType.END;
+            if (isStartOrEnd) {
+                return;
+            }
+            setSelectedNode(node);
+            setSheetOpen(true);
+        },
+        [setNodes]
+    );
+
+    const onPaneClick = useCallback(() => {
+        setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
+    }, [setNodes]);
 
 
     const onNodeSubmit = useCallback(
@@ -361,9 +366,20 @@ export const Editor = ({ workflowId }: EditorProps) => {
 
 
     const handleDeleteSelected = useCallback(() => {
+        const removedNodeIds = new Set(nodes.filter((n) => n.selected).map((n) => n.id));
         setNodes((nds) => nds.filter((node) => !node.selected));
-        setEdges((eds) => eds.filter((edge) => !edge.selected));
-    }, [setNodes, setEdges]);
+        setEdges((eds) =>
+            eds.filter((edge) => {
+                if (removedNodeIds.has(edge.source) || removedNodeIds.has(edge.target)) {
+                    return false;
+                }
+                if (edge.selected) {
+                    return false;
+                }
+                return true;
+            })
+        );
+    }, [nodes, setNodes, setEdges]);
 
 
     const handleClearAll = useCallback(() => {
@@ -439,10 +455,8 @@ export const Editor = ({ workflowId }: EditorProps) => {
                 const parsedEdges = JSON.parse((response as { edges: string }).edges);
                 const nodes = parsedNodes.map((node: any) => deserializeNode(node));
 
-                console.log(nodes);
-
                 setNodes(nodes);
-                setEdges(parsedEdges);
+                setEdges(edgesWithValidEndpoints(nodes, parsedEdges));
                 const name = (response as { name?: string }).name;
                 setWorkflowName(typeof name === 'string' && name.trim() ? name : 'New Workflow');
 
@@ -483,6 +497,7 @@ export const Editor = ({ workflowId }: EditorProps) => {
                             onDrop={onDrop}
                             onDragOver={onDragOver}
                             onNodeClick={onNodeClick}
+                            onPaneClick={onPaneClick}
                             nodeTypes={nodeTypes}
                             edgeTypes={edgeTypes}
                             defaultViewport={{ x: 0, y: 0, zoom: 1 }}

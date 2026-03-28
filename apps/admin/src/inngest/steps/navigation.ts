@@ -22,6 +22,40 @@ function branchHandleSortKey(handle: string | null | undefined): number | null {
     return null;
 }
 
+/**
+ * Fills missing/invalid `sourceHandle` on condition outgoing edges when the graph
+ * was saved without handles (e.g. legacy connect). Assigns branch-0… in document order,
+ * then branch-else if `list.length > branchCount`.
+ */
+function inferConditionBranchHandles(list: Edge[], branchCount: number): Edge[] {
+    if (list.length === 0) return list;
+    const needElse = list.length > branchCount;
+    const used = new Set<string>();
+    for (const e of list) {
+        const h = e.sourceHandle ?? null;
+        if (branchHandleSortKey(h) !== null && h) used.add(h);
+    }
+    const pool: string[] = [];
+    for (let i = 0; i < branchCount; i++) {
+        const h = `branch-${i}`;
+        if (!used.has(h)) pool.push(h);
+    }
+    if (needElse && !used.has('branch-else')) {
+        pool.push('branch-else');
+    }
+    pool.sort((a, b) => (branchHandleSortKey(a) ?? 0) - (branchHandleSortKey(b) ?? 0));
+
+    const result = list.map((e) => ({ ...e }));
+    let pi = 0;
+    for (let i = 0; i < result.length; i++) {
+        if (branchHandleSortKey(result[i].sourceHandle ?? null) === null) {
+            if (pi >= pool.length) break;
+            result[i] = { ...result[i], sourceHandle: pool[pi++] };
+        }
+    }
+    return result;
+}
+
 /** First outgoing edge in persisted graph order (non-condition nodes). */
 export function getOutgoingEdgesInDocumentOrder(edges: unknown[], sourceId: string): Edge[] {
     return asEdges(edges).filter((e) => e.source === sourceId);
@@ -29,11 +63,21 @@ export function getOutgoingEdgesInDocumentOrder(edges: unknown[], sourceId: stri
 
 /**
  * Outgoing edges from a condition node: every edge must use `branch-{i}` or `branch-else` handles.
+ * Missing handles are inferred from `conditionBranchCount` when possible (saved graphs without sourceHandle).
  * Sorted by branch index, else last.
  */
-export function getConditionOutgoingEdges(edges: unknown[], conditionNodeId: string): Edge[] {
-    const list = asEdges(edges).filter((e) => e.source === conditionNodeId);
+export function getConditionOutgoingEdges(
+    edges: unknown[],
+    conditionNodeId: string,
+    conditionBranchCount: number
+): Edge[] {
+    let list = asEdges(edges).filter((e) => e.source === conditionNodeId);
     if (list.length === 0) return [];
+
+    const hasInvalid = list.some((e) => branchHandleSortKey(e.sourceHandle ?? null) === null);
+    if (hasInvalid) {
+        list = inferConditionBranchHandles(list, conditionBranchCount);
+    }
 
     for (const e of list) {
         if (branchHandleSortKey(e.sourceHandle ?? null) === null) {
@@ -67,10 +111,9 @@ function resolveConditionNext(
     conditionNodeId: string,
     execution: WorkflowExecutionSnapshot
 ): string | null {
-    const outgoing = getConditionOutgoingEdges(edges, conditionNodeId);
-    if (outgoing.length === 0) return null;
-
     const branches = conditionNode.conditions ?? [];
+    const outgoing = getConditionOutgoingEdges(edges, conditionNodeId, branches.length);
+    if (outgoing.length === 0) return null;
     for (let i = 0; i < branches.length; i++) {
         if (evaluateConditionBranch(branches[i], execution)) {
             return outgoing[i]?.target ?? null;

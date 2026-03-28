@@ -6,17 +6,30 @@ export type WorkflowExecution = {
     currentNodeId?: string;
     workflowId: string;
     updatedAt: string;
+    recruiterId?: string;
+    stage?: string;
+    nextRunAt?: string;
+    error?: string;
+    startedAt?: string;
+    completedAt?: string;
+    state?: Record<string, unknown>;
 };
 
 export type WorkflowExecutionEvent = {
     id: string;
     nodeId: string;
+    nodeType?: string;
     stepType: string;
     status: 'started' | 'completed' | 'failed';
     input?: string;
     output?: string;
     error?: string;
     createdAt: string;
+    executionId?: string;
+    applicationId?: string;
+    jobId?: string;
+    workflowId?: string;
+    recruiterId?: string;
 };
 
 export type EventRun = {

@@ -73,6 +73,32 @@
 .react-flow__node-group {
     background: unset !important;
 }
+
+/* Custom nodes render inside .react-flow__node-{type}; disable xyflow default selected/hover
+   box-shadow (thin dark rect) on wrappers — selection chrome lives in CustomNode only. */
+.react-flow {
+    --xy-node-boxshadow-selected: none;
+    --xy-node-boxshadow-hover: none;
+}
+.react-flow .react-flow__node.selectable.selected,
+.react-flow .react-flow__node.selectable:focus,
+.react-flow .react-flow__node.selectable:focus-visible {
+    box-shadow: none !important;
+}
+.react-flow .react-flow__node-input.selectable.selected,
+.react-flow .react-flow__node-input.selectable:focus,
+.react-flow .react-flow__node-input.selectable:focus-visible,
+.react-flow .react-flow__node-default.selectable.selected,
+.react-flow .react-flow__node-default.selectable:focus,
+.react-flow .react-flow__node-default.selectable:focus-visible,
+.react-flow .react-flow__node-output.selectable.selected,
+.react-flow .react-flow__node-output.selectable:focus,
+.react-flow .react-flow__node-output.selectable:focus-visible,
+.react-flow .react-flow__node-group.selectable.selected,
+.react-flow .react-flow__node-group.selectable:focus,
+.react-flow .react-flow__node-group.selectable:focus-visible {
+    box-shadow: none !important;
+}
 .my-masonry-grid {
     display: flex;
     margin-left: -30px;

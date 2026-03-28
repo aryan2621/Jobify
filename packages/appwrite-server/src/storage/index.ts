@@ -44,12 +44,7 @@ async function uploadAvatar(file: File, userId: string): Promise<string> {
 async function uploadResume(file: File) {
     try {
         const fileId = uuidv4();
-        await storage.createFile(STORAGE, fileId, file, [
-            Permission.read(Role.any()),
-            Permission.write(Role.any()),
-            Permission.delete(Role.any()),
-            Permission.update(Role.any()),
-        ]);
+        await storage.createFile(STORAGE, fileId, file, []);
         return fileId;
     }
     catch (error) {
@@ -60,12 +55,7 @@ async function uploadResume(file: File) {
 async function uploadResumeToBucket(file: File) {
     try {
         const fileId = uuidv4();
-        await storage.createFile(STORAGE, fileId, file, [
-            Permission.read(Role.any()),
-            Permission.write(Role.any()),
-            Permission.delete(Role.any()),
-            Permission.update(Role.any()),
-        ]);
+        await storage.createFile(STORAGE, fileId, file, []);
         return fileId;
     }
     catch (error) {

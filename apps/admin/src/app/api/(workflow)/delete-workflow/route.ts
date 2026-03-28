@@ -1,7 +1,7 @@
 import { ADMIN_AUTH_COOKIE_NAME } from '@jobify/domain/auth-cookie';
 import { NextRequest, NextResponse } from 'next/server';
 import { deleteWorkflow, getWorkflowById } from '@jobify/appwrite-server/collections/workflow-collection';
-import { NotFoundError, UnauthorizedError } from '@jobify/domain/error';
+import { isRecognisedError, NotFoundError, UnauthorizedError } from '@jobify/domain/error';
 import jwt from 'jsonwebtoken';
 
 export async function GET(req: NextRequest) {
@@ -31,6 +31,10 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ message: 'Workflow deleted successfully' }, { status: 200 });
     } catch (error) {
         console.error('Error deleting workflow:', error);
+        if (isRecognisedError(error)) {
+            const err = error as { message?: string; statusCode?: number };
+            return NextResponse.json({ error: err.message }, { status: err.statusCode ?? 401 });
+        }
         return NextResponse.json({ error: 'Failed to delete workflow' }, { status: 500 });
     }
 }

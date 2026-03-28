@@ -66,6 +66,8 @@ export type PublicWorkflowExecution = {
     startedAt?: string;
     completedAt?: string;
     updatedAt?: string;
+    /** Parsed `state` column (e.g. workflowState per assignment node) for debugging. */
+    state?: Record<string, unknown>;
 };
 
 export type PublicWorkflowExecutionEvent = {
@@ -223,6 +225,21 @@ export function toPublicWorkflowExecution(doc: Record<string, unknown>): PublicW
     if (completedAt) out.completedAt = completedAt;
     const updatedAt = optionalStr(doc, 'updatedAt');
     if (updatedAt) out.updatedAt = updatedAt;
+    const rawState = doc.state;
+    if (rawState != null) {
+        if (typeof rawState === 'object' && !Array.isArray(rawState)) {
+            out.state = rawState as Record<string, unknown>;
+        } else if (typeof rawState === 'string' && rawState.trim()) {
+            try {
+                const parsed = JSON.parse(rawState) as unknown;
+                if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                    out.state = parsed as Record<string, unknown>;
+                }
+            } catch {
+                /* omit invalid JSON */
+            }
+        }
+    }
     return out;
 }
 

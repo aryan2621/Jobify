@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { 
     ReactFlow, 
     Controls, 
@@ -45,6 +45,14 @@ function WorkflowExecutionGraphInner({
     onSelectRun: (run: EventRun) => void 
 }) {
     const { fitView } = useReactFlow();
+    const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const run = eventRuns.find((r) => r.key === selectedRunKey);
+        if (run) {
+            setFocusedNodeId(run.nodeId);
+        }
+    }, [selectedRunKey, eventRuns]);
 
     const latestRunsMap = useMemo(() => {
         const map = new Map<string, EventRun>();
@@ -69,34 +77,49 @@ function WorkflowExecutionGraphInner({
                 }
             }
 
-            const currentSelectedRun = eventRuns.find(r => r.key === selectedRunKey);
-            const isSelected = currentSelectedRun?.nodeId === node.id;
-            
-            if (isSelected) {
+            const currentSelectedRun = eventRuns.find((r) => r.key === selectedRunKey);
+            const isRunSelected = currentSelectedRun?.nodeId === node.id;
+            const isFocused = focusedNodeId === node.id;
+
+            if (isRunSelected) {
                 shadow = `0 0 0 5px ${run?.finalStatus === 'failed' ? '#ef4444' : run?.finalStatus === 'completed' ? '#22c55e' : '#3b82f6'}`;
+            } else if (isFocused && shadow === 'none') {
+                shadow = '0 0 0 4px rgba(99, 102, 241, 0.55)';
+            } else if (isFocused && shadow !== 'none') {
+                shadow = `${shadow}, 0 0 0 3px rgba(99, 102, 241, 0.45)`;
             }
 
             return {
                 ...node,
+                selected: isFocused || isRunSelected,
                 style: {
                     ...node.style,
                     boxShadow: shadow !== 'none' ? shadow : undefined,
                     transition: 'all 0.2s ease',
                     borderRadius: '0.65rem',
-                    cursor: run ? 'pointer' : 'default',
+                    cursor: 'pointer',
                 },
                 draggable: false,
             };
         });
-    }, [workflowNodes, latestRunsMap, selectedRunKey, eventRuns]);
+    }, [workflowNodes, latestRunsMap, selectedRunKey, eventRuns, focusedNodeId]);
 
-    const handleNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
-        const run = Array.from(eventRuns).reverse().find(r => r.nodeId === node.id);
-        if (run) {
-            onSelectRun(run);
-        }
-    }, [eventRuns, onSelectRun]);
+    const handleNodeClick = useCallback(
+        (_: React.MouseEvent, node: Node) => {
+            setFocusedNodeId(node.id);
+            const run = Array.from(eventRuns)
+                .reverse()
+                .find((r) => r.nodeId === node.id);
+            if (run) {
+                onSelectRun(run);
+            }
+        },
+        [eventRuns, onSelectRun]
+    );
 
+    const handlePaneClick = useCallback(() => {
+        setFocusedNodeId(null);
+    }, []);
 
     return (
         <div className="w-full h-full relative">
@@ -106,6 +129,7 @@ function WorkflowExecutionGraphInner({
                 nodeTypes={nodeTypesConfig}
                 edgeTypes={edgeTypesConfig}
                 onNodeClick={handleNodeClick}
+                onPaneClick={handlePaneClick}
                 fitView
                 fitViewOptions={{ padding: 0.2 }}
                 nodesDraggable={false}

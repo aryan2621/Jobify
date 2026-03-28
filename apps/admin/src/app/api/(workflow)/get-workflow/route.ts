@@ -6,8 +6,6 @@ import jwt from 'jsonwebtoken';
 import { isRecognisedError } from '@jobify/domain/error';
 import { toPublicWorkflow } from '@jobify/domain/api-serializers';
 
-export const dynamic = 'force-dynamic';
-
 export async function GET(req: NextRequest) {
     try {
         const token = req.cookies.get(ADMIN_AUTH_COOKIE_NAME);

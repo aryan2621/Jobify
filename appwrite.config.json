@@ -1337,7 +1337,7 @@
                 "update(\"any\")",
                 "delete(\"any\")"
             ],
-            "fileSecurity": false,
+            "fileSecurity": true,
             "name": "storage",
             "enabled": true,
             "maximumFileSize": 50000000,

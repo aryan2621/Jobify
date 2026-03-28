@@ -66,6 +66,26 @@ export function hasUsefulPayload(value?: string): boolean {
     return true;
 }
 
+export function formatJsonValue(value: unknown): string {
+    if (value === undefined) return '';
+    try {
+        return JSON.stringify(value, null, 2);
+    } catch {
+        return String(value);
+    }
+}
+
+/** Pretty block for event payload; shows placeholder when empty. */
+export function formatEventPayloadDisplay(raw?: string): string {
+    if (raw === undefined || raw === null || String(raw).trim() === '') {
+        return '(empty)';
+    }
+    const parsed = parseContent(raw);
+    if (parsed === null || parsed === undefined) return '(empty)';
+    if (typeof parsed === 'object') return formatJsonValue(parsed);
+    return String(parsed);
+}
+
 export function buildEventRuns(events: WorkflowExecutionEvent[]): EventRun[] {
     const sorted = [...events].sort((a, b) =>
         new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()

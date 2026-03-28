@@ -1,8 +1,9 @@
 'use client';
 
-import { Handle, Position, useReactFlow } from '@xyflow/react';
+import { Handle, Position, useReactFlow, type NodeProps } from '@xyflow/react';
 import type { ConditionBranch } from '@jobify/domain/workflow';
 import { NodeType, TaskType } from '@jobify/domain/workflow';
+import { cn } from '@/lib/utils';
 
 type FlowNodeWithTask = {
     id: string;
@@ -10,7 +11,7 @@ type FlowNodeWithTask = {
     conditions?: ConditionBranch[];
 };
 
-export const CustomNode = ({ id, data, type }: { id: string; data: { label: string }; type?: string }) => {
+export const CustomNode = ({ id, data, type, selected }: NodeProps) => {
     const { getNode } = useReactFlow();
     const full = getNode(id) as FlowNodeWithTask | undefined;
     const taskType = full?.taskType;
@@ -19,13 +20,21 @@ export const CustomNode = ({ id, data, type }: { id: string; data: { label: stri
         type === NodeType.TASK && taskType === TaskType.CONDITION && conditions.length > 0;
     const branchCount = conditions.length;
     const totalHandles = branchCount + 1;
+    const label = typeof data.label === 'string' ? data.label : String(data.label ?? '');
 
     return (
-        <div className='shadow-md p-4 rounded-lg border-2 border-gray-200 relative min-w-[160px]'>
+        <div
+            className={cn(
+                'shadow-md p-4 rounded-lg border-2 relative min-w-[160px] transition-[box-shadow,border-color] duration-200',
+                selected
+                    ? 'border-primary ring-2 ring-inset ring-primary/45 z-10'
+                    : 'border-gray-200 dark:border-gray-600'
+            )}
+        >
             {type !== NodeType.START && (
                 <Handle type='target' position={Position.Top} className='bg-blue-500 w-2 h-2' />
             )}
-            <div className='text-center font-bold text-lg'>{data.label}</div>
+            <div className='text-center font-bold text-lg'>{label}</div>
             {type !== NodeType.END && !isConditionLayout && (
                 <Handle type='source' position={Position.Bottom} className='bg-blue-500 w-2 h-2' />
             )}
