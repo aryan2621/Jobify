@@ -1,8 +1,9 @@
 export { evaluateConditionBranch } from './evaluate-condition-branch';
 export {
+    getConditionOutgoingEdges,
     getFirstNodeAfterStart,
     getNextNodeIdLinear,
-    getSortedOutgoingEdges,
+    getOutgoingEdgesInDocumentOrder,
     resolveNextNodeId,
 } from './navigation';
 export { runNodeStep } from './run-node-step';

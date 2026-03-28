@@ -2,25 +2,27 @@ import { inngest } from '../client';
 import { APPLICATION_SUBMITTED, WORKFLOW_STEP } from '../constants';
 import {
     createWorkflowExecutionEvent,
+    getActiveWorkflowForRecruiter,
     getWorkflowById,
     getWorkflowExecutionByApplicationId,
-    getWorkflowsByUserId,
     updateWorkflowExecutionProgress,
     upsertWorkflowExecution,
 } from '@jobify/appwrite-server/collections/workflow-collection';
 import { fetchApplicationById } from '@jobify/appwrite-server/collections/application-collection';
 import { fetchJobById as getJobById } from '@jobify/appwrite-server/collections/job-collection';
 import { deserializeNode } from '@/lib/utils/workflow-utils';
-import { NodeType, TaskType, type WaitNode } from '@jobify/domain/workflow';
+import { NodeType, TaskType, type WaitNode, type WorkflowNode } from '@jobify/domain/workflow';
 import {
     applicationFromDocument,
     executionFromDocument,
+    getConditionOutgoingEdges,
     getFirstNodeAfterStart,
     jobFromDocument,
     planWaitSchedule,
     resolveNextNodeId,
     runNodeStep,
 } from '../steps';
+import type { WaitSchedulePlan } from '../steps/wait-step';
 
 type WorkflowPayload = { applicationId: string; jobId: string; currentNodeId?: string };
 
@@ -34,6 +36,15 @@ function parseExecutionState(raw: unknown): Record<string, unknown> {
     }
     if (raw && typeof raw === 'object') return raw as Record<string, unknown>;
     return {};
+}
+
+function assertValidWaitPlan(plan: WaitSchedulePlan): void {
+    if (plan.kind === 'skip') {
+        throw new Error('Wait node has no valid schedule (set a duration or exact date/time)');
+    }
+    if (plan.kind === 'relative' && plan.sleepSeconds <= 0) {
+        throw new Error('Wait node relative delay must be greater than zero');
+    }
 }
 
 export const runWorkflowStep = inngest.createFunction(
@@ -65,24 +76,47 @@ export const runWorkflowStep = inngest.createFunction(
             const recruiterId = (job as { createdBy?: string }).createdBy;
             if (!recruiterId) throw new Error('Job has no recruiter');
 
-            const workflows = await getWorkflowsByUserId(recruiterId);
-            const recruiterWorkflow = workflows?.[0];
-            const recruiterWorkflowId = (recruiterWorkflow as { id?: string; $id?: string } | undefined)?.id
-                ?? (recruiterWorkflow as { id?: string; $id?: string } | undefined)?.$id;
+            const existingExecution = await getWorkflowExecutionByApplicationId(applicationId);
+            const execStatus = String((existingExecution as { status?: string } | null)?.status ?? '');
+            const isStepContinuation =
+                incomingNodeId != null || execStatus === 'running' || execStatus === 'waiting';
 
-            if (!recruiterWorkflowId) {
-                return [null, application, job, null];
+            let workflowIdToLoad: string | null = null;
+            if (isStepContinuation && existingExecution) {
+                const wid = (existingExecution as { workflowId?: string }).workflowId;
+                if (wid) workflowIdToLoad = String(wid);
+            }
+            if (!workflowIdToLoad) {
+                const active = await getActiveWorkflowForRecruiter(recruiterId);
+                const id = (active as { id?: string; $id?: string } | null)?.id ?? (active as { $id?: string } | null)?.$id;
+                workflowIdToLoad = id ? String(id) : null;
             }
 
-            const workflow = await getWorkflowById(recruiterWorkflowId);
-            if (!workflow) return [null, application, job, null];
+            if (!workflowIdToLoad) {
+                return [null, application, job, existingExecution];
+            }
+
+            const workflow = await getWorkflowById(workflowIdToLoad);
+            if (!workflow) return [null, application, job, existingExecution];
+
+            const wfStatus = String((workflow as { status?: string }).status ?? '');
+            if (wfStatus !== 'active') {
+                if (isStepContinuation && existingExecution) {
+                    await updateWorkflowExecutionProgress(applicationId, {
+                        status: 'cancelled',
+                        error: 'Workflow is no longer active',
+                        nextRunAt: null,
+                    });
+                }
+                return [null, application, job, existingExecution];
+            }
 
             await upsertWorkflowExecution({
                 id: applicationId,
                 applicationId,
                 jobId: applicationJobId,
                 recruiterId,
-                workflowId: recruiterWorkflowId,
+                workflowId: workflowIdToLoad,
                 status: 'running',
             });
             const execution = await getWorkflowExecutionByApplicationId(applicationId);
@@ -177,16 +211,39 @@ export const runWorkflowStep = inngest.createFunction(
         }
 
         const nextNodeId = resolveNextNodeId(edges, currentNodeId, node, executionSnapshot);
+
+        if (node.type === NodeType.TASK && node.taskType === TaskType.CONDITION && nextNodeId === null) {
+            const conditionOutgoing = getConditionOutgoingEdges(edges, currentNodeId);
+            if (conditionOutgoing.length === 0) {
+                throw new Error('Condition node has no outgoing edges');
+            }
+            throw new Error('Condition node had no matching branch and no default (else) edge');
+        }
+
         let nodeToRunNext = nextNodeId;
 
         const nextRaw = nextNodeId ? (nodes as { id?: string }[]).find((n) => n.id === nextNodeId) : null;
         const nextNode = nextRaw ? deserializeNode(nextRaw) : null;
-        const isWait = nextNode?.type === NodeType.TASK && (nextNode as { taskType?: TaskType }).taskType === TaskType.WAIT;
-        const waitNode = isWait ? (nextNode as WaitNode) : null;
+
+        const currentIsWait =
+            node.type === NodeType.TASK && (node as WorkflowNode).taskType === TaskType.WAIT;
+        const nextIsWait =
+            nextNode?.type === NodeType.TASK && (nextNode as WorkflowNode).taskType === TaskType.WAIT;
         const isEnd = nextNode?.type === NodeType.END;
 
-        if (isWait && waitNode) {
-            nodeToRunNext = resolveNextNodeId(edges, nextNodeId!, waitNode, executionSnapshot) ?? nextNodeId!;
+        if (currentIsWait && !nextNodeId) {
+            throw new Error('Wait node must have an outgoing edge');
+        }
+
+        if (!currentIsWait && nextIsWait && nextNodeId && nextNode) {
+            nodeToRunNext = resolveNextNodeId(edges, nextNodeId, nextNode as WaitNode, executionSnapshot) ?? nextNodeId;
+        }
+
+        let waitNodeToSchedule: WaitNode | null = null;
+        if (currentIsWait) {
+            waitNodeToSchedule = node as WaitNode;
+        } else if (nextIsWait && nextNode) {
+            waitNodeToSchedule = nextNode as WaitNode;
         }
 
         await updateWorkflowExecutionProgress(applicationId, {
@@ -212,8 +269,9 @@ export const runWorkflowStep = inngest.createFunction(
             return { done: true };
         }
 
-        if (isWait && waitNode) {
-            const plan = planWaitSchedule(waitNode);
+        if (waitNodeToSchedule) {
+            const plan = planWaitSchedule(waitNodeToSchedule);
+            assertValidWaitPlan(plan);
             if (plan.kind === 'exact') {
                 await updateWorkflowExecutionProgress(applicationId, {
                     status: 'waiting',
@@ -226,7 +284,7 @@ export const runWorkflowStep = inngest.createFunction(
                 });
                 return { done: false, scheduled: true };
             }
-            if (plan.kind === 'relative' && plan.sleepSeconds > 0) {
+            if (plan.kind === 'relative') {
                 await updateWorkflowExecutionProgress(applicationId, {
                     status: 'waiting',
                     nextRunAt: new Date(Date.now() + plan.sleepSeconds * 1000).toISOString(),

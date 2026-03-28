@@ -79,6 +79,22 @@ export async function getWorkflowsByUserId(userId: string) {
     }
 }
 
+/** Most recently updated workflow for this recruiter with `status: active`. */
+export async function getActiveWorkflowForRecruiter(userId: string) {
+    try {
+        const res = await database.listDocuments(DB_NAME, WORKFLOW_COLLECTION, [
+            Query.equal('createdBy', userId),
+            Query.equal('status', 'active'),
+            Query.orderDesc('updatedAt'),
+            Query.limit(1),
+        ]);
+        return res.documents[0] ?? null;
+    } catch (error) {
+        console.log('Error fetching active workflow for recruiter', error);
+        throw error;
+    }
+}
+
 export async function countWorkflowsByUserId(userId: string): Promise<number> {
     try {
         const workflows = await database.listDocuments(DB_NAME, WORKFLOW_COLLECTION, [

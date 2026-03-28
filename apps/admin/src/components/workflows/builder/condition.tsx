@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ApplicationStatus } from '@jobify/domain/application';
 import { ConditionNode, ConditionBranch, ConditionOperator, ApplicationStage } from '@jobify/domain/workflow';
 import { Label } from '@jobify/ui/label';
@@ -12,48 +12,51 @@ import { nanoid } from 'nanoid';
 import { useToast } from '@jobify/ui/use-toast';
 import { cn } from '@/lib/utils';
 
+export type AssignmentOption = { id: string; label: string };
+
 interface ConditionNodeBuilderProps {
     node: ConditionNode;
     onSubmit: (node: ConditionNode) => void;
+    assignmentOptions?: AssignmentOption[];
 }
 
-const CONDITION_FIELDS = [
+const CORE_FIELDS = [
     { value: 'application.stage', label: 'Application stage' },
-    { value: 'workflowState.submitted', label: 'Assignment submitted' },
     { value: 'application.status', label: 'Application status' },
 ] as const;
 
-type ConditionFieldValue = (typeof CONDITION_FIELDS)[number]['value'];
+const CORE_FIELD_VALUES = new Set<string>(CORE_FIELDS.map((f) => f.value));
 
-const ALL_OPERATORS: { value: ConditionOperator; label: string }[] = [
+const ORDER_OPS: { value: ConditionOperator; label: string }[] = [
+    { value: ConditionOperator.GT, label: 'greater than' },
+    { value: ConditionOperator.GTE, label: 'greater than or equals' },
+    { value: ConditionOperator.LT, label: 'less than' },
+    { value: ConditionOperator.LTE, label: 'less than or equals' },
+];
+
+const BASIC_OPS: { value: ConditionOperator; label: string }[] = [
     { value: ConditionOperator.EQ, label: 'equals' },
     { value: ConditionOperator.NE, label: 'not equals' },
     { value: ConditionOperator.EXISTS, label: 'exists' },
     { value: ConditionOperator.NOT_EXISTS, label: 'not exists' },
 ];
 
-const OPERATORS_BY_FIELD: Record<ConditionFieldValue, { value: ConditionOperator; label: string }[]> = {
-    'application.stage': ALL_OPERATORS,
-    'application.status': ALL_OPERATORS,
-    'workflowState.submitted': [
-        { value: ConditionOperator.EQ, label: 'equals' },
-        { value: ConditionOperator.NE, label: 'not equals' },
-    ],
-};
+const STAGE_STATUS_OPS = [...BASIC_OPS, ...ORDER_OPS];
 
-const VALUE_OPTIONS_BY_FIELD: Record<ConditionFieldValue, { value: string; label: string }[]> = {
-    'application.stage': Object.values(ApplicationStage).map((s) => ({ value: s, label: s })),
-    'application.status': Object.values(ApplicationStatus).map((s) => ({ value: s, label: s })),
-    'workflowState.submitted': [
-        { value: 'true', label: 'true' },
-        { value: 'false', label: 'false' },
-    ],
-};
+const SUBMITTED_EQ_OPS: { value: ConditionOperator; label: string }[] = [
+    { value: ConditionOperator.EQ, label: 'equals' },
+    { value: ConditionOperator.NE, label: 'not equals' },
+];
 
-const ALLOWED_CONDITION_FIELDS = new Set<string>(CONDITION_FIELDS.map((f) => f.value));
+function isPerAssignmentSubmittedField(field: string, assignmentIds: Set<string>): boolean {
+    const m = field.match(/^workflowState\.([^.\s]+)\.submitted$/);
+    return Boolean(m && assignmentIds.has(m[1]!));
+}
 
-function isAllowedConditionField(field: string | undefined): field is ConditionFieldValue {
-    return Boolean(field && ALLOWED_CONDITION_FIELDS.has(field));
+function isAllowedConditionField(field: string | undefined, assignmentIds: Set<string>): boolean {
+    if (!field) return false;
+    if (CORE_FIELD_VALUES.has(field)) return true;
+    return isPerAssignmentSubmittedField(field, assignmentIds);
 }
 
 function operatorNeedsValue(op: ConditionOperator): boolean {
@@ -72,57 +75,90 @@ function selectStringToConditionValue(v: string): ConditionBranch['value'] {
     return v;
 }
 
-function getOperatorsForField(field: string): { value: ConditionOperator; label: string }[] {
-    if (isAllowedConditionField(field)) return OPERATORS_BY_FIELD[field];
-    return ALL_OPERATORS;
+function getOperatorsForField(field: string, assignmentIds: Set<string>): { value: ConditionOperator; label: string }[] {
+    if (isPerAssignmentSubmittedField(field, assignmentIds)) {
+        return SUBMITTED_EQ_OPS;
+    }
+    if (field === 'application.stage' || field === 'application.status') return STAGE_STATUS_OPS;
+    return STAGE_STATUS_OPS;
 }
 
-function getValueOptionsForField(field: string): { value: string; label: string }[] {
-    if (isAllowedConditionField(field)) return VALUE_OPTIONS_BY_FIELD[field];
+function getValueOptionsForField(field: string, assignmentIds: Set<string>): { value: string; label: string }[] {
+    if (isPerAssignmentSubmittedField(field, assignmentIds)) {
+        return [
+            { value: 'true', label: 'true' },
+            { value: 'false', label: 'false' },
+        ];
+    }
+    if (field === 'application.stage') return Object.values(ApplicationStage).map((s) => ({ value: s, label: s }));
+    if (field === 'application.status') return Object.values(ApplicationStatus).map((s) => ({ value: s, label: s }));
     return [];
 }
 
-function isValueValidForField(field: ConditionFieldValue, value: ConditionBranch['value']): boolean {
+function isValueValidForField(
+    field: string,
+    value: ConditionBranch['value'],
+    assignmentIds: Set<string>
+): boolean {
     if (value === undefined || value === null) return false;
     const str = conditionValueToSelectString(value);
-    return getValueOptionsForField(field).some((o) => o.value === str);
+    return getValueOptionsForField(field, assignmentIds).some((o) => o.value === str);
 }
 
-function isAllowedConditionValue(field: string | undefined, value: ConditionBranch['value']): boolean {
-    if (!isAllowedConditionField(field)) return false;
-    return isValueValidForField(field, value);
+function isAllowedConditionValue(
+    field: string | undefined,
+    value: ConditionBranch['value'],
+    assignmentIds: Set<string>
+): boolean {
+    if (!isAllowedConditionField(field, assignmentIds)) return false;
+    return isValueValidForField(field!, value, assignmentIds);
 }
 
-function firstValueForField(field: ConditionFieldValue): ConditionBranch['value'] | undefined {
-    const first = getValueOptionsForField(field)[0];
+function firstValueForField(field: string, assignmentIds: Set<string>): ConditionBranch['value'] | undefined {
+    const first = getValueOptionsForField(field, assignmentIds)[0];
     if (!first) return undefined;
     return selectStringToConditionValue(first.value);
 }
 
 type ConditionRowErrors = { field?: string; value?: string };
 
-function normalizeConditionBranch(c: ConditionBranch): ConditionBranch {
-    const field: ConditionFieldValue = isAllowedConditionField(c.field) ? c.field : 'application.stage';
-    const ops = getOperatorsForField(field);
+function normalizeConditionBranch(c: ConditionBranch, assignmentIds: Set<string>): ConditionBranch {
+    const field = isAllowedConditionField(c.field, assignmentIds) ? c.field! : 'application.stage';
+    const ops = getOperatorsForField(field, assignmentIds);
     const operator = ops.some((o) => o.value === c.operator) ? c.operator : ops[0]!.value;
     let value: ConditionBranch['value'] | undefined = c.value;
     if (operatorNeedsValue(operator)) {
-        value = isValueValidForField(field, c.value) ? c.value : firstValueForField(field);
+        value = isValueValidForField(field, c.value, assignmentIds) ? c.value : firstValueForField(field, assignmentIds);
     } else {
         value = undefined;
     }
     return { ...c, field, operator, value };
 }
 
-const ConditionNodeBuilderComponent = ({ node, onSubmit }: ConditionNodeBuilderProps) => {
+const ConditionNodeBuilderComponent = ({ node, onSubmit, assignmentOptions = [] }: ConditionNodeBuilderProps) => {
     const { toast } = useToast();
+    const assignmentIdSet = useMemo(() => new Set(assignmentOptions.map((o) => o.id)), [assignmentOptions]);
+
+    const fieldSelectOptions = useMemo(
+        () => [
+            ...CORE_FIELDS,
+            ...assignmentOptions.map((o) => ({
+                value: `workflowState.${o.id}.submitted`,
+                label: `Assignment submitted (${o.label})`,
+            })),
+        ],
+        [assignmentOptions]
+    );
+
     const [newNode, setNewNode] = useState<ConditionNode>(() => {
         const n = node as ConditionNode;
         return new ConditionNode(
             n.id,
             { ...n.data },
             { ...n.position },
-            n.conditions?.length ? n.conditions.map((c) => normalizeConditionBranch({ ...c })) : [],
+            n.conditions?.length
+                ? n.conditions.map((c) => normalizeConditionBranch({ ...c }, assignmentIdSet))
+                : [],
             n.sourcePosition,
             n.targetPosition
         );
@@ -136,7 +172,12 @@ const ConditionNodeBuilderComponent = ({ node, onSubmit }: ConditionNodeBuilderP
             ...prev,
             conditions: [
                 ...prev.conditions,
-                { id: nanoid(), field: 'application.stage', operator: ConditionOperator.EQ, value: ApplicationStage.ASSIGNMENT_SUBMITTED },
+                {
+                    id: nanoid(),
+                    field: 'application.stage',
+                    operator: ConditionOperator.EQ,
+                    value: ApplicationStage.ASSIGNMENT_SUBMITTED,
+                },
             ],
         }));
     };
@@ -181,10 +222,10 @@ const ConditionNodeBuilderComponent = ({ node, onSubmit }: ConditionNodeBuilderP
     const validateConditions = (): boolean => {
         const errors: Record<number, ConditionRowErrors> = {};
         newNode.conditions.forEach((cond, index) => {
-            if (!isAllowedConditionField(cond.field)) {
+            if (!isAllowedConditionField(cond.field, assignmentIdSet)) {
                 errors[index] = { ...errors[index], field: 'Select a field' };
             }
-            if (operatorNeedsValue(cond.operator) && !isAllowedConditionValue(cond.field, cond.value)) {
+            if (operatorNeedsValue(cond.operator) && !isAllowedConditionValue(cond.field, cond.value, assignmentIdSet)) {
                 errors[index] = { ...errors[index], value: 'Select a value' };
             }
         });
@@ -215,15 +256,15 @@ const ConditionNodeBuilderComponent = ({ node, onSubmit }: ConditionNodeBuilderP
 
     return (
         <div className='p-4'>
-            <h2 className="font-bold text-lg mb-4">Configure Condition</h2>
+            <h2 className='font-bold text-lg mb-4'>Configure Condition</h2>
 
-            <div className="flex flex-col gap-4">
+            <div className='flex flex-col gap-4'>
                 <div>
                     <Label className='mb-2 block'>Name</Label>
                     <Input
                         value={newNode.data.name ?? `condition_${newNode.id.slice(0, 8)}`}
                         disabled
-                        className="bg-muted"
+                        className='bg-muted'
                     />
                 </div>
                 <div>
@@ -231,171 +272,170 @@ const ConditionNodeBuilderComponent = ({ node, onSubmit }: ConditionNodeBuilderP
                     <Input
                         value={newNode.data.label}
                         onChange={(e) => setNewNode({ ...newNode, data: { ...newNode.data, label: e.target.value } })}
-                        placeholder="e.g., Assignment submitted?"
+                        placeholder='e.g., Assignment submitted?'
                     />
                 </div>
 
                 <div>
-                    <div className="flex items-center justify-between mb-2">
+                    <div className='flex items-center justify-between mb-2'>
                         <Label className='mb-2 block'>Branch conditions</Label>
-                        <Button type="button" variant="outline" size="sm" onClick={addCondition}>
-                            <Plus className="h-4 w-4 mr-1" /> Add
+                        <Button type='button' variant='outline' size='sm' onClick={addCondition}>
+                            <Plus className='h-4 w-4 mr-1' /> Add
                         </Button>
                     </div>
-                    <p className="text-xs text-muted-foreground mb-3">
-                        First matching condition wins. Connect each branch to a different next node. One edge can be the default (no condition).
+                    <p className='text-xs text-muted-foreground mb-3'>
+                        First matching condition wins. Connect each &quot;If&quot; handle to a next node, and use &quot;Else&quot;
+                        for the default branch. Re-save the workflow after changing branch count so handles stay in sync.
                     </p>
                     {newNode.conditions.length === 0 ? (
-                        <p className="text-sm text-muted-foreground py-4 border border-dashed rounded-md text-center">
-                            No conditions yet. Add one to branch (e.g. workflowState.[nodeName].submitted equals true).
+                        <p className='text-sm text-muted-foreground py-4 border border-dashed rounded-md text-center'>
+                            No conditions yet. Add one to branch on stage, status, or a specific assignment submission.
                         </p>
                     ) : (
-                        <div className="flex flex-col gap-3">
+                        <div className='flex flex-col gap-3'>
                             {newNode.conditions.map((cond, index) => {
                                 const fieldError = formSubmitted && rowErrors[index]?.field;
                                 const valueError = formSubmitted && rowErrors[index]?.value;
-                                const fieldSelectValue = isAllowedConditionField(cond.field) ? cond.field : undefined;
+                                const fieldOk = isAllowedConditionField(cond.field, assignmentIdSet);
                                 const valueStr = conditionValueToSelectString(cond.value);
                                 const valueSelectValue =
                                     operatorNeedsValue(cond.operator) &&
-                                    isAllowedConditionField(cond.field) &&
-                                    isValueValidForField(cond.field, cond.value)
+                                    fieldOk &&
+                                    isValueValidForField(cond.field, cond.value, assignmentIdSet)
                                         ? valueStr
                                         : undefined;
-                                const operatorOptions = getOperatorsForField(cond.field);
+                                const operatorOptions = getOperatorsForField(cond.field, assignmentIdSet);
                                 const operatorSelectValue = operatorOptions.some((o) => o.value === cond.operator)
                                     ? cond.operator
                                     : operatorOptions[0]!.value;
 
                                 return (
-                                <div key={cond.id} className="border rounded-md p-3 flex flex-col gap-3">
-                                    <div className="flex justify-between items-start">
-                                        <span className="text-xs font-medium text-muted-foreground">Condition {index + 1}</span>
-                                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeCondition(index)}>
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                    <div className="flex flex-col gap-3">
-                                        <div>
-                                            <Label
-                                                className={cn('text-xs mb-1.5 block', fieldError && 'text-destructive')}
+                                    <div key={cond.id} className='border rounded-md p-3 flex flex-col gap-3'>
+                                        <div className='flex justify-between items-start'>
+                                            <span className='text-xs font-medium text-muted-foreground'>Condition {index + 1}</span>
+                                            <Button
+                                                type='button'
+                                                variant='ghost'
+                                                size='icon'
+                                                className='h-8 w-8'
+                                                onClick={() => removeCondition(index)}
                                             >
-                                                Field
-                                                <span className="text-destructive ml-0.5">*</span>
-                                            </Label>
-                                            <Select
-                                                value={fieldSelectValue}
-                                                onValueChange={(v) => {
-                                                    const nextField = v as ConditionFieldValue;
-                                                    const ops = getOperatorsForField(nextField);
-                                                    const nextOp = ops.some((o) => o.value === cond.operator)
-                                                        ? cond.operator
-                                                        : ops[0]!.value;
-                                                    const needsVal = operatorNeedsValue(nextOp);
-                                                    let nextValue: ConditionBranch['value'] | undefined;
-                                                    if (needsVal) {
-                                                        nextValue = isValueValidForField(nextField, cond.value)
-                                                            ? cond.value
-                                                            : firstValueForField(nextField);
-                                                    } else {
-                                                        nextValue = undefined;
-                                                    }
-                                                    updateCondition(index, {
-                                                        field: nextField,
-                                                        operator: nextOp,
-                                                        value: nextValue,
-                                                    });
-                                                    clearRowFieldError(index, 'field');
-                                                    clearRowFieldError(index, 'value');
-                                                }}
-                                            >
-                                                <SelectTrigger className={cn('h-9', fieldError && 'border-destructive')}>
-                                                    <SelectValue placeholder="Select field" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {CONDITION_FIELDS.map((f) => (
-                                                        <SelectItem key={f.value} value={f.value}>
-                                                            {f.label}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            {fieldError ? (
-                                                <p className="text-destructive text-xs mt-1">{fieldError}</p>
-                                            ) : null}
+                                                <Trash2 className='h-4 w-4' />
+                                            </Button>
                                         </div>
-                                        <div>
-                                            <Label className="text-xs mb-1.5 block">
-                                                Operator
-                                                <span className="text-destructive ml-0.5">*</span>
-                                            </Label>
-                                            <Select
-                                                value={operatorSelectValue}
-                                                onValueChange={(v) => {
-                                                    const op = v as ConditionOperator;
-                                                    const field = cond.field;
-                                                    let nextValue: ConditionBranch['value'] | undefined = cond.value;
-                                                    if (operatorNeedsValue(op) && isAllowedConditionField(field)) {
-                                                        if (!isValueValidForField(field, cond.value)) {
-                                                            nextValue = firstValueForField(field);
-                                                        }
-                                                    } else {
-                                                        nextValue = undefined;
-                                                    }
-                                                    updateCondition(index, { operator: op, value: nextValue });
-                                                    if (!operatorNeedsValue(op)) {
-                                                        clearRowFieldError(index, 'value');
-                                                    }
-                                                }}
-                                            >
-                                                <SelectTrigger className="h-9">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {operatorOptions.map((o) => (
-                                                        <SelectItem key={o.value} value={o.value}>
-                                                            {o.label}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        {operatorNeedsValue(cond.operator) && (
+                                        <div className='flex flex-col gap-3'>
                                             <div>
-                                                <Label
-                                                    className={cn('text-xs mb-1.5 block', valueError && 'text-destructive')}
-                                                >
-                                                    Value
-                                                    <span className="text-destructive ml-0.5">*</span>
+                                                <Label className={cn('text-xs mb-1.5 block', fieldError && 'text-destructive')}>
+                                                    Field
+                                                    <span className='text-destructive ml-0.5'>*</span>
                                                 </Label>
                                                 <Select
-                                                    value={valueSelectValue}
+                                                    value={fieldOk ? cond.field : undefined}
                                                     onValueChange={(v) => {
+                                                        const nextField = v;
+                                                        const ops = getOperatorsForField(nextField, assignmentIdSet);
+                                                        const nextOp = ops.some((o) => o.value === cond.operator)
+                                                            ? cond.operator
+                                                            : ops[0]!.value;
+                                                        const needsVal = operatorNeedsValue(nextOp);
+                                                        let nextValue: ConditionBranch['value'] | undefined;
+                                                        if (needsVal) {
+                                                            nextValue = isValueValidForField(nextField, cond.value, assignmentIdSet)
+                                                                ? cond.value
+                                                                : firstValueForField(nextField, assignmentIdSet);
+                                                        } else {
+                                                            nextValue = undefined;
+                                                        }
                                                         updateCondition(index, {
-                                                            value: selectStringToConditionValue(v),
+                                                            field: nextField,
+                                                            operator: nextOp,
+                                                            value: nextValue,
                                                         });
+                                                        clearRowFieldError(index, 'field');
                                                         clearRowFieldError(index, 'value');
                                                     }}
                                                 >
-                                                    <SelectTrigger className={cn('h-9', valueError && 'border-destructive')}>
-                                                        <SelectValue placeholder="Select value" />
+                                                    <SelectTrigger className={cn('h-9', fieldError && 'border-destructive')}>
+                                                        <SelectValue placeholder='Select field' />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {isAllowedConditionField(cond.field) &&
-                                                            getValueOptionsForField(cond.field).map((opt) => (
-                                                                <SelectItem key={opt.value} value={opt.value}>
-                                                                    {opt.label}
-                                                                </SelectItem>
-                                                            ))}
+                                                        {fieldSelectOptions.map((f) => (
+                                                            <SelectItem key={f.value} value={f.value}>
+                                                                {f.label}
+                                                            </SelectItem>
+                                                        ))}
                                                     </SelectContent>
                                                 </Select>
-                                                {valueError ? (
-                                                    <p className="text-destructive text-xs mt-1">{valueError}</p>
-                                                ) : null}
+                                                {fieldError ? <p className='text-destructive text-xs mt-1'>{fieldError}</p> : null}
                                             </div>
-                                        )}
+                                            <div>
+                                                <Label className='text-xs mb-1.5 block'>
+                                                    Operator
+                                                    <span className='text-destructive ml-0.5'>*</span>
+                                                </Label>
+                                                <Select
+                                                    value={operatorSelectValue}
+                                                    onValueChange={(v) => {
+                                                        const op = v as ConditionOperator;
+                                                        const field = cond.field;
+                                                        let nextValue: ConditionBranch['value'] | undefined = cond.value;
+                                                        if (operatorNeedsValue(op) && isAllowedConditionField(field, assignmentIdSet)) {
+                                                            if (!isValueValidForField(field, cond.value, assignmentIdSet)) {
+                                                                nextValue = firstValueForField(field, assignmentIdSet);
+                                                            }
+                                                        } else {
+                                                            nextValue = undefined;
+                                                        }
+                                                        updateCondition(index, { operator: op, value: nextValue });
+                                                        if (!operatorNeedsValue(op)) {
+                                                            clearRowFieldError(index, 'value');
+                                                        }
+                                                    }}
+                                                >
+                                                    <SelectTrigger className='h-9'>
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {operatorOptions.map((o) => (
+                                                            <SelectItem key={o.value} value={o.value}>
+                                                                {o.label}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            {operatorNeedsValue(cond.operator) && (
+                                                <div>
+                                                    <Label className={cn('text-xs mb-1.5 block', valueError && 'text-destructive')}>
+                                                        Value
+                                                        <span className='text-destructive ml-0.5'>*</span>
+                                                    </Label>
+                                                    <Select
+                                                        value={valueSelectValue}
+                                                        onValueChange={(v) => {
+                                                            updateCondition(index, {
+                                                                value: selectStringToConditionValue(v),
+                                                            });
+                                                            clearRowFieldError(index, 'value');
+                                                        }}
+                                                    >
+                                                        <SelectTrigger className={cn('h-9', valueError && 'border-destructive')}>
+                                                            <SelectValue placeholder='Select value' />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {isAllowedConditionField(cond.field, assignmentIdSet) &&
+                                                                getValueOptionsForField(cond.field, assignmentIdSet).map((opt) => (
+                                                                    <SelectItem key={opt.value} value={opt.value}>
+                                                                        {opt.label}
+                                                                    </SelectItem>
+                                                                ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    {valueError ? <p className='text-destructive text-xs mt-1'>{valueError}</p> : null}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
                                 );
                             })}
                         </div>
@@ -403,7 +443,7 @@ const ConditionNodeBuilderComponent = ({ node, onSubmit }: ConditionNodeBuilderP
                 </div>
             </div>
 
-            <Button type="button" onClick={handleSave} className="mt-4 w-full">
+            <Button type='button' onClick={handleSave} className='mt-4 w-full'>
                 Save Condition Configuration
             </Button>
         </div>

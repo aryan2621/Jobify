@@ -83,6 +83,17 @@ export const Editor = ({ workflowId }: EditorProps) => {
     const [edges, setEdges, onEdgesChange] = useEdgesState(defaultTemplate.edges as any[]);
     const { screenToFlowPosition, fitView, zoomIn, zoomOut } = useReactFlow();
 
+    const assignmentOptionsForConditions = useMemo(
+        () =>
+            (nodes as WorkflowNode[])
+                .filter((n): n is AssignmentNode => n.type === NodeType.TASK && n.taskType === TaskType.ASSIGNMENT)
+                .map((n) => ({
+                    id: n.id,
+                    label: (n.data?.label && String(n.data.label).trim()) || n.data?.name || n.id,
+                })),
+        [nodes]
+    );
+
 
     const [type] = useDnD();
 
@@ -639,7 +650,11 @@ export const Editor = ({ workflowId }: EditorProps) => {
                                     <WaitNodeBuilderComponent node={selectedNode as WaitNode} onSubmit={onNodeSubmit} />
                                 )}
                                 {selectedNode && selectedNode.type === NodeType.TASK && selectedNode.taskType === TaskType.CONDITION && (
-                                    <ConditionNodeBuilderComponent node={selectedNode as ConditionNode} onSubmit={onNodeSubmit} />
+                                    <ConditionNodeBuilderComponent
+                                        node={selectedNode as ConditionNode}
+                                        onSubmit={onNodeSubmit}
+                                        assignmentOptions={assignmentOptionsForConditions}
+                                    />
                                 )}
                                 {selectedNode && selectedNode.type === NodeType.TASK && selectedNode.taskType === TaskType.UPDATE_STATUS && (
                                     <UpdateStatusNodeBuilderComponent node={selectedNode as UpdateStatusNode} onSubmit={onNodeSubmit} />

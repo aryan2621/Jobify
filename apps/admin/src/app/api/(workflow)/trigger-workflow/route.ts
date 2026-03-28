@@ -3,6 +3,7 @@ import { inngest } from '@/inngest/client';
 import { APPLICATION_SUBMITTED } from '@/inngest/constants';
 import { fetchApplicationById } from '@jobify/appwrite-server/collections/application-collection';
 import { fetchJobById } from '@jobify/appwrite-server/collections/job-collection';
+import { getActiveWorkflowForRecruiter } from '@jobify/appwrite-server/collections/workflow-collection';
 
 export async function POST(req: NextRequest) {
     try {
@@ -31,6 +32,19 @@ export async function POST(req: NextRequest) {
         }
         if (!job) {
             return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+        }
+
+        const recruiterId = (job as { createdBy?: string }).createdBy;
+        if (!recruiterId) {
+            return NextResponse.json({ error: 'Job has no recruiter' }, { status: 400 });
+        }
+
+        const activeWorkflow = await getActiveWorkflowForRecruiter(recruiterId);
+        if (!activeWorkflow) {
+            return NextResponse.json(
+                { ok: true, skipped: true, reason: 'no-active-workflow', applicationId, jobId },
+                { status: 200 }
+            );
         }
 
         await inngest.send({

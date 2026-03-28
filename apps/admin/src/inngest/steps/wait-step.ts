@@ -14,11 +14,7 @@ export type WaitSchedulePlan =
     | { kind: 'relative'; sleepSeconds: number }
     | { kind: 'skip' };
 
-/**
- * Delay is applied when the *next* node after the one just executed is a wait node.
- * If the pointer is already on a wait node, this plan is still used by the orchestrator
- * when the following node is wait (same as legacy behavior).
- */
+/** Used when the executed node is a WAIT or when advancing through a WAIT successor (see workflow orchestrator). */
 export function planWaitSchedule(waitNode: WaitNode): WaitSchedulePlan {
     if (waitNode.exactDateTime) {
         const ts = new Date(waitNode.exactDateTime).getTime();

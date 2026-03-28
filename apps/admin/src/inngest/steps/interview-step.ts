@@ -81,7 +81,5 @@ export async function runInterviewStep(ctx: WorkflowRunContext, node: InterviewN
         durationMinutes,
         attendeeEmails,
     });
-    if (cal.error) {
-        console.error('[interview-step] Calendar event failed (email was sent):', cal.error.message);
-    }
+    if (cal.error) throw cal.error;
 }

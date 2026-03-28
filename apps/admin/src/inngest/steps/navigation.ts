@@ -2,7 +2,7 @@ import { NodeType, TaskType, type ConditionNode, type WorkflowNode } from '@jobi
 import { evaluateConditionBranch } from './evaluate-condition-branch';
 import type { WorkflowExecutionSnapshot } from './types';
 
-type Edge = { source: string; target: string };
+type Edge = { source: string; target: string; sourceHandle?: string | null };
 
 function asEdges(edges: unknown[]): Edge[] {
     return edges.filter((e): e is Edge => {
@@ -11,15 +11,47 @@ function asEdges(edges: unknown[]): Edge[] {
     });
 }
 
-/** Stable order so branch index maps to condition index. */
-export function getSortedOutgoingEdges(edges: unknown[], sourceId: string): Edge[] {
-    return asEdges(edges)
-        .filter((e) => e.source === sourceId)
-        .sort((a, b) => a.target.localeCompare(b.target));
+const BRANCH_HANDLE = /^branch-(\d+)$/;
+const ELSE_HANDLE = /^branch-else$/;
+
+function branchHandleSortKey(handle: string | null | undefined): number | null {
+    if (!handle) return null;
+    if (ELSE_HANDLE.test(handle)) return Number.MAX_SAFE_INTEGER;
+    const m = handle.match(BRANCH_HANDLE);
+    if (m) return Number(m[1]);
+    return null;
+}
+
+/** First outgoing edge in persisted graph order (non-condition nodes). */
+export function getOutgoingEdgesInDocumentOrder(edges: unknown[], sourceId: string): Edge[] {
+    return asEdges(edges).filter((e) => e.source === sourceId);
+}
+
+/**
+ * Outgoing edges from a condition node: every edge must use `branch-{i}` or `branch-else` handles.
+ * Sorted by branch index, else last.
+ */
+export function getConditionOutgoingEdges(edges: unknown[], conditionNodeId: string): Edge[] {
+    const list = asEdges(edges).filter((e) => e.source === conditionNodeId);
+    if (list.length === 0) return [];
+
+    for (const e of list) {
+        if (branchHandleSortKey(e.sourceHandle ?? null) === null) {
+            throw new Error(
+                'Condition node edges must use If/Else branch handles from the workflow editor (branch-0, branch-1, …, branch-else).'
+            );
+        }
+    }
+
+    return [...list].sort((a, b) => {
+        const ka = branchHandleSortKey(a.sourceHandle ?? null) ?? 0;
+        const kb = branchHandleSortKey(b.sourceHandle ?? null) ?? 0;
+        return ka - kb;
+    });
 }
 
 export function getNextNodeIdLinear(edges: unknown[], currentNodeId: string): string | null {
-    const outgoing = getSortedOutgoingEdges(edges, currentNodeId);
+    const outgoing = getOutgoingEdgesInDocumentOrder(edges, currentNodeId);
     return outgoing[0]?.target ?? null;
 }
 
@@ -35,7 +67,7 @@ function resolveConditionNext(
     conditionNodeId: string,
     execution: WorkflowExecutionSnapshot
 ): string | null {
-    const outgoing = getSortedOutgoingEdges(edges, conditionNodeId);
+    const outgoing = getConditionOutgoingEdges(edges, conditionNodeId);
     if (outgoing.length === 0) return null;
 
     const branches = conditionNode.conditions ?? [];
@@ -47,7 +79,7 @@ function resolveConditionNext(
     if (outgoing.length > branches.length) {
         return outgoing[branches.length]?.target ?? null;
     }
-    return outgoing[0]?.target ?? null;
+    return null;
 }
 
 /**
