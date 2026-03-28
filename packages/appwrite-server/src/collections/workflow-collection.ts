@@ -178,6 +178,11 @@ export async function upsertWorkflowExecution(record: WorkflowExecutionRecord) {
     try {
         const existing = await getWorkflowExecutionByApplicationId(record.applicationId);
         const existingState = existing ? parseExecutionState(existing.state) : {};
+        const existingDoc = existing as { stage?: string | null; currentNodeId?: string | null } | null;
+        const preservedCurrentNodeId =
+            record.currentNodeId !== undefined ? (record.currentNodeId ?? null) : (existingDoc?.currentNodeId ?? null);
+        const preservedStage =
+            record.stage !== undefined ? (record.stage ?? null) : (existingDoc?.stage ?? null);
         const payload = {
             id: record.id,
             applicationId: record.applicationId,
@@ -185,8 +190,8 @@ export async function upsertWorkflowExecution(record: WorkflowExecutionRecord) {
             recruiterId: record.recruiterId,
             workflowId: record.workflowId,
             status: record.status,
-            currentNodeId: record.currentNodeId ?? null,
-            stage: record.stage ?? null,
+            currentNodeId: preservedCurrentNodeId,
+            stage: preservedStage,
             state: JSON.stringify(record.state ?? existingState),
             nextRunAt: record.nextRunAt ?? null,
             error: record.error ?? null,
