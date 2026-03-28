@@ -14,7 +14,7 @@ import { LoadingProfileSkeleton } from '@/components/elements/profile-skeleton';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { userStore } from '@/store';
 import { LogOut, Camera, Loader2 } from 'lucide-react';
-import { Application } from '@jobify/domain/application';
+import { Application, parseApplicationStage } from '@jobify/domain/application';
 import { UserSummary } from './components/summary';
 import ProfilePersonalTab from './components/profile-personal-tab';
 import ProfileSecurityTab from './components/profile-security-tab';
@@ -93,6 +93,7 @@ function ProfilePageContent() {
                         jsonArrayFromApi<string>(application.socialLinks),
                         application.coverLetter,
                         application.status,
+                        parseApplicationStage(application.stage),
                         application.jobId,
                         application.createdAt,
                         application.createdBy

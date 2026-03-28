@@ -1,5 +1,5 @@
+import { ApplicationStage, ApplicationStatus } from '@jobify/domain/application';
 import {
-    ApplicationStage,
     AssignmentNode,
     ConditionNode,
     EndNode,
@@ -11,7 +11,7 @@ import {
 } from '@jobify/domain/workflow';
 import { Position } from '@xyflow/react';
 import { nanoid } from 'nanoid';
-import { DelayUnit, NodeType, TaskType } from '@jobify/domain/workflow';
+import { ApplicationUpdateTarget, DelayUnit, NodeType, TaskType } from '@jobify/domain/workflow';
 
 function getTypeLabel(type: NodeType | TaskType): string {
     if (type === NodeType.START) return 'start';
@@ -59,8 +59,10 @@ export const nodeFactory = (
         case TaskType.UPDATE_STATUS:
             return new UpdateStatusNode(
                 id,
-                { ...nodeData, label: nodeData.label || 'Set stage' },
+                { ...nodeData, label: nodeData.label || 'Update application' },
                 position,
+                ApplicationUpdateTarget.STATUS,
+                ApplicationStatus.APPLIED,
                 ApplicationStage.APPLIED,
                 sourcePosition,
                 targetPosition

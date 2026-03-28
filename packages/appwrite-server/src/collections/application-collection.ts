@@ -1,6 +1,6 @@
 import { DB_NAME, APPLICATION_COLLECTION } from '../name';
 import { database } from '../config';
-import { Application, ApplicationStatus } from '@jobify/domain/application';
+import { Application, ApplicationStage, ApplicationStatus } from '@jobify/domain/application';
 import { Query } from 'appwrite';
 import { UserApplicationsRequest } from '@jobify/domain/request';
 
@@ -22,6 +22,7 @@ async function createApplicationDocument(application: Application) {
             socialLinks: application.socialLinks ?? [],
             coverLetter: application.coverLetter,
             status: application.status,
+            stage: application.stage,
             jobId: application.jobId,
             createdAt: application.createdAt,
             createdBy: application.createdBy,
@@ -58,15 +59,21 @@ async function fetchApplicationsByJobId(jobId: string, request?: UserApplication
     }
 }
 
-async function updateApplicationStatus(jobId: string, applicationId: string, status: ApplicationStatus) {
+async function updateApplication(applicationId: string, updates: { status?: ApplicationStatus; stage?: ApplicationStage }) {
+    const payload: Record<string, unknown> = {};
+    if (updates.status !== undefined) payload.status = updates.status;
+    if (updates.stage !== undefined) payload.stage = updates.stage;
+    if (Object.keys(payload).length === 0) return null;
     try {
-        return await database.updateDocument(DB_NAME, APPLICATION_COLLECTION, applicationId, {
-            status: status,
-        });
+        return await database.updateDocument(DB_NAME, APPLICATION_COLLECTION, applicationId, payload);
     } catch (error) {
-        console.log('Error updating application status', error);
+        console.log('Error updating application', error);
         throw error;
     }
+}
+
+async function updateApplicationStatus(jobId: string, applicationId: string, status: ApplicationStatus) {
+    return updateApplication(applicationId, { status });
 }
 
 async function fetchApplicationsByUserId(userId: string, request?: UserApplicationsRequest) {
@@ -122,5 +129,6 @@ export {
     fetchApplicationsByJobIds,
     fetchApplicationsByUserId,
     hasApplicationByUserAndJob,
+    updateApplication,
     updateApplicationStatus,
 };

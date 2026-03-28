@@ -1,5 +1,6 @@
 import { Job } from './job';
-import type { ApplicationStatus, Gender, JobSource } from './application';
+import type { ApplicationStage, ApplicationStatus, Gender, JobSource } from './application';
+import { parseApplicationStage } from './application';
 
 export type PublicJob = {
     id: string;
@@ -35,6 +36,7 @@ export type PublicApplication = {
     socialLinks: string[];
     coverLetter: string;
     status: ApplicationStatus;
+    stage: ApplicationStage;
     jobId: string;
     createdAt: string;
     createdBy: string;
@@ -175,6 +177,7 @@ export function toPublicApplication(doc: Record<string, unknown>): PublicApplica
         socialLinks: strArr(doc, 'socialLinks'),
         coverLetter: str(doc, 'coverLetter'),
         status: str(doc, 'status') as ApplicationStatus,
+        stage: parseApplicationStage(doc.stage),
         jobId: str(doc, 'jobId'),
         createdAt: str(doc, 'createdAt'),
         createdBy: str(doc, 'createdBy'),

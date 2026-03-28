@@ -18,7 +18,7 @@ import {
 import { Input } from '@jobify/ui/input';
 import { BellRing, FileText, GitBranch, Flag, Info, Video, Clock, Save, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { TaskType, NodeType } from '@jobify/domain/workflow';
+import { ApplicationUpdateTarget, TaskType, NodeType } from '@jobify/domain/workflow';
 import { toast } from '@jobify/ui/use-toast';
 import { HTTPError } from 'ky';
 
@@ -193,7 +193,11 @@ export default function Sidebar({
                 return false; 
             } else if (node.taskType === TaskType.UPDATE_STATUS) {
                 const updateNode = node as any;
-                return !updateNode.stage;
+                const t = updateNode.updateTarget as ApplicationUpdateTarget | undefined;
+                if (t === ApplicationUpdateTarget.STAGE) {
+                    return updateNode.pipelineStage == null || updateNode.pipelineStage === '';
+                }
+                return !updateNode.applicationStatus;
             }
             return false;
         });
@@ -315,7 +319,7 @@ export default function Sidebar({
                         onDragEnd={onDragEnd}
                     >
                         <Flag className='h-4 w-4 mr-2 text-orange-500' />
-                        <span>Set stage</span>
+                        <span>Update application</span>
                     </div>
                 </div>
 

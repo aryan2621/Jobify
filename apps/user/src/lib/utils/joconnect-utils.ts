@@ -1,4 +1,13 @@
-import { Application, ApplicationStatus, DegreeType, Education, Experience, Gender, JobSource } from '@jobify/domain/application';
+import {
+    Application,
+    ApplicationStage,
+    ApplicationStatus,
+    DegreeType,
+    Education,
+    Experience,
+    Gender,
+    JobSource,
+} from '@jobify/domain/application';
 export const jobs: {
     title: string;
     company: string;
@@ -315,6 +324,7 @@ export const dummyApplications: Application[] = [
         socialLinks: ['https://linkedin.com/in/johndoe', 'https://github.com/johndoe'],
         coverLetter: 'I am excited to apply for this position...',
         status: ApplicationStatus.APPLIED,
+        stage: ApplicationStage.APPLIED,
         jobId: 'JOB001',
         createdAt: '2023-08-15T10:00:00Z',
         createdBy: 'SYSTEM',
@@ -341,6 +351,7 @@ export const dummyApplications: Application[] = [
         socialLinks: ['https://linkedin.com/in/janesmith'],
         coverLetter: 'With my experience in digital marketing...',
         status: ApplicationStatus.SELECTED,
+        stage: ApplicationStage.SHORTLISTED,
         jobId: 'JOB002',
         createdAt: '2023-08-16T14:30:00Z',
         createdBy: 'SYSTEM',
@@ -361,6 +372,7 @@ export const dummyApplications: Application[] = [
         socialLinks: ['https://linkedin.com/in/alexjohnson', 'https://github.com/alexj'],
         coverLetter: 'I am passionate about leveraging data to drive business decisions...',
         status: ApplicationStatus.REJECTED,
+        stage: ApplicationStage.REJECTED,
         jobId: 'JOB003',
         createdAt: '2023-08-17T09:15:00Z',
         createdBy: 'SYSTEM',

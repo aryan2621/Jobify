@@ -1,23 +1,24 @@
 import { USER_AUTH_COOKIE_NAME } from '@jobify/domain/auth-cookie';
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-import { Application } from '@jobify/domain/application';
+import { Application, parseApplicationStage } from '@jobify/domain/application';
 import { fetchJobById } from '@jobify/appwrite-server/collections/job-collection';
 import {
     createApplicationDocument,
     fetchApplicationById,
+    updateApplication,
     updateApplicationStatus,
     hasApplicationByUserAndJob,
 } from '@jobify/appwrite-server/collections/application-collection';
 import {
     getWorkflowById,
     getWorkflowsByUserId,
-    updateWorkflowExecutionProgress,
     updateWorkflowExecutionState,
 } from '@jobify/appwrite-server/collections/workflow-collection';
 import { isRecognisedError, NotFoundError, UnauthorizedError, ForbiddenError } from '@jobify/domain/error';
 import { toPublicApplication } from '@jobify/domain/api-serializers';
-import { ApplicationStage, TaskType } from '@jobify/domain/workflow';
+import { ApplicationStage } from '@jobify/domain/application';
+import { TaskType } from '@jobify/domain/workflow';
 
 async function triggerWorkflow(applicationId: string, jobId: string) {
     const adminUrl = process.env.ADMIN_APP_URL;
@@ -128,6 +129,7 @@ export async function POST(req: NextRequest) {
         const id = (user as any).id;
         const body = (await req.json()) as Application;
         body.createdBy = id;
+        body.stage = parseApplicationStage(body.stage);
         const job = await fetchJobById(body.jobId);
         if (!job) {
             throw new NotFoundError('Requested job does not exist');
@@ -181,7 +183,7 @@ export async function PUT(req: NextRequest) {
 
             const submittedAt = new Date().toISOString();
             await updateWorkflowExecutionState(applicationId, nodeId, { submitted: true, submittedAt });
-            await updateWorkflowExecutionProgress(applicationId, { stage: ApplicationStage.ASSIGNMENT_SUBMITTED });
+            await updateApplication(applicationId, { stage: ApplicationStage.ASSIGNMENT_SUBMITTED });
             return NextResponse.json({ message: 'Assignment submitted successfully' }, { status: 200 });
         }
 

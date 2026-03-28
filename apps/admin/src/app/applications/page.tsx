@@ -53,7 +53,7 @@ import {
 } from '@jobify/ui/alert-dialog';
 
 
-import { Application, ApplicationStatus } from '@jobify/domain/application';
+import { Application, ApplicationStatus, parseApplicationStage } from '@jobify/domain/application';
 import { Job } from '@jobify/domain/job';
 import { Alert, AlertDescription, AlertTitle } from '@jobify/ui/alert';
 
@@ -695,6 +695,7 @@ export default function AdminApplicationsPage() {
                         jsonArrayFromApi<string>(app.socialLinks),
                         app.coverLetter,
                         app.status,
+                        parseApplicationStage(app.stage),
                         app.jobId,
                         app.createdAt,
                         app.createdBy

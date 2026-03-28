@@ -1,4 +1,8 @@
 /** Handle side for workflow nodes; matches @xyflow/react `Position` string values. */
+import type { ApplicationStage, ApplicationStatus } from './application';
+
+export { ApplicationStage, parseApplicationStage, APPLICATION_STAGE_PIPELINE_ORDER } from './application';
+
 export type FlowHandlePosition = 'top' | 'right' | 'bottom' | 'left';
 
 export interface EmailConfig {
@@ -46,43 +50,6 @@ export enum TaskType {
     CONDITION = 'condition',
     UPDATE_STATUS = 'update_status',
 }
-
-
-export enum ApplicationStage {
-    APPLIED = 'applied',
-    REJECTED = 'rejected',
-    SHORTLISTED = 'shortlisted',
-    ASSIGNMENT_SENT = 'assignment_sent',
-    ASSIGNMENT_SUBMITTED = 'assignment_submitted',
-    INTERVIEW_SCHEDULED = 'interview_scheduled',
-    INTERVIEW_DONE = 'interview_done',
-    OFFER_SENT = 'offer_sent',
-    HIRED = 'hired',
-    WITHDRAWN = 'withdrawn',
-}
-
-const APPLICATION_STAGE_VALUES = new Set<string>(Object.values(ApplicationStage));
-
-/** Normalizes persisted / API stage strings for workflow execution (conditions: `application.stage`). */
-export function parseApplicationStage(raw: unknown): ApplicationStage {
-    if (typeof raw !== 'string') return ApplicationStage.APPLIED;
-    const v = raw.trim();
-    return APPLICATION_STAGE_VALUES.has(v) ? (v as ApplicationStage) : ApplicationStage.APPLIED;
-}
-
-/** Typical funnel order for recruiter-facing dropdowns (subset first; remaining enum values appended). */
-export const APPLICATION_STAGE_PIPELINE_ORDER: ApplicationStage[] = [
-    ApplicationStage.APPLIED,
-    ApplicationStage.SHORTLISTED,
-    ApplicationStage.ASSIGNMENT_SENT,
-    ApplicationStage.ASSIGNMENT_SUBMITTED,
-    ApplicationStage.INTERVIEW_SCHEDULED,
-    ApplicationStage.INTERVIEW_DONE,
-    ApplicationStage.OFFER_SENT,
-    ApplicationStage.HIRED,
-    ApplicationStage.REJECTED,
-    ApplicationStage.WITHDRAWN,
-];
 
 
 export enum ConditionOperator {
@@ -355,19 +322,36 @@ export class ConditionNode extends BaseTaskNode {
     }
 }
 
+/** Which application field the "Update application" node writes. */
+export enum ApplicationUpdateTarget {
+    STATUS = 'status',
+    STAGE = 'stage',
+}
+
+export function parseApplicationUpdateTarget(raw: unknown): ApplicationUpdateTarget {
+    if (raw === ApplicationUpdateTarget.STAGE || raw === 'stage') return ApplicationUpdateTarget.STAGE;
+    return ApplicationUpdateTarget.STATUS;
+}
 
 export class UpdateStatusNode extends BaseTaskNode {
-    stage: ApplicationStage;
+    /** Whether this node updates high-level status or pipeline stage. */
+    updateTarget: ApplicationUpdateTarget;
+    applicationStatus: ApplicationStatus;
+    pipelineStage: ApplicationStage;
 
     constructor(
         id: string,
         data: { label: string; name?: string },
         position: { x: number; y: number },
-        stage: ApplicationStage,
+        updateTarget: ApplicationUpdateTarget,
+        applicationStatus: ApplicationStatus,
+        pipelineStage: ApplicationStage,
         sourcePosition?: FlowHandlePosition,
         targetPosition?: FlowHandlePosition
     ) {
         super(id, data, position, TaskType.UPDATE_STATUS, sourcePosition, targetPosition);
-        this.stage = stage;
+        this.updateTarget = updateTarget;
+        this.applicationStatus = applicationStatus;
+        this.pipelineStage = pipelineStage;
     }
 }

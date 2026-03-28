@@ -1,6 +1,5 @@
+import { ApplicationStatus, parseApplicationStage, parseApplicationStatus, ApplicationStage } from '@jobify/domain/application';
 import {
-    ApplicationStage,
-    parseApplicationStage,
     AssignmentNode,
     ConditionNode,
     EndNode,
@@ -12,7 +11,14 @@ import {
 } from '@jobify/domain/workflow';
 import type { Edge } from '@xyflow/react';
 import { Position } from '@xyflow/react';
-import { WorkflowNode, NodeType, TaskType, DelayUnit } from '@jobify/domain/workflow';
+import {
+    ApplicationUpdateTarget,
+    WorkflowNode,
+    NodeType,
+    TaskType,
+    DelayUnit,
+    parseApplicationUpdateTarget,
+} from '@jobify/domain/workflow';
 
 function getTypeLabel(type: NodeType | TaskType): string {
     if (type === NodeType.START) return 'start';
@@ -66,8 +72,10 @@ export function createNode(
         case TaskType.UPDATE_STATUS:
             return new UpdateStatusNode(
                 id,
-                { ...nodeData, label: nodeData.label || 'Set stage' },
+                { ...nodeData, label: nodeData.label || 'Update application' },
                 position,
+                ApplicationUpdateTarget.STATUS,
+                ApplicationStatus.APPLIED,
                 ApplicationStage.APPLIED,
                 sourcePosition,
                 targetPosition
@@ -153,7 +161,9 @@ export function cloneNode(node: WorkflowNode): WorkflowNode {
                 node.id,
                 { ...node.data },
                 { ...node.position },
-                parseApplicationStage(updateNode.stage),
+                parseApplicationUpdateTarget(updateNode.updateTarget),
+                parseApplicationStatus(updateNode.applicationStatus),
+                parseApplicationStage(updateNode.pipelineStage),
                 node.sourcePosition,
                 node.targetPosition
             );
@@ -239,7 +249,9 @@ export function deserializeNode(node: any): WorkflowNode {
                 node.id,
                 nodeData,
                 node.position,
-                parseApplicationStage(node.stage),
+                parseApplicationUpdateTarget(node.updateTarget),
+                parseApplicationStatus(node.applicationStatus),
+                parseApplicationStage(node.pipelineStage),
                 node.sourcePosition,
                 node.targetPosition
             );

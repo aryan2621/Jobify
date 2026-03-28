@@ -9,6 +9,7 @@ import {
     upsertWorkflowExecution,
 } from '@jobify/appwrite-server/collections/workflow-collection';
 import { fetchApplicationById } from '@jobify/appwrite-server/collections/application-collection';
+import { parseApplicationStage, parseApplicationStatus } from '@jobify/domain/application';
 import { fetchJobById as getJobById } from '@jobify/appwrite-server/collections/job-collection';
 import { deserializeNode } from '@/lib/utils/workflow-utils';
 import { NodeType, TaskType, type ConditionNode, type WaitNode, type WorkflowNode } from '@jobify/domain/workflow';
@@ -142,8 +143,8 @@ export const runWorkflowStep = inngest.createFunction(
         const executionState = execution ? parseExecutionState(execution.state) : {};
         const workflowState = (executionState.workflowState as Record<string, unknown> | undefined) ?? {};
         const executionSnapshot = executionFromDocument({
-            stage: execution?.stage,
-            status: applicationDoc.status,
+            stage: parseApplicationStage((applicationDoc as { stage?: unknown }).stage),
+            status: parseApplicationStatus(applicationDoc.status),
             currentNodeId: execution?.currentNodeId,
             workflowState,
         });

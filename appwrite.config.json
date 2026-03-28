@@ -378,6 +378,26 @@
                     ]
                 },
                 {
+                    "key": "stage",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": "enum",
+                    "elements": [
+                        "applied",
+                        "rejected",
+                        "shortlisted",
+                        "assignment_sent",
+                        "assignment_submitted",
+                        "interview_scheduled",
+                        "interview_done",
+                        "offer_sent",
+                        "hired",
+                        "withdrawn"
+                    ]
+                },
+                {
                     "key": "firstName",
                     "type": "string",
                     "required": true,

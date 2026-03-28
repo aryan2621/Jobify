@@ -55,7 +55,7 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@jobif
 import { Popover, PopoverAnchor, PopoverContent } from '@jobify/ui/popover';
 import { Skeleton } from '@jobify/ui/skeleton';
 
-import { Application, ApplicationStatus } from '@jobify/domain/application';
+import { Application, ApplicationStatus, parseApplicationStage } from '@jobify/domain/application';
 
 const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -751,6 +751,7 @@ export default function JobApplicationsPage({ params }: { params: { id: string }
                         jsonArrayFromApi<string>(app.socialLinks),
                         app.coverLetter,
                         app.status,
+                        parseApplicationStage(app.stage),
                         app.jobId,
                         app.createdAt,
                         app.createdBy

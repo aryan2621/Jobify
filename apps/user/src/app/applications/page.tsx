@@ -13,7 +13,7 @@ import { Skeleton } from '@jobify/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@jobify/ui/tabs';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@jobify/ui/tooltip';
 import { User as UserIcon, Briefcase, MapPin, Phone, Building, GraduationCap, Lightbulb, Globe, FileText, Calendar, ChevronDown, Filter, SortAsc, SortDesc, Search, Download, Mail, AlertCircle, Info, CheckCircle, XCircle, Clock, } from 'lucide-react';
-import { Application, ApplicationStatus } from '@jobify/domain/application';
+import { Application, ApplicationStatus, parseApplicationStage } from '@jobify/domain/application';
 import { User } from '@jobify/domain/user';
 import { Job } from '@jobify/domain/job';
 import { getResume } from '@jobify/appwrite-server/storage';
@@ -534,6 +534,7 @@ export default function ApplicationsPage() {
                         jsonArrayFromApi<string>(application.socialLinks),
                         application.coverLetter,
                         application.status,
+                        parseApplicationStage(application.stage),
                         application.jobId,
                         application.createdAt,
                         application.createdBy

@@ -11,7 +11,7 @@ import { Separator } from '@jobify/ui/separator';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@jobify/ui/tabs';
 import { Alert, AlertTitle, AlertDescription } from '@jobify/ui/alert';
 import { Skeleton } from '@jobify/ui/skeleton';
-import { Application, ApplicationStatus } from '@jobify/domain/application';
+import { Application, ApplicationStatus, parseApplicationStage } from '@jobify/domain/application';
 import { Job } from '@jobify/domain/job';
 import { downloadResume, formatDate, jsonArrayFromApi } from '@/app/applications/_lib/utils';
 import { ApplicationTimeline, JobDetails, StatusBadge } from '@/app/applications/_lib/components';
@@ -47,6 +47,7 @@ export default function UserApplicationDetailPage({ params }: {
                 jsonArrayFromApi<string>(response.socialLinks),
                 response.coverLetter,
                 response.status,
+                parseApplicationStage(response.stage),
                 response.jobId,
                 response.createdAt,
                 response.createdBy

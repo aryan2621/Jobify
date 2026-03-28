@@ -1,14 +1,12 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ApplicationStatus } from '@jobify/domain/application';
 import {
     APPLICATION_STAGE_PIPELINE_ORDER,
     ApplicationStage,
-    ConditionBranch,
-    ConditionNode,
-    ConditionOperator,
-} from '@jobify/domain/workflow';
+    ApplicationStatus,
+} from '@jobify/domain/application';
+import { ConditionBranch, ConditionNode, ConditionOperator } from '@jobify/domain/workflow';
 import { Label } from '@jobify/ui/label';
 import { Input } from '@jobify/ui/input';
 import { Button } from '@jobify/ui/button';

@@ -45,8 +45,55 @@ export class Experience {
 export enum ApplicationStatus {
     APPLIED = 'Applied',
     REJECTED = 'Rejected',
-    SELECTED = 'Selected'
+    SELECTED = 'Selected',
 }
+
+const APPLICATION_STATUS_VALUES = new Set<string>(Object.values(ApplicationStatus));
+
+/** Normalizes persisted values for the application document `status` field. */
+export function parseApplicationStatus(raw: unknown): ApplicationStatus {
+    if (typeof raw !== 'string') return ApplicationStatus.APPLIED;
+    const v = raw.trim();
+    return APPLICATION_STATUS_VALUES.has(v) ? (v as ApplicationStatus) : ApplicationStatus.APPLIED;
+}
+
+/** Detailed pipeline position for a candidacy (per job application). */
+export enum ApplicationStage {
+    APPLIED = 'applied',
+    REJECTED = 'rejected',
+    SHORTLISTED = 'shortlisted',
+    ASSIGNMENT_SENT = 'assignment_sent',
+    ASSIGNMENT_SUBMITTED = 'assignment_submitted',
+    INTERVIEW_SCHEDULED = 'interview_scheduled',
+    INTERVIEW_DONE = 'interview_done',
+    OFFER_SENT = 'offer_sent',
+    HIRED = 'hired',
+    WITHDRAWN = 'withdrawn',
+}
+
+const APPLICATION_STAGE_VALUES = new Set<string>(Object.values(ApplicationStage));
+
+/** Normalizes persisted values for the application document `stage` field. */
+export function parseApplicationStage(raw: unknown): ApplicationStage {
+    if (typeof raw !== 'string') return ApplicationStage.APPLIED;
+    const v = raw.trim();
+    return APPLICATION_STAGE_VALUES.has(v) ? (v as ApplicationStage) : ApplicationStage.APPLIED;
+}
+
+/** Typical funnel order for recruiter-facing dropdowns. */
+export const APPLICATION_STAGE_PIPELINE_ORDER: ApplicationStage[] = [
+    ApplicationStage.APPLIED,
+    ApplicationStage.SHORTLISTED,
+    ApplicationStage.ASSIGNMENT_SENT,
+    ApplicationStage.ASSIGNMENT_SUBMITTED,
+    ApplicationStage.INTERVIEW_SCHEDULED,
+    ApplicationStage.INTERVIEW_DONE,
+    ApplicationStage.OFFER_SENT,
+    ApplicationStage.HIRED,
+    ApplicationStage.REJECTED,
+    ApplicationStage.WITHDRAWN,
+];
+
 export enum JobSource {
     LINKEDIN = 'LinkedIn',
     ANGEL_LIST = 'Angel List',
@@ -71,6 +118,8 @@ export class Application {
     socialLinks: string[];
     coverLetter: string;
     status: ApplicationStatus;
+    /** Pipeline detail (shortlisted, assignment submitted, …). */
+    stage: ApplicationStage;
     jobId: string;
     createdAt: string;
     createdBy: string;
@@ -90,6 +139,7 @@ export class Application {
         socialLinks: string[],
         coverLetter: string,
         status: ApplicationStatus,
+        stage: ApplicationStage,
         jobId: string,
         createdAt: string,
         createdBy: string,
@@ -109,6 +159,7 @@ export class Application {
         this.socialLinks = socialLinks;
         this.coverLetter = coverLetter;
         this.status = status;
+        this.stage = stage;
         this.jobId = jobId;
         this.createdAt = createdAt;
         this.createdBy = createdBy;

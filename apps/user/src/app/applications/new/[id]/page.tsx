@@ -14,7 +14,7 @@ import { toast } from '@jobify/ui/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@jobify/ui/tooltip';
 import { AlertCircle, CheckCircle, Info, Briefcase, GraduationCap } from 'lucide-react';
 import { Job } from '@jobify/domain/job';
-import { Application, ApplicationStatus, DegreeType, Education, Experience, Gender, JobSource } from '@jobify/domain/application';
+import { Application, ApplicationStage, ApplicationStatus, DegreeType, Education, Experience, Gender, JobSource } from '@jobify/domain/application';
 import JobComponent from '@/components/elements/job';
 import { FormSectionTitle, ProgressStepper } from '../../_lib/components';
 import { clearFormDraft, FORM_STEPS, FormValidation, loadFormDraft, saveFormDraft } from '../../_lib/utils';
@@ -24,7 +24,28 @@ import { CoverLetterForm } from '../../_lib/components/form-steps/cover-letter-f
 import { SkillsForm } from '../../_lib/components/form-steps/skills-form';
 import { ExperienceForm } from '../../_lib/components/form-steps/experience-form';
 import { EducationForm } from '../../_lib/components/form-steps/education-form';
-const createEmptyApplication = (jobId: string): Application => new Application(uuidv4(), '', '', '', '', '', Gender.Male, [new Education('', '', DegreeType.BACHELOR, 0)], [new Experience('', '', '', false, '', '', 0)], [], JobSource.ANGEL_LIST, '', [''], '', ApplicationStatus.APPLIED, jobId, new Date().toISOString(), '');
+const createEmptyApplication = (jobId: string): Application =>
+    new Application(
+        uuidv4(),
+        '',
+        '',
+        '',
+        '',
+        '',
+        Gender.Male,
+        [new Education('', '', DegreeType.BACHELOR, 0)],
+        [new Experience('', '', '', false, '', '', 0)],
+        [],
+        JobSource.ANGEL_LIST,
+        '',
+        [''],
+        '',
+        ApplicationStatus.APPLIED,
+        ApplicationStage.APPLIED,
+        jobId,
+        new Date().toISOString(),
+        ''
+    );
 type AccountIdentity = {
     firstName: string;
     lastName: string;
