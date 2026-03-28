@@ -1,52 +1,71 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Job } from '@jobify/domain/job';
 import { fetchPaginatedJobs } from '@/lib/job-utils/service';
-import { useDebounce } from '@/lib/job-utils/utils';
 
-export const useJobFetching = (initialLimit = 10) => {
+export type JobListFilters = {
+    searchQuery: string;
+    jobType: string;
+    workplaceType: string;
+    jobState: string;
+    sortBy: string;
+};
+
+const DEFAULT_FILTERS: JobListFilters = {
+    searchQuery: '',
+    jobType: 'all',
+    workplaceType: 'all',
+    jobState: 'all',
+    sortBy: 'newest',
+};
+
+export const useJobFetching = (pageSize = 10) => {
     const [jobs, setJobs] = useState<Job[]>([]);
     const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
     const [loading, setLoading] = useState(true);
-    const [lastId, setLastId] = useState<string | null>(null);
-    const [hasMore, setHasMore] = useState(true);
-    const observerRef = useRef<HTMLDivElement | null>(null);
     const loadingRef = useRef(false);
+    const [page, setPage] = useState(1);
 
-    
-    const [searchQuery, setSearchQuery] = useState('');
-    const [jobType, setJobType] = useState('all');
-    const [workplaceType, setWorkplaceType] = useState('all');
-    const [jobState, setJobState] = useState('all');
-    const [sortBy, setSortBy] = useState('newest');
+    const [draft, setDraft] = useState<JobListFilters>(DEFAULT_FILTERS);
+    const [applied, setApplied] = useState<JobListFilters>(DEFAULT_FILTERS);
 
-    const fetchJobs = useCallback(async () => {
-        if (loadingRef.current || !hasMore) return;
-
-        setLoading(true);
+    const loadAllJobsFromServer = useCallback(async () => {
+        if (loadingRef.current) return;
         loadingRef.current = true;
+        setLoading(true);
+        try {
+            const allJobs: Job[] = [];
+            let cursor: string | null = null;
+            let more = true;
+            while (more) {
+                let batch: Job[] = [];
+                let pageHasMore = false;
+                let nextCursor: string | null = null;
+                await fetchPaginatedJobs(
+                    pageSize,
+                    cursor,
+                    (fetchedJobs, hasMoreJobs, newLastId) => {
+                        batch = fetchedJobs;
+                        pageHasMore = hasMoreJobs;
+                        nextCursor = newLastId;
+                    },
+                    () => {}
+                );
+                if (batch.length === 0) break;
+                allJobs.push(...batch);
+                cursor = nextCursor;
+                more = pageHasMore;
+            }
+            setJobs(allJobs);
+        } finally {
+            setLoading(false);
+            loadingRef.current = false;
+        }
+    }, [pageSize]);
 
-        await fetchPaginatedJobs(
-            initialLimit,
-            lastId,
-            (fetchedJobs, hasMoreJobs, newLastId) => {
-                setJobs((prevJobs) => [...prevJobs, ...fetchedJobs]);
-                setLastId(newLastId);
-                setHasMore(hasMoreJobs);
-            },
-            () => {}
-        );
-
-        setLoading(false);
-        loadingRef.current = false;
-    }, [lastId, hasMore, initialLimit]);
-
-    const debouncedFetchJobs = useDebounce(fetchJobs, 300);
-
-    
     useEffect(() => {
         let filtered = [...jobs];
+        const { searchQuery, jobType, workplaceType, jobState, sortBy } = applied;
 
-        
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
             filtered = filtered.filter(
@@ -59,90 +78,103 @@ export const useJobFetching = (initialLimit = 10) => {
             );
         }
 
-        
         if (jobType !== 'all') {
             filtered = filtered.filter((job) => job.type === jobType);
         }
 
-        
         if (workplaceType !== 'all') {
             filtered = filtered.filter((job) => job.workplaceType === workplaceType);
         }
 
-        
         if (jobState !== 'all') {
             filtered = filtered.filter((job) => job.state === jobState);
         }
 
-        
         filtered.sort((a, b) => {
             switch (sortBy) {
                 case 'newest':
                     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
                 case 'oldest':
                     return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-                case 'closing':
+                case 'closing': {
                     const getDaysRemaining = (deadline: string) => {
                         const today = new Date();
                         const lastDate = new Date(deadline);
                         return Math.ceil((lastDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
                     };
                     return getDaysRemaining(a.lastDateToApply) - getDaysRemaining(b.lastDateToApply);
+                }
                 default:
                     return 0;
             }
         });
 
         setFilteredJobs(filtered);
-    }, [jobs, searchQuery, jobType, workplaceType, jobState, sortBy]);
+    }, [jobs, applied]);
 
-    
-    const resetFilters = () => {
-        setSearchQuery('');
-        setJobType('all');
-        setWorkplaceType('all');
-        setJobState('all');
-        setSortBy('newest');
-    };
-
-    
-    useEffect(() => {
-        debouncedFetchJobs();
-    }, [debouncedFetchJobs]);
+    const totalPages = Math.max(1, Math.ceil(filteredJobs.length / pageSize) || 1);
 
     useEffect(() => {
-        if (!observerRef.current) return;
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting && hasMore) {
-                    debouncedFetchJobs();
-                }
-            },
-            { threshold: 0.5 }
-        );
+        setPage((p) => Math.min(Math.max(1, p), totalPages));
+    }, [totalPages]);
 
-        observer.observe(observerRef.current);
-        return () => observer.disconnect();
-    }, [debouncedFetchJobs, hasMore]);
+    const paginatedJobs = useMemo(() => {
+        const start = (page - 1) * pageSize;
+        return filteredJobs.slice(start, start + pageSize);
+    }, [filteredJobs, page, pageSize]);
+
+    useEffect(() => {
+        void loadAllJobsFromServer();
+    }, [loadAllJobsFromServer]);
+
+    const applyFilters = useCallback(() => {
+        setApplied({ ...draft });
+        setPage(1);
+        void loadAllJobsFromServer();
+    }, [draft, loadAllJobsFromServer]);
+
+    const refreshJobs = useCallback(() => {
+        setDraft({ ...applied });
+        setPage(1);
+        void loadAllJobsFromServer();
+    }, [applied, loadAllJobsFromServer]);
+
+    const clearFiltersAndApply = useCallback(() => {
+        setDraft(DEFAULT_FILTERS);
+        setApplied(DEFAULT_FILTERS);
+        setPage(1);
+        void loadAllJobsFromServer();
+    }, [loadAllJobsFromServer]);
+
+    const rangeStart = filteredJobs.length === 0 ? 0 : (page - 1) * pageSize + 1;
+    const rangeEnd = Math.min(page * pageSize, filteredJobs.length);
 
     return {
         jobs,
-        filteredJobs,
-        loading,
-        hasMore,
-        observerRef,
-        searchQuery,
-        setSearchQuery,
-        jobType,
-        setJobType,
-        workplaceType,
-        setWorkplaceType,
-        jobState,
-        setJobState,
-        sortBy,
-        setSortBy,
-        resetFilters,
-        fetchJobs: debouncedFetchJobs,
         setJobs,
+        filteredJobs,
+        paginatedJobs,
+        loading,
+        page,
+        setPage,
+        pageSize,
+        totalPages,
+        totalFilteredCount: filteredJobs.length,
+        rangeStart,
+        rangeEnd,
+        searchQuery: draft.searchQuery,
+        setSearchQuery: (q: string) => setDraft((p) => ({ ...p, searchQuery: q })),
+        jobType: draft.jobType,
+        setJobType: (v: string) => setDraft((p) => ({ ...p, jobType: v })),
+        workplaceType: draft.workplaceType,
+        setWorkplaceType: (v: string) => setDraft((p) => ({ ...p, workplaceType: v })),
+        jobState: draft.jobState,
+        setJobState: (v: string) => setDraft((p) => ({ ...p, jobState: v })),
+        sortBy: draft.sortBy,
+        setSortBy: (v: string) => setDraft((p) => ({ ...p, sortBy: v })),
+        applyFilters,
+        refreshJobs,
+        clearFiltersAndApply,
+        appliedFilters: applied,
     };
 };

@@ -1,7 +1,7 @@
 import { ADMIN_AUTH_COOKIE_NAME } from '@jobify/domain/auth-cookie';
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchJobsByUserId } from '@jobify/appwrite-server/collections/job-collection';
-import { fetchApplicationsByJobIds } from '@jobify/appwrite-server/collections/application-collection';
+import { fetchApplicationsByRecruiterJobIdsPaginated } from '@jobify/appwrite-server/collections/application-collection';
 import { isRecognisedError, UnauthorizedError } from '@jobify/domain/error';
 import { toPublicApplication } from '@jobify/domain/api-serializers';
 import jwt from 'jsonwebtoken';
@@ -21,7 +21,12 @@ export async function GET(req: NextRequest) {
             return NextResponse.json([], { status: 200 });
         }
 
-        const applications = await fetchApplicationsByJobIds(jobIds);
+        const limitParam = req.nextUrl.searchParams.get('limit');
+        const lastId = req.nextUrl.searchParams.get('lastId');
+        const parsed = limitParam ? parseInt(limitParam, 10) : 100;
+        const limit = Number.isFinite(parsed) ? Math.min(Math.max(parsed, 1), 100) : 100;
+
+        const applications = await fetchApplicationsByRecruiterJobIdsPaginated(jobIds, lastId, limit);
         return NextResponse.json(
             applications.map((doc) => toPublicApplication(doc as unknown as Record<string, unknown>)),
             { status: 200 }

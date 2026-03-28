@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import ky from 'ky';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -10,10 +10,6 @@ import {
     User as UserIcon,
     Briefcase,
     MapPin,
-    Search,
-    Filter,
-    SortAsc,
-    SortDesc,
     RefreshCw,
     Clock,
     CheckCircle,
@@ -26,23 +22,24 @@ import {
     ArrowLeft,
     FileText,
     Inbox,
+    Star,
+    Send,
+    Video,
+    Handshake,
+    LogOut,
 } from 'lucide-react';
 
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@jobify/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@jobify/ui/card';
 import { Button } from '@jobify/ui/button';
 import { Badge } from '@jobify/ui/badge';
-import { Separator } from '@jobify/ui/separator';
 import { toast } from '@jobify/ui/use-toast';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@jobify/ui/tabs';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@jobify/ui/dropdown-menu';
-import { Input } from '@jobify/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@jobify/ui/avatar';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@jobify/ui/select';
+import { ApplicationFilterBar } from '@jobify/ui/components/application-filter-bar';
+import { Avatar, AvatarFallback } from '@jobify/ui/avatar';
 import { Skeleton } from '@jobify/ui/skeleton';
 import {
     AlertDialog,
-    AlertDialogAction,
     AlertDialogCancel,
     AlertDialogContent,
     AlertDialogDescription,
@@ -54,9 +51,26 @@ import {
 
 
 import { Application, ApplicationStatus, ApplicationStage, parseApplicationStage } from '@jobify/domain/application';
+import { User } from '@jobify/domain/user';
 import { Job } from '@jobify/domain/job';
-import { Alert, AlertDescription, AlertTitle } from '@jobify/ui/alert';
 
+type SortOption = 'newest' | 'oldest' | 'nameAsc' | 'nameDesc';
+
+type AdminApplicationFilters = {
+    searchQuery: string;
+    statusFilter: string;
+    stageFilter: string;
+    sortOption: SortOption;
+};
+
+const DEFAULT_ADMIN_APP_FILTERS: AdminApplicationFilters = {
+    searchQuery: '',
+    statusFilter: 'all',
+    stageFilter: 'all',
+    sortOption: 'newest',
+};
+
+const APPLICATIONS_PAGE_SIZE = 100;
 
 const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -77,8 +91,32 @@ function jsonArrayFromApi<T>(raw: unknown): T[] {
     return [];
 }
 
+function applicationFromApi(app: any): Application {
+    return new Application(
+        app.id,
+        app.firstName,
+        app.lastName,
+        app.email,
+        app.phone,
+        app.currentLocation,
+        app.gender,
+        jsonArrayFromApi(app.education),
+        jsonArrayFromApi(app.experience),
+        jsonArrayFromApi<string>(app.skills),
+        app.source,
+        app.resume,
+        jsonArrayFromApi<string>(app.socialLinks),
+        app.coverLetter,
+        app.status,
+        parseApplicationStage(app.stage),
+        app.jobId,
+        app.createdAt,
+        app.createdBy
+    );
+}
+
 const StatusBadge = ({ status, stage }: { status: ApplicationStatus; stage: ApplicationStage }) => {
-    const variants = {
+    const statusVariants = {
         [ApplicationStatus.APPLIED]: {
             variant: 'secondary' as const,
             icon: <Clock className='w-3 h-3 mr-1' />,
@@ -93,7 +131,51 @@ const StatusBadge = ({ status, stage }: { status: ApplicationStatus; stage: Appl
         },
     };
 
-    const { variant, icon } = variants[status];
+    const stageVariants = {
+        [ApplicationStage.APPLIED]: {
+            icon: <Send className='w-3 h-3 mr-1' />,
+            color: 'text-blue-600',
+        },
+        [ApplicationStage.SHORTLISTED]: {
+            icon: <Star className='w-3 h-3 mr-1' />,
+            color: 'text-yellow-600',
+        },
+        [ApplicationStage.ASSIGNMENT_SENT]: {
+            icon: <FileText className='w-3 h-3 mr-1' />,
+            color: 'text-purple-600',
+        },
+        [ApplicationStage.ASSIGNMENT_SUBMITTED]: {
+            icon: <Send className='w-3 h-3 mr-1' />,
+            color: 'text-indigo-600',
+        },
+        [ApplicationStage.INTERVIEW_SCHEDULED]: {
+            icon: <Calendar className='w-3 h-3 mr-1' />,
+            color: 'text-green-600',
+        },
+        [ApplicationStage.INTERVIEW_DONE]: {
+            icon: <Video className='w-3 h-3 mr-1' />,
+            color: 'text-teal-600',
+        },
+        [ApplicationStage.OFFER_SENT]: {
+            icon: <Mail className='w-3 h-3 mr-1' />,
+            color: 'text-orange-600',
+        },
+        [ApplicationStage.HIRED]: {
+            icon: <Handshake className='w-3 h-3 mr-1' />,
+            color: 'text-emerald-600',
+        },
+        [ApplicationStage.REJECTED]: {
+            icon: <XCircle className='w-3 h-3 mr-1' />,
+            color: 'text-red-600',
+        },
+        [ApplicationStage.WITHDRAWN]: {
+            icon: <LogOut className='w-3 h-3 mr-1' />,
+            color: 'text-gray-600',
+        },
+    };
+
+    const { variant, icon } = statusVariants[status];
+    const stageInfo = stageVariants[stage];
     
     const formatStage = (stage: ApplicationStage) => {
         return stage.split('_').map(word => 
@@ -107,7 +189,8 @@ const StatusBadge = ({ status, stage }: { status: ApplicationStatus; stage: Appl
                 {icon}
                 {status}
             </Badge>
-            <Badge variant='outline' className='text-xs flex items-center'>
+            <Badge variant='outline' className={`text-xs flex items-center ${stageInfo.color}`}>
+                {stageInfo.icon}
                 {formatStage(stage)}
             </Badge>
         </div>
@@ -178,106 +261,6 @@ const ApplicationCard = ({
                 <div className='mt-3 text-xs text-muted-foreground flex justify-between border-t pt-2'>
                     <span>Applied: {formatDate(application.createdAt)}</span>
                     <span>Job ID: {application.jobId.substring(0, 8)}</span>
-                </div>
-            </CardContent>
-        </Card>
-    );
-};
-
-
-const FilterBar = ({
-    searchQuery,
-    setSearchQuery,
-    statusFilter,
-    setStatusFilter,
-    stageFilter,
-    setStageFilter,
-    sortOption,
-    setSortOption,
-    resetFilters,
-}: {
-    searchQuery: string;
-    setSearchQuery: (query: string) => void;
-    statusFilter: string;
-    setStatusFilter: (status: string) => void;
-    stageFilter: string;
-    setStageFilter: (stage: string) => void;
-    sortOption: string;
-    setSortOption: (option: string) => void;
-    resetFilters: () => void;
-}) => {
-    return (
-        <Card className='mb-4'>
-            <CardContent className='p-4'>
-                <div className='space-y-4'>
-                    <div className='relative'>
-                        <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
-                        <Input
-                            placeholder='Search by name, email, or skills...'
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className='pl-9'
-                        />
-                    </div>
-
-                    <div className='grid grid-cols-1 sm:grid-cols-4 gap-4'>
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger>
-                                <div className='flex items-center'>
-                                    <Filter className='h-4 w-4 mr-2' />
-                                    <SelectValue placeholder='Filter by Status' />
-                                </div>
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value='all'>All Statuses</SelectItem>
-                                <SelectItem value={ApplicationStatus.APPLIED}>Pending</SelectItem>
-                                <SelectItem value={ApplicationStatus.SELECTED}>Selected</SelectItem>
-                                <SelectItem value={ApplicationStatus.REJECTED}>Rejected</SelectItem>
-                            </SelectContent>
-                        </Select>
-
-                        <Select value={stageFilter} onValueChange={setStageFilter}>
-                            <SelectTrigger>
-                                <div className='flex items-center'>
-                                    <Filter className='h-4 w-4 mr-2' />
-                                    <SelectValue placeholder='Filter by Stage' />
-                                </div>
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value='all'>All Stages</SelectItem>
-                                <SelectItem value={ApplicationStage.APPLIED}>Applied</SelectItem>
-                                <SelectItem value={ApplicationStage.SHORTLISTED}>Shortlisted</SelectItem>
-                                <SelectItem value={ApplicationStage.ASSIGNMENT_SENT}>Assignment Sent</SelectItem>
-                                <SelectItem value={ApplicationStage.ASSIGNMENT_SUBMITTED}>Assignment Submitted</SelectItem>
-                                <SelectItem value={ApplicationStage.INTERVIEW_SCHEDULED}>Interview Scheduled</SelectItem>
-                                <SelectItem value={ApplicationStage.INTERVIEW_DONE}>Interview Done</SelectItem>
-                                <SelectItem value={ApplicationStage.OFFER_SENT}>Offer Sent</SelectItem>
-                                <SelectItem value={ApplicationStage.HIRED}>Hired</SelectItem>
-                                <SelectItem value={ApplicationStage.REJECTED}>Rejected</SelectItem>
-                                <SelectItem value={ApplicationStage.WITHDRAWN}>Withdrawn</SelectItem>
-                            </SelectContent>
-                        </Select>
-
-                        <Select value={sortOption} onValueChange={setSortOption}>
-                            <SelectTrigger>
-                                <div className='flex items-center'>
-                                    <SortAsc className='h-4 w-4 mr-2' />
-                                    <SelectValue placeholder='Sort By' />
-                                </div>
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value='newest'>Newest First</SelectItem>
-                                <SelectItem value='oldest'>Oldest First</SelectItem>
-                                <SelectItem value='nameAsc'>Name (A-Z)</SelectItem>
-                                <SelectItem value='nameDesc'>Name (Z-A)</SelectItem>
-                            </SelectContent>
-                        </Select>
-
-                        <Button variant='outline' className='w-full' onClick={resetFilters}>
-                            <RefreshCw className='h-4 w-4 mr-2' />
-                            Reset Filters
-                        </Button>
-                    </div>
                 </div>
             </CardContent>
         </Card>
@@ -669,101 +652,28 @@ const getDaysRemaining = (deadline: string) => {
 };
 
 
-function useDebounce<T>(value: T, delay: number): T {
-    const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedValue(value);
-        }, delay);
-
-        return () => {
-            clearTimeout(handler);
-        };
-    }, [value, delay]);
-
-    return debouncedValue;
-}
-
 export default function AdminApplicationsPage() {
     const router = useRouter();
     const [applications, setApplications] = useState<Application[]>([]);
     const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
     const [jobs, setJobs] = useState<Map<string, Job>>(new Map());
     const [loading, setLoading] = useState(true);
+    const [hasMore, setHasMore] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [statusChangeLoading, setStatusChangeLoading] = useState(false);
+    const loadingRef = useRef(false);
+    const lastIdRef = useRef<string | null>(null);
+    const hasMoreRef = useRef(true);
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const sentinelRef = useRef<HTMLDivElement>(null);
 
+    const [filterDraft, setFilterDraft] = useState<AdminApplicationFilters>(DEFAULT_ADMIN_APP_FILTERS);
+    const [filterApplied, setFilterApplied] = useState<AdminApplicationFilters>(DEFAULT_ADMIN_APP_FILTERS);
 
-    const [searchQuery, setSearchQuery] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
-    const [stageFilter, setStageFilter] = useState('all');
-    const [sortOption, setSortOption] = useState('newest');
-
-
-    const debouncedSearchQuery = useDebounce(searchQuery, 500);
-
-
-    const fetchApplications = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-
-        try {
-            const res = (await ky.get('/api/applications').json()) as any[];
-
-            if (!Array.isArray(res)) {
-                throw new Error('Invalid response format');
-            }
-
-            const fetchedApplications = res.map(
-                (app) =>
-                    new Application(
-                        app.id,
-                        app.firstName,
-                        app.lastName,
-                        app.email,
-                        app.phone,
-                        app.currentLocation,
-                        app.gender,
-                        jsonArrayFromApi(app.education),
-                        jsonArrayFromApi(app.experience),
-                        jsonArrayFromApi<string>(app.skills),
-                        app.source,
-                        app.resume,
-                        jsonArrayFromApi<string>(app.socialLinks),
-                        app.coverLetter,
-                        app.status,
-                        parseApplicationStage(app.stage),
-                        app.jobId,
-                        app.createdAt,
-                        app.createdBy
-                    )
-            );
-
-            setApplications(fetchedApplications);
-
-
-            if (fetchedApplications.length > 0) {
-                const jobIds = [...new Set(fetchedApplications.map((app) => app.jobId))];
-                fetchJobsData(jobIds);
-            }
-
-            if (fetchedApplications.length > 0 && !selectedApplication) {
-                setSelectedApplication(fetchedApplications[0]);
-            }
-        } catch (error) {
-            console.error('Error fetching applications:', error);
-            setError('Failed to load applications. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    }, [selectedApplication]);
-
-
-    const fetchJobsData = async (jobIds: string[]) => {
+    const fetchJobsData = useCallback(async (jobIds: string[]) => {
+        if (jobIds.length === 0) return;
         try {
             const jobsMap = new Map<string, Job>();
-
 
             await Promise.all(
                 jobIds.map(async (jobId) => {
@@ -788,22 +698,89 @@ export default function AdminApplicationsPage() {
                                 jobData.createdBy,
                             )
                         );
-                    } catch (error) {
-                        console.error(`Error fetching job ${jobId}:`, error);
+                    } catch (err) {
+                        console.error(`Error fetching job ${jobId}:`, err);
                     }
                 })
             );
 
-            setJobs(jobsMap);
-        } catch (error) {
-            console.error('Error fetching jobs:', error);
+            setJobs((prev) => {
+                const next = new Map(prev);
+                for (const [k, v] of jobsMap) next.set(k, v);
+                return next;
+            });
+        } catch (err) {
+            console.error('Error fetching jobs:', err);
         }
-    };
+    }, []);
 
+    const fetchApplications = useCallback(
+        async (replace: boolean) => {
+            if (loadingRef.current) return;
+            if (!replace && !hasMoreRef.current) return;
+            loadingRef.current = true;
+            setLoading(true);
+            setError(null);
+            if (replace) {
+                setApplications([]);
+                lastIdRef.current = null;
+                setHasMore(true);
+                hasMoreRef.current = true;
+            }
+            try {
+                const cursor = replace ? null : lastIdRef.current;
+                const url = `/api/applications?limit=${APPLICATIONS_PAGE_SIZE}${cursor ? `&lastId=${encodeURIComponent(cursor)}` : ''}`;
+                const res = (await ky.get(url).json()) as any[];
+                if (!Array.isArray(res)) {
+                    throw new Error('Invalid response format');
+                }
+                const fetched = res.map(applicationFromApi);
+                setApplications((prev) => (replace ? fetched : [...prev, ...fetched]));
+                const nextLast = fetched.length ? fetched[fetched.length - 1].id : null;
+                lastIdRef.current = nextLast;
+                const more = fetched.length === APPLICATIONS_PAGE_SIZE;
+                setHasMore(more);
+                hasMoreRef.current = more;
+                if (fetched.length > 0) {
+                    const jobIds = [...new Set(fetched.map((a) => a.jobId))];
+                    void fetchJobsData(jobIds);
+                }
+                if (replace && fetched.length > 0) {
+                    setSelectedApplication((prev) => prev ?? fetched[0]);
+                }
+                if (!replace && fetched.length > 0) {
+                    setSelectedApplication((prev) => prev ?? fetched[0]);
+                }
+            } catch (err) {
+                console.error('Error fetching applications:', err);
+                setError('Failed to load applications. Please try again.');
+            } finally {
+                setLoading(false);
+                loadingRef.current = false;
+            }
+        },
+        [fetchJobsData]
+    );
 
     useEffect(() => {
-        fetchApplications();
+        void fetchApplications(true);
     }, [fetchApplications]);
+
+    useEffect(() => {
+        const root = scrollRef.current;
+        const target = sentinelRef.current;
+        if (!root || !target) return;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0]?.isIntersecting && hasMoreRef.current && !loadingRef.current) {
+                    void fetchApplications(false);
+                }
+            },
+            { root, rootMargin: '200px', threshold: 0 }
+        );
+        observer.observe(target);
+        return () => observer.disconnect();
+    }, [fetchApplications, loading, applications.length, hasMore]);
 
 
     const handleStatusChange = async (status: ApplicationStatus) => {
@@ -841,15 +818,64 @@ export default function AdminApplicationsPage() {
     };
 
 
-    const resetFilters = () => {
-        setSearchQuery('');
-        setStatusFilter('all');
-        setSortOption('newest');
-    };
+    const applyFilters = useCallback(() => {
+        setFilterApplied({ ...filterDraft });
+        void fetchApplications(true);
+    }, [filterDraft, fetchApplications]);
 
+    const refreshList = useCallback(async () => {
+        setFilterDraft({ ...filterApplied });
+        if (loadingRef.current) return;
+        loadingRef.current = true;
+        setLoading(true);
+        setError(null);
+        setApplications([]);
+        lastIdRef.current = null;
+        setHasMore(true);
+        hasMoreRef.current = true;
+        try {
+            const all: Application[] = [];
+            let cursor: string | null = null;
+            let more = true;
+            while (more) {
+                const url = `/api/applications?limit=${APPLICATIONS_PAGE_SIZE}${cursor ? `&lastId=${encodeURIComponent(cursor)}` : ''}`;
+                const res = (await ky.get(url).json()) as any[];
+                if (!Array.isArray(res)) {
+                    throw new Error('Invalid response format');
+                }
+                const batch = res.map(applicationFromApi);
+                if (batch.length === 0) break;
+                all.push(...batch);
+                cursor = batch[batch.length - 1].id;
+                more = batch.length === APPLICATIONS_PAGE_SIZE;
+            }
+            setApplications(all);
+            lastIdRef.current = all.length > 0 ? all[all.length - 1].id : null;
+            setHasMore(false);
+            hasMoreRef.current = false;
+            setSelectedApplication(all.length > 0 ? all[0] : null);
+            if (all.length > 0) {
+                const jobIds = [...new Set(all.map((a) => a.jobId))];
+                await fetchJobsData(jobIds);
+            }
+        } catch (err) {
+            console.error('Error fetching applications:', err);
+            setError('Failed to load applications. Please try again.');
+        } finally {
+            setLoading(false);
+            loadingRef.current = false;
+        }
+    }, [filterApplied, fetchJobsData]);
+
+    const clearFiltersAndRefetch = useCallback(() => {
+        setFilterDraft(DEFAULT_ADMIN_APP_FILTERS);
+        setFilterApplied(DEFAULT_ADMIN_APP_FILTERS);
+        void fetchApplications(true);
+    }, [fetchApplications]);
 
     const filteredApplications = useMemo(() => {
         let filtered = [...applications];
+        const { searchQuery, statusFilter, stageFilter, sortOption } = filterApplied;
 
         if (statusFilter !== 'all') {
             filtered = filtered.filter((app) => app.status === statusFilter);
@@ -859,8 +885,8 @@ export default function AdminApplicationsPage() {
             filtered = filtered.filter((app) => app.stage === stageFilter);
         }
 
-        if (debouncedSearchQuery) {
-            const query = debouncedSearchQuery.toLowerCase();
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
             filtered = filtered.filter(
                 (app) =>
                     app.firstName.toLowerCase().includes(query) ||
@@ -887,7 +913,7 @@ export default function AdminApplicationsPage() {
         }
 
         return filtered;
-    }, [applications, statusFilter, stageFilter, debouncedSearchQuery, sortOption]);
+    }, [applications, filterApplied]);
 
 
     const selectedJobDetails = useMemo(() => {
@@ -902,114 +928,119 @@ export default function AdminApplicationsPage() {
                     <div>
                         <h1 className='text-2xl font-bold'>All Applications</h1>
                         <p className='text-muted-foreground'>
-                            {loading
+                            {loading && applications.length === 0
                                 ? 'Loading applications…'
                                 : `${filteredApplications.length} ${filteredApplications.length === 1 ? 'application' : 'applications'} found`}
                         </p>
                     </div>
 
-                    <Button variant='ghost' asChild className='mt-2 md:mt-0'>
-                        <Link href='/posts'>
-                            <ArrowLeft className='h-4 w-4 mr-2' />
-                            Back to Jobs
-                        </Link>
-                    </Button>
+                    <div className='mt-4 md:mt-0'>
+                        <Button variant='ghost' asChild>
+                            <Link href='/posts'>
+                                <ArrowLeft className='h-4 w-4 mr-2' />
+                                Back to Jobs
+                            </Link>
+                        </Button>
+                    </div>
                 </div>
 
-                <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
-                    <div className='md:col-span-1'>
-                        <FilterBar
-                            searchQuery={searchQuery}
-                            setSearchQuery={setSearchQuery}
-                            statusFilter={statusFilter}
-                            setStatusFilter={setStatusFilter}
-                            stageFilter={stageFilter}
-                            setStageFilter={setStageFilter}
-                            sortOption={sortOption}
-                            setSortOption={setSortOption}
-                            resetFilters={() => {
-                                setSearchQuery('');
-                                setStatusFilter('all');
-                                setStageFilter('all');
-                                setSortOption('newest');
-                            }}
-                        />
+                <ApplicationFilterBar
+                    searchQuery={filterDraft.searchQuery}
+                    setSearchQuery={(q) => setFilterDraft((p) => ({ ...p, searchQuery: q }))}
+                    statusFilter={filterDraft.statusFilter}
+                    setStatusFilter={(v) => setFilterDraft((p) => ({ ...p, statusFilter: v }))}
+                    stageFilter={filterDraft.stageFilter}
+                    setStageFilter={(v) => setFilterDraft((p) => ({ ...p, stageFilter: v }))}
+                    sortBy={filterDraft.sortOption}
+                    setSortBy={(v) => setFilterDraft((p) => ({ ...p, sortOption: v }))}
+                    onApply={applyFilters}
+                    onRefresh={refreshList}
+                    compact={false}
+                />
 
-                        {error && (
-                            <Alert variant='destructive' className='mb-4'>
-                                <AlertCircle className='h-4 w-4' />
-                                <AlertTitle>Error</AlertTitle>
-                                <AlertDescription>{error}</AlertDescription>
-                            </Alert>
-                        )}
-
-                        <div className='h-[calc(100vh-300px)] overflow-auto space-y-2'>
-                            {loading ? (
-
-                                Array(5)
-                                    .fill(0)
-                                    .map((_, index) => (
-                                        <Card key={index} className='mb-3'>
-                                            <CardContent className='p-4'>
-                                                <div className='flex items-start justify-between'>
-                                                    <div className='flex items-center gap-3'>
-                                                        <Skeleton className='h-10 w-10 rounded-full' />
-                                                        <div>
-                                                            <Skeleton className='h-5 w-40 mb-1' />
-                                                            <Skeleton className='h-3 w-32' />
+                <div className='grid min-w-0 grid-cols-1 gap-6 items-start lg:grid-cols-3'>
+                    <div className='flex h-[calc(100vh-220px)] min-h-0 min-w-0 flex-col overflow-hidden lg:col-span-1'>
+                        <Card className='flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden'>
+                            <CardHeader className='border-b px-4 py-3'>
+                                <CardTitle className='truncate text-base'>
+                                    Applications ({filteredApplications.length})
+                                </CardTitle>
+                            </CardHeader>
+                            <div ref={scrollRef} className='min-h-0 min-w-0 flex-1 overflow-auto p-3'>
+                                {loading && applications.length === 0 ? (
+                                    Array(5)
+                                        .fill(0)
+                                        .map((_, index) => (
+                                            <Card key={index} className='mb-3'>
+                                                <CardContent className='p-4'>
+                                                    <div className='flex items-start justify-between'>
+                                                        <div className='flex items-center gap-3'>
+                                                            <Skeleton className='h-10 w-10 rounded-full' />
+                                                            <div>
+                                                                <Skeleton className='h-5 w-40 mb-1' />
+                                                                <Skeleton className='h-3 w-32' />
+                                                            </div>
                                                         </div>
+                                                        <Skeleton className='h-5 w-20 rounded-full' />
                                                     </div>
-                                                    <Skeleton className='h-5 w-20 rounded-full' />
-                                                </div>
-                                                <div className='mt-3'>
-                                                    <Skeleton className='h-4 w-full' />
-                                                    <Skeleton className='h-4 w-2/3 mt-2' />
-                                                </div>
-                                                <div className='mt-3 flex gap-2'>
-                                                    <Skeleton className='h-5 w-16 rounded-full' />
-                                                    <Skeleton className='h-5 w-16 rounded-full' />
-                                                    <Skeleton className='h-5 w-16 rounded-full' />
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    ))
-                            ) : filteredApplications.length === 0 ? (
-
-                                <Card className='py-10'>
-                                    <CardContent className='flex flex-col items-center justify-center text-center'>
+                                                    <div className='mt-3'>
+                                                        <Skeleton className='h-4 w-full' />
+                                                        <Skeleton className='h-4 w-2/3 mt-2' />
+                                                    </div>
+                                                    <div className='mt-3 flex gap-2'>
+                                                        <Skeleton className='h-5 w-16 rounded-full' />
+                                                        <Skeleton className='h-5 w-16 rounded-full' />
+                                                        <Skeleton className='h-5 w-16 rounded-full' />
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        ))
+                                ) : filteredApplications.length === 0 ? (
+                                    <div className='flex flex-col items-center justify-center py-10 text-center'>
                                         <Inbox className='h-12 w-12 text-muted-foreground mb-4' />
                                         <h2 className='text-xl font-semibold mb-2'>No Applications Found</h2>
                                         <p className='text-muted-foreground mb-6 max-w-sm'>
-                                            {debouncedSearchQuery || statusFilter !== 'all'
+                                            {filterApplied.searchQuery || filterApplied.statusFilter !== 'all' || filterApplied.stageFilter !== 'all'
                                                 ? 'No applications match your current filters.'
                                                 : 'There are no applications in the system yet.'}
                                         </p>
 
-                                        {(debouncedSearchQuery || statusFilter !== 'all') && (
-                                            <Button variant='outline' onClick={resetFilters}>
+                                        {(filterApplied.searchQuery || filterApplied.statusFilter !== 'all' || filterApplied.stageFilter !== 'all') && (
+                                            <Button variant='outline' onClick={clearFiltersAndRefetch}>
                                                 <RefreshCw className='h-4 w-4 mr-2' />
                                                 Reset Filters
                                             </Button>
                                         )}
-                                    </CardContent>
-                                </Card>
-                            ) : (
-
-                                filteredApplications.map((application) => (
-                                    <ApplicationCard
-                                        key={application.id}
-                                        application={application}
-                                        isSelected={selectedApplication?.id === application.id}
-                                        onClick={() => setSelectedApplication(application)}
-                                        statusChangeLoading={statusChangeLoading}
-                                        isChangingStatus={selectedApplication?.id === application.id}
-                                    />
-                                ))
-                            )}
-                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        {filteredApplications.map((application) => (
+                                            <ApplicationCard
+                                                key={application.id}
+                                                application={application}
+                                                isSelected={selectedApplication?.id === application.id}
+                                                onClick={() => setSelectedApplication(application)}
+                                                statusChangeLoading={statusChangeLoading}
+                                                isChangingStatus={selectedApplication?.id === application.id}
+                                            />
+                                        ))}
+                                        <div ref={sentinelRef} className='h-1 w-full shrink-0' aria-hidden />
+                                        {loading && applications.length > 0 && hasMore && (
+                                            <div className='flex justify-center py-2'>
+                                                <div className='flex animate-pulse space-x-2'>
+                                                    <div className='h-2 w-2 rounded-full bg-muted-foreground' />
+                                                    <div className='h-2 w-2 rounded-full bg-muted-foreground' />
+                                                    <div className='h-2 w-2 rounded-full bg-muted-foreground' />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        </Card>
                     </div>
 
-                    <div className='md:col-span-2'>
+                    <div className='min-w-0 lg:col-span-2'>
                         <ApplicationDetail
                             application={selectedApplication}
                             onStatusChange={handleStatusChange}

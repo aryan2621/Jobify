@@ -45,6 +45,9 @@ async function fetchApplicationById(id: string) {
 async function fetchApplicationsByJobId(jobId: string, request?: UserApplicationsRequest) {
     try {
         const queries = [Query.equal('jobId', jobId)];
+        if (request?.lastId != null || request?.limit != null) {
+            queries.push(Query.orderDesc('$createdAt'));
+        }
         if (request?.lastId) {
             queries.push(Query.cursorAfter(request.lastId));
         }
@@ -73,7 +76,20 @@ async function updateApplication(applicationId: string, updates: { status?: Appl
 }
 
 async function updateApplicationStatus(jobId: string, applicationId: string, status: ApplicationStatus) {
-    return updateApplication(applicationId, { status });
+    let stage: ApplicationStage;
+    switch (status) {
+        case ApplicationStatus.REJECTED:
+            stage = ApplicationStage.REJECTED;
+            break;
+        case ApplicationStatus.SELECTED:
+            stage = ApplicationStage.HIRED;
+            break;
+        case ApplicationStatus.APPLIED:
+        default:
+            stage = ApplicationStage.APPLIED;
+            break;
+    }
+    return updateApplication(applicationId, { status, stage });
 }
 
 async function fetchApplicationsByUserId(userId: string, request?: UserApplicationsRequest) {
@@ -122,11 +138,28 @@ async function fetchApplicationsByJobIds(jobIds: string[], limit: number = DEFAU
     }
 }
 
+/** Paginated applications across an admin's jobs (jobId must be one of jobIds). */
+async function fetchApplicationsByRecruiterJobIdsPaginated(jobIds: string[], lastId: string | null, limit: number) {
+    if (jobIds.length === 0) return [];
+    try {
+        const queries: string[] = [Query.equal('jobId', jobIds), Query.limit(limit), Query.orderDesc('$createdAt')];
+        if (lastId) {
+            queries.push(Query.cursorAfter(lastId));
+        }
+        const records = await database.listDocuments(DB_NAME, APPLICATION_COLLECTION, queries);
+        return records.documents;
+    } catch (error) {
+        console.log('Error fetching applications by recruiter job ids (paginated)', error);
+        throw error;
+    }
+}
+
 export {
     createApplicationDocument,
     fetchApplicationById,
     fetchApplicationsByJobId,
     fetchApplicationsByJobIds,
+    fetchApplicationsByRecruiterJobIdsPaginated,
     fetchApplicationsByUserId,
     hasApplicationByUserAndJob,
     updateApplication,

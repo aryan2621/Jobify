@@ -1,8 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import ky from 'ky';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 import NavbarLayout from '@/layouts/navbar';
@@ -10,8 +9,6 @@ import {
     User as UserIcon,
     Briefcase,
     MapPin,
-    Search,
-    Filter,
     Clock,
     CheckCircle,
     XCircle,
@@ -37,7 +34,6 @@ import { Badge } from '@jobify/ui/badge';
 import { Separator } from '@jobify/ui/separator';
 import { toast } from '@jobify/ui/use-toast';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@jobify/ui/tabs';
-import { Input } from '@jobify/ui/input';
 import { Avatar, AvatarFallback } from '@jobify/ui/avatar';
 import {
     AlertDialog,
@@ -50,12 +46,30 @@ import {
     AlertDialogTrigger,
 } from '@jobify/ui/alert-dialog';
 import { Alert, AlertTitle, AlertDescription } from '@jobify/ui/alert';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@jobify/ui/dropdown-menu';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@jobify/ui/tooltip';
 import { Popover, PopoverAnchor, PopoverContent } from '@jobify/ui/popover';
 import { Skeleton } from '@jobify/ui/skeleton';
 
 import { Application, ApplicationStatus, parseApplicationStage } from '@jobify/domain/application';
+import { ApplicationFilterBar } from '@jobify/ui/components/application-filter-bar';
+
+type SortOption = 'newest' | 'oldest' | 'nameAsc' | 'nameDesc';
+
+type JobApplicationsFilters = {
+    searchQuery: string;
+    statusFilter: string;
+    stageFilter: string;
+    sortOption: SortOption;
+};
+
+const DEFAULT_JOB_APP_FILTERS: JobApplicationsFilters = {
+    searchQuery: '',
+    statusFilter: 'all',
+    stageFilter: 'all',
+    sortOption: 'newest',
+};
+
+const APPLICATIONS_PAGE_SIZE = 100;
 
 const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -73,6 +87,30 @@ function jsonArrayFromApi<T>(raw: unknown): T[] {
         return JSON.parse(s) as T[];
     }
     return [];
+}
+
+function applicationFromApi(app: any): Application {
+    return new Application(
+        app.id,
+        app.firstName,
+        app.lastName,
+        app.email,
+        app.phone,
+        app.currentLocation,
+        app.gender,
+        jsonArrayFromApi(app.education),
+        jsonArrayFromApi(app.experience),
+        jsonArrayFromApi<string>(app.skills),
+        app.source,
+        app.resume,
+        jsonArrayFromApi<string>(app.socialLinks),
+        app.coverLetter,
+        app.status,
+        parseApplicationStage(app.stage),
+        app.jobId,
+        app.createdAt,
+        app.createdBy
+    );
 }
 
 const DetailSection = ({
@@ -636,167 +674,205 @@ const ApplicationDetail = ({
     );
 };
 
-const FilterBar = ({
-    searchQuery,
-    setSearchQuery,
-    statusFilter,
-    setStatusFilter,
-}: {
-    searchQuery: string;
-    setSearchQuery: (query: string) => void;
-    statusFilter: string;
-    setStatusFilter: (status: string) => void;
-}) => (
-    <div className='flex w-full min-w-0 shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-2'>
-        <div className='relative w-full min-w-0 sm:w-64'>
-            <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
-            <Input
-                placeholder='Search applicants...'
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className='pl-8'
-            />
-        </div>
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant='outline' className='flex-shrink-0'>
-                    <Filter className='w-4 h-4 mr-2' />
-                    Filter
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => setStatusFilter('all')}>All Statuses</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter(ApplicationStatus.APPLIED)}>
-                    <Clock className='w-4 h-4 mr-2' />
-                    Pending
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter(ApplicationStatus.SELECTED)}>
-                    <CheckCircle className='w-4 h-4 mr-2' />
-                    Selected
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter(ApplicationStatus.REJECTED)}>
-                    <XCircle className='w-4 h-4 mr-2' />
-                    Rejected
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
-    </div>
-);
-
-const useDebounce = <T,>(value: T, delay: number): T => {
-    const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedValue(value);
-        }, delay);
-
-        return () => {
-            clearTimeout(handler);
-        };
-    }, [value, delay]);
-
-    return debouncedValue;
-};
-
 export default function JobApplicationsPage({ params }: { params: { id: string } }) {
     const { id } = params;
-    const router = useRouter();
 
     const [applications, setApplications] = useState<Application[]>([]);
-    const [filteredApplications, setFilteredApplications] = useState<Application[]>([]);
     const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
     const [loading, setLoading] = useState(true);
+    const [hasMore, setHasMore] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const loadingRef = useRef(false);
+    const lastIdRef = useRef<string | null>(null);
+    const hasMoreRef = useRef(true);
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const sentinelRef = useRef<HTMLDivElement>(null);
 
-    const [searchQuery, setSearchQuery] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
+    const [filterDraft, setFilterDraft] = useState<JobApplicationsFilters>(DEFAULT_JOB_APP_FILTERS);
+    const [filterApplied, setFilterApplied] = useState<JobApplicationsFilters>(DEFAULT_JOB_APP_FILTERS);
 
-    const debouncedSearchQuery = useDebounce(searchQuery, 300);
-
-    const fetchJob = useCallback(async () => {
-        try {
-            await ky.get(`/api/post?id=${id}`);
-            await fetchApplications();
-        } catch (error) {
-            console.error('Error fetching job:', error);
-            setError('Failed to load job details');
-            setLoading(false);
-        }
-    }, [id]);
-
-    const fetchApplications = async () => {
-        try {
-            const response = (await ky.get(`/api/job-applications?jobId=${id}`).json()) as any[];
-
-            if (!Array.isArray(response)) {
-                throw new Error('Invalid response format');
+    const fetchApplications = useCallback(
+        async (replace: boolean) => {
+            if (!id) return;
+            if (loadingRef.current) return;
+            if (!replace && !hasMoreRef.current) return;
+            loadingRef.current = true;
+            setLoading(true);
+            setError(null);
+            if (replace) {
+                setApplications([]);
+                lastIdRef.current = null;
+                setHasMore(true);
+                hasMoreRef.current = true;
             }
-
-            const fetchedApplications = response.map(
-                (app) =>
-                    new Application(
-                        app.id,
-                        app.firstName,
-                        app.lastName,
-                        app.email,
-                        app.phone,
-                        app.currentLocation,
-                        app.gender,
-                        jsonArrayFromApi(app.education),
-                        jsonArrayFromApi(app.experience),
-                        jsonArrayFromApi<string>(app.skills),
-                        app.source,
-                        app.resume,
-                        jsonArrayFromApi<string>(app.socialLinks),
-                        app.coverLetter,
-                        app.status,
-                        parseApplicationStage(app.stage),
-                        app.jobId,
-                        app.createdAt,
-                        app.createdBy
-                    )
-            );
-
-            setApplications(fetchedApplications);
-
-            if (fetchedApplications.length > 0 && !selectedApplication) {
-                setSelectedApplication(fetchedApplications[0]);
+            try {
+                const cursor = replace ? null : lastIdRef.current;
+                const url = `/api/job-applications?jobId=${encodeURIComponent(id)}&limit=${APPLICATIONS_PAGE_SIZE}${cursor ? `&lastId=${encodeURIComponent(cursor)}` : ''}`;
+                const response = (await ky.get(url).json()) as any[];
+                if (!Array.isArray(response)) {
+                    throw new Error('Invalid response format');
+                }
+                const fetched = response.map(applicationFromApi);
+                setApplications((prev) => (replace ? fetched : [...prev, ...fetched]));
+                const nextLast = fetched.length ? fetched[fetched.length - 1].id : null;
+                lastIdRef.current = nextLast;
+                const more = fetched.length === APPLICATIONS_PAGE_SIZE;
+                setHasMore(more);
+                hasMoreRef.current = more;
+                if (fetched.length > 0) {
+                    setSelectedApplication((prev) => prev ?? fetched[0]);
+                }
+            } catch (err) {
+                console.error('Error fetching applications:', err);
+                setError('Failed to load applications');
+            } finally {
+                setLoading(false);
+                loadingRef.current = false;
             }
-        } catch (error) {
-            console.error('Error fetching applications:', error);
+        },
+        [id]
+    );
+
+    useEffect(() => {
+        if (!id) return;
+        let cancelled = false;
+        void (async () => {
+            setError(null);
+            try {
+                await ky.get(`/api/post?id=${id}`);
+                if (!cancelled) {
+                    await fetchApplications(true);
+                }
+            } catch {
+                if (!cancelled) {
+                    setError('Failed to load job details');
+                    setLoading(false);
+                }
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [id, fetchApplications]);
+
+    useEffect(() => {
+        const root = scrollRef.current;
+        const target = sentinelRef.current;
+        if (!root || !target) return;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0]?.isIntersecting && hasMoreRef.current && !loadingRef.current) {
+                    void fetchApplications(false);
+                }
+            },
+            { root, rootMargin: '200px', threshold: 0 }
+        );
+        observer.observe(target);
+        return () => observer.disconnect();
+    }, [fetchApplications, loading, applications.length, hasMore]);
+
+    const applyFilters = useCallback(() => {
+        setFilterApplied({ ...filterDraft });
+        void fetchApplications(true);
+    }, [filterDraft, fetchApplications]);
+
+    const refreshList = useCallback(async () => {
+        if (!id) return;
+        setFilterDraft({ ...filterApplied });
+        if (loadingRef.current) return;
+        loadingRef.current = true;
+        setLoading(true);
+        setError(null);
+        setApplications([]);
+        lastIdRef.current = null;
+        setHasMore(true);
+        hasMoreRef.current = true;
+        try {
+            const all: Application[] = [];
+            let cursor: string | null = null;
+            let more = true;
+            while (more) {
+                const url = `/api/job-applications?jobId=${encodeURIComponent(id)}&limit=${APPLICATIONS_PAGE_SIZE}${cursor ? `&lastId=${encodeURIComponent(cursor)}` : ''}`;
+                const res = (await ky.get(url).json()) as any[];
+                if (!Array.isArray(res)) {
+                    throw new Error('Invalid response format');
+                }
+                const batch = res.map(applicationFromApi);
+                if (batch.length === 0) break;
+                all.push(...batch);
+                cursor = batch[batch.length - 1].id;
+                more = batch.length === APPLICATIONS_PAGE_SIZE;
+            }
+            setApplications(all);
+            lastIdRef.current = all.length > 0 ? all[all.length - 1].id : null;
+            setHasMore(false);
+            hasMoreRef.current = false;
+            setSelectedApplication(all.length > 0 ? all[0] : null);
+        } catch (err) {
+            console.error('Error fetching applications:', err);
             setError('Failed to load applications');
         } finally {
             setLoading(false);
+            loadingRef.current = false;
         }
-    };
+    }, [id, filterApplied]);
 
-    useEffect(() => {
+    const clearFiltersAndRefetch = useCallback(() => {
+        setFilterDraft(DEFAULT_JOB_APP_FILTERS);
+        setFilterApplied(DEFAULT_JOB_APP_FILTERS);
+        void fetchApplications(true);
+    }, [fetchApplications]);
+
+    const filteredApplications = useMemo(() => {
         let filtered = [...applications];
+        const { searchQuery, statusFilter, stageFilter, sortOption } = filterApplied;
 
         if (statusFilter !== 'all') {
             filtered = filtered.filter((app) => app.status === statusFilter);
         }
 
-        if (debouncedSearchQuery) {
-            const query = debouncedSearchQuery.toLowerCase();
+        if (stageFilter !== 'all') {
+            filtered = filtered.filter((app) => app.stage === stageFilter);
+        }
+
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
             filtered = filtered.filter(
                 (app) =>
                     app.firstName.toLowerCase().includes(query) ||
                     app.lastName.toLowerCase().includes(query) ||
                     app.email.toLowerCase().includes(query) ||
-                    app.skills.some((skill) => skill.toLowerCase().includes(query))
+                    app.skills.some((skill) => skill.toLowerCase().includes(query)) ||
+                    app.experience.some((exp) => exp.profile.toLowerCase().includes(query) || exp.company.toLowerCase().includes(query))
             );
         }
 
-        setFilteredApplications(filtered);
-    }, [applications, statusFilter, debouncedSearchQuery]);
+        switch (sortOption) {
+            case 'newest':
+                filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                break;
+            case 'oldest':
+                filtered.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+                break;
+            case 'nameAsc':
+                filtered.sort((a, b) => `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`));
+                break;
+            case 'nameDesc':
+                filtered.sort((a, b) => `${b.firstName} ${b.lastName}`.localeCompare(`${a.firstName} ${a.lastName}`));
+                break;
+        }
+
+        return filtered;
+    }, [applications, filterApplied]);
 
     useEffect(() => {
-        if (id) {
-            fetchJob();
+        if (filteredApplications.length > 0 &&
+            (!selectedApplication || !filteredApplications.some((app) => app.id === selectedApplication.id))) {
+            setSelectedApplication(filteredApplications[0]);
+        } else if (filteredApplications.length === 0) {
+            setSelectedApplication(null);
         }
-    }, [id, fetchJob]);
+    }, [filteredApplications, selectedApplication]);
 
     const handleStatusChange = async (status: ApplicationStatus) => {
         if (!selectedApplication) return;
@@ -850,69 +926,39 @@ export default function JobApplicationsPage({ params }: { params: { id: string }
 
     return (
         <NavbarLayout>
-            <div className='mx-auto max-w-full px-4 py-6 sm:px-6'>
-                <div className='flex min-w-0 flex-col space-y-6'>
-                    <div className='flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
-                        <div className='min-w-0 max-w-full lg:max-w-2xl lg:pr-4'>
-                            <Button variant='ghost' asChild className='mb-2'>
-                                <Link href='/posts'>
-                                    <ArrowLeft className='h-4 w-4 mr-2' />
-                                    Back to Jobs
-                                </Link>
-                            </Button>
-                            <h1 className='text-2xl font-bold'>Applications</h1>
-                            <p className='text-pretty text-muted-foreground break-words'>
-                                {loading
-                                    ? 'Loading applications…'
-                                    : 'Manage and review applications for this job'}
-                            </p>
-                        </div>
-                        <FilterBar
-                            searchQuery={searchQuery}
-                            setSearchQuery={setSearchQuery}
-                            statusFilter={statusFilter}
-                            setStatusFilter={setStatusFilter}
-                        />
+            <div className='container mx-auto px-4 py-6'>
+                <div className='mb-6'>
+                    <Button variant='ghost' asChild className='mb-2 -ml-2'>
+                        <Link href='/posts'>
+                            <ArrowLeft className='h-4 w-4 mr-2' />
+                            Back to Jobs
+                        </Link>
+                    </Button>
+                    <div>
+                        <h1 className='text-2xl font-bold'>Applications</h1>
+                        <p className='text-muted-foreground'>
+                            {loading && applications.length === 0
+                                ? 'Loading applications…'
+                                : `${filteredApplications.length} ${filteredApplications.length === 1 ? 'application' : 'applications'} found`}
+                        </p>
                     </div>
+                </div>
 
-                    {(statusFilter !== 'all' || searchQuery) && (
-                        <div className='flex flex-wrap items-center gap-2 text-sm'>
-                            <span className='text-muted-foreground'>Active filters:</span>
-                            {statusFilter !== 'all' && (
-                                <Badge variant='secondary' className='flex items-center'>
-                                    Status: {statusFilter}
-                                    <Button
-                                        variant='ghost'
-                                        size='icon'
-                                        className='h-4 w-4 ml-1'
-                                        onClick={() => setStatusFilter('all')}
-                                    >
-                                        <XCircle className='h-3 w-3' />
-                                    </Button>
-                                </Badge>
-                            )}
-                            {searchQuery && (
-                                <Badge variant='secondary' className='flex items-center'>
-                                    Search: {searchQuery}
-                                    <Button variant='ghost' size='icon' className='h-4 w-4 ml-1' onClick={() => setSearchQuery('')}>
-                                        <XCircle className='h-3 w-3' />
-                                    </Button>
-                                </Badge>
-                            )}
-                            <Button
-                                variant='ghost'
-                                size='sm'
-                                className='text-xs'
-                                onClick={() => {
-                                    setSearchQuery('');
-                                    setStatusFilter('all');
-                                }}
-                            >
-                                Clear all
-                            </Button>
-                        </div>
-                    )}
+                <ApplicationFilterBar
+                    searchQuery={filterDraft.searchQuery}
+                    setSearchQuery={(q) => setFilterDraft((p) => ({ ...p, searchQuery: q }))}
+                    statusFilter={filterDraft.statusFilter}
+                    setStatusFilter={(v) => setFilterDraft((p) => ({ ...p, statusFilter: v }))}
+                    stageFilter={filterDraft.stageFilter}
+                    setStageFilter={(v) => setFilterDraft((p) => ({ ...p, stageFilter: v }))}
+                    sortBy={filterDraft.sortOption}
+                    setSortBy={(v) => setFilterDraft((p) => ({ ...p, sortOption: v }))}
+                    onApply={applyFilters}
+                    onRefresh={refreshList}
+                    compact={false}
+                />
 
+                <div className='flex min-w-0 flex-col space-y-6'>
                     {error && (
                         <Alert variant='destructive' className='mb-4'>
                             <AlertCircle className='h-4 w-4' />
@@ -921,7 +967,7 @@ export default function JobApplicationsPage({ params }: { params: { id: string }
                         </Alert>
                     )}
 
-                    {loading ? (
+                    {loading && applications.length === 0 ? (
                         <div className='grid min-w-0 grid-cols-1 gap-6 items-start lg:grid-cols-3'>
                             <div className='min-w-0 space-y-3 lg:col-span-1'>
                                 <Skeleton className='h-12 w-full rounded-md' />
@@ -941,13 +987,9 @@ export default function JobApplicationsPage({ params }: { params: { id: string }
                                     <CardHeader className='border-b px-4 py-3'>
                                         <div className='flex min-w-0 items-center justify-between gap-2'>
                                             <CardTitle className='min-w-0 truncate text-base'>
-                                                {loading
-                                                    ? statusFilter !== 'all'
-                                                        ? `${statusFilter}`
-                                                        : 'All Applications'
-                                                    : statusFilter !== 'all'
-                                                      ? `${statusFilter} (${filteredApplications.length})`
-                                                      : `All Applications (${filteredApplications.length})`}
+                                                {filterApplied.statusFilter !== 'all'
+                                                    ? `${filterApplied.statusFilter} (${filteredApplications.length})`
+                                                    : `All Applications (${filteredApplications.length})`}
                                             </CardTitle>
                                             {!loading && applications.length > 0 && (
                                                 <Badge variant='outline' className='shrink-0 whitespace-nowrap'>
@@ -956,46 +998,51 @@ export default function JobApplicationsPage({ params }: { params: { id: string }
                                             )}
                                         </div>
                                     </CardHeader>
-                                    <div className='min-h-0 min-w-0 flex-1 overflow-auto p-3'>
+                                    <div ref={scrollRef} className='min-h-0 min-w-0 flex-1 overflow-auto p-3'>
                                         {filteredApplications.length === 0 ? (
                                             <Card className='border-0 shadow-none'>
                                                 <CardContent className='flex flex-col items-center justify-center py-10'>
                                                     <UserIcon className='w-16 h-16 text-muted-foreground mb-4 opacity-40' />
                                                     <h2 className='text-lg font-semibold text-center'>
-                                                        {searchQuery || statusFilter !== 'all'
+                                                        {filterApplied.searchQuery || filterApplied.statusFilter !== 'all' || filterApplied.stageFilter !== 'all'
                                                             ? 'No applications match your filters'
                                                             : 'No applications yet'}
                                                     </h2>
                                                     <p className='text-sm text-muted-foreground text-center mt-2'>
-                                                        {searchQuery || statusFilter !== 'all'
+                                                        {filterApplied.searchQuery || filterApplied.statusFilter !== 'all' || filterApplied.stageFilter !== 'all'
                                                             ? 'Try adjusting your filters or search criteria.'
                                                             : 'Applications will appear here when candidates apply.'}
                                                     </p>
-                                                    {(searchQuery || statusFilter !== 'all') && (
-                                                        <Button
-                                                            variant='outline'
-                                                            className='mt-4'
-                                                            onClick={() => {
-                                                                setSearchQuery('');
-                                                                setStatusFilter('all');
-                                                            }}
-                                                        >
+                                                    {(filterApplied.searchQuery || filterApplied.statusFilter !== 'all' || filterApplied.stageFilter !== 'all') && (
+                                                        <Button variant='outline' className='mt-4' onClick={clearFiltersAndRefetch}>
                                                             Clear Filters
                                                         </Button>
                                                     )}
                                                 </CardContent>
                                             </Card>
                                         ) : (
-                                            <div className='min-w-0 space-y-3 pr-1'>
-                                                {filteredApplications.map((application) => (
-                                                    <ApplicationCard
-                                                        key={application.id}
-                                                        application={application}
-                                                        isSelected={selectedApplication?.id === application.id}
-                                                        onClick={() => setSelectedApplication(application)}
-                                                    />
-                                                ))}
-                                            </div>
+                                            <>
+                                                <div className='min-w-0 space-y-3 pr-1'>
+                                                    {filteredApplications.map((application) => (
+                                                        <ApplicationCard
+                                                            key={application.id}
+                                                            application={application}
+                                                            isSelected={selectedApplication?.id === application.id}
+                                                            onClick={() => setSelectedApplication(application)}
+                                                        />
+                                                    ))}
+                                                </div>
+                                                <div ref={sentinelRef} className='h-1 w-full shrink-0' aria-hidden />
+                                                {loading && applications.length > 0 && hasMore && (
+                                                    <div className='flex justify-center py-2'>
+                                                        <div className='flex animate-pulse space-x-2'>
+                                                            <div className='h-2 w-2 rounded-full bg-muted-foreground' />
+                                                            <div className='h-2 w-2 rounded-full bg-muted-foreground' />
+                                                            <div className='h-2 w-2 rounded-full bg-muted-foreground' />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </>
                                         )}
                                     </div>
                                 </Card>

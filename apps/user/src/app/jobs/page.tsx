@@ -56,21 +56,57 @@ const JobTableRow = ({ job, onView }: {
 };
 export default function JobListings() {
     const [viewJob, setViewJob] = useState<Job | null>(null);
-    const { filteredJobs, loading, hasMore, observerRef, searchQuery, setSearchQuery, jobType, setJobType, workplaceType, setWorkplaceType, sortBy, setSortBy, resetFilters, } = useJobFetching(10);
+    const {
+        jobs,
+        filteredJobs,
+        paginatedJobs,
+        loading,
+        page,
+        setPage,
+        totalPages,
+        totalFilteredCount,
+        rangeStart,
+        rangeEnd,
+        pageSize,
+        searchQuery,
+        setSearchQuery,
+        jobType,
+        setJobType,
+        workplaceType,
+        setWorkplaceType,
+        sortBy,
+        setSortBy,
+        applyFilters,
+        refreshJobs,
+        clearFiltersAndApply,
+        appliedFilters,
+    } = useJobFetching(10);
     return (<NavbarLayout>
             <div className='container mx-auto px-4 py-6'>
                 <div className='flex flex-col md:flex-row justify-between items-start md:items-center mb-6'>
                     <div>
                         <h1 className='text-2xl font-bold'>Job Listings</h1>
                         <p className='text-muted-foreground'>
-                            {filteredJobs.length} {filteredJobs.length === 1 ? 'job' : 'jobs'} available
+                            {totalFilteredCount} {totalFilteredCount === 1 ? 'job' : 'jobs'} available
                         </p>
                     </div>
                 </div>
 
-                <FilterBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} jobType={jobType} setJobType={setJobType} workplaceType={workplaceType} setWorkplaceType={setWorkplaceType} sortBy={sortBy} setSortBy={setSortBy} resetFilters={resetFilters} compact={false}/>
+                <FilterBar
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    jobType={jobType}
+                    setJobType={setJobType}
+                    workplaceType={workplaceType}
+                    setWorkplaceType={setWorkplaceType}
+                    sortBy={sortBy}
+                    setSortBy={setSortBy}
+                    onApply={applyFilters}
+                    onRefresh={refreshJobs}
+                    compact={false}
+                />
 
-                {loading && filteredJobs.length === 0 ? (<Card>
+                {loading && jobs.length === 0 ? (<Card>
                         <Table className='min-w-full w-max'>
                             <TableHeader>
                                 <TableRow>
@@ -107,15 +143,23 @@ export default function JobListings() {
                             <Briefcase className='h-12 w-12 text-muted-foreground mb-4'/>
                             <h2 className='text-xl font-semibold mb-2'>No Jobs Found</h2>
                             <p className='text-muted-foreground mb-6 max-w-md'>
-                                {searchQuery || jobType !== 'all' || workplaceType !== 'all'
+                                {appliedFilters.searchQuery || appliedFilters.jobType !== 'all' || appliedFilters.workplaceType !== 'all'
                 ? 'No jobs match your current filters. Try adjusting your search criteria.'
                 : 'There are no job listings available at the moment.'}
                             </p>
-                            {(searchQuery || jobType !== 'all' || workplaceType !== 'all') && (<Button variant='outline' size='icon' className='h-10 w-10' onClick={resetFilters} aria-label='Reset filters' title='Reset filters'>
+                            {(appliedFilters.searchQuery || appliedFilters.jobType !== 'all' || appliedFilters.workplaceType !== 'all') && (<Button variant='outline' size='icon' className='h-10 w-10' onClick={clearFiltersAndApply} aria-label='Clear filters' title='Clear filters'>
                                     <RefreshCw className='h-4 w-4'/>
                                 </Button>)}
                         </CardContent>
-                    </Card>) : (<Card>
+                    </Card>                ) : (<Card className='relative'>
+                        {loading && jobs.length > 0 && (
+                            <div className='absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/60 backdrop-blur-[1px]'>
+                                <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+                                    <div className='h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent' />
+                                    Updating listings…
+                                </div>
+                            </div>
+                        )}
                         <Table className='min-w-full w-max'>
                             <TableHeader>
                                 <TableRow>
@@ -127,15 +171,20 @@ export default function JobListings() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredJobs.map((job) => (<JobTableRow key={job.id} job={job} onView={() => setViewJob(job)}/>))}
+                                {paginatedJobs.map((job) => (<JobTableRow key={job.id} job={job} onView={() => setViewJob(job)}/>))}
                             </TableBody>
                         </Table>
-                        <div ref={observerRef} className='h-10'>
-                            {loading && filteredJobs.length > 0 && (<div className='flex items-center justify-center py-3 border-t'>
-                                    <div className='h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent'/>
-                                    <span className='ml-2 text-sm text-muted-foreground'>Loading more jobs...</span>
-                                </div>)}
-                        </div>
+                        {filteredJobs.length > 0 && (
+                            <div className='flex flex-col gap-3 border-t px-4 py-3 sm:flex-row sm:items-center sm:justify-between'>
+                                <p className='text-center text-sm text-muted-foreground sm:text-left'>
+                                    Showing {rangeStart}–{rangeEnd} of {totalFilteredCount} · {pageSize} per page
+                                </p>
+                                <div className='flex flex-wrap items-center justify-center gap-2'>
+                                    <Button type='button' variant='outline' size='sm' disabled={page <= 1 || loading} onClick={() => setPage((p) => p - 1)}>Previous</Button>
+                                    <Button type='button' variant='outline' size='sm' disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>Next</Button>
+                                </div>
+                            </div>
+                        )}
                     </Card>)}
 
                 <Dialog open={!!viewJob} onOpenChange={(open) => !open && setViewJob(null)}>

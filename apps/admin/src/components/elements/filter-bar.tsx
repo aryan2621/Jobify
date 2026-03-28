@@ -1,7 +1,7 @@
 import { Input } from '@jobify/ui/input';
 import { Button } from '@jobify/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@jobify/ui/select';
-import { Search, RefreshCw, Briefcase, Building, Filter, SortAsc } from 'lucide-react';
+import { Search, RefreshCw, Briefcase, Building, Filter, SortAsc, Send } from 'lucide-react';
 import { JobType, WorkplaceTypes, JobState } from '@jobify/domain/job';
 
 interface FilterBarProps {
@@ -15,7 +15,8 @@ interface FilterBarProps {
     setJobState?: (state: string) => void;
     sortBy?: string;
     setSortBy?: (sort: string) => void;
-    resetFilters: () => void;
+    onApply: () => void;
+    onRefresh: () => void;
     isAdmin?: boolean;
     compact?: boolean;
 }
@@ -31,10 +32,38 @@ export const FilterBar = ({
     setJobState,
     sortBy,
     setSortBy,
-    resetFilters,
+    onApply,
+    onRefresh,
     isAdmin = false,
     compact = false,
 }: FilterBarProps) => {
+    const actionButtons = (
+        <div className='flex items-center gap-2 shrink-0'>
+            <Button
+                type='button'
+                variant='outline'
+                size='icon'
+                className={compact ? 'h-8 w-8' : 'h-9 w-9'}
+                onClick={onRefresh}
+                aria-label='Reload all data from server'
+                title='Reload all data from server'
+            >
+                <RefreshCw className={compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
+            </Button>
+            <Button
+                type='button'
+                variant='default'
+                size='icon'
+                className={compact ? 'h-8 w-8' : 'h-9 w-9'}
+                onClick={onApply}
+                aria-label='Apply filters'
+                title='Apply filters'
+            >
+                <Send className={compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
+            </Button>
+        </div>
+    );
+
     if (compact) {
         return (
             <div className='bg-background/95 pb-3 pt-2 mb-4 border-b'>
@@ -78,9 +107,36 @@ export const FilterBar = ({
                             </SelectContent>
                         </Select>
 
-                        <Button variant='ghost' size='icon' className='h-8 w-8 shrink-0' onClick={resetFilters} aria-label='Reset filters' title='Reset filters'>
-                            <RefreshCw className='h-3.5 w-3.5' />
-                        </Button>
+                        {isAdmin && setJobState && jobState && (
+                            <Select value={jobState} onValueChange={setJobState}>
+                                <SelectTrigger className='h-8 text-xs flex-1 min-w-[130px]'>
+                                    <Filter className='mr-2 h-3.5 w-3.5' />
+                                    <SelectValue placeholder='Status' />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value='all'>All Status</SelectItem>
+                                    <SelectItem value={JobState.PUBLISHED}>{JobState.PUBLISHED}</SelectItem>
+                                    <SelectItem value={JobState.DRAFT}>{JobState.DRAFT}</SelectItem>
+                                    <SelectItem value={JobState.CLOSED}>{JobState.CLOSED}</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        )}
+
+                        {isAdmin && setSortBy && sortBy && (
+                            <Select value={sortBy} onValueChange={setSortBy}>
+                                <SelectTrigger className='h-8 text-xs flex-1 min-w-[130px]'>
+                                    <SortAsc className='mr-2 h-3.5 w-3.5' />
+                                    <SelectValue placeholder='Sort By' />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value='newest'>Newest First</SelectItem>
+                                    <SelectItem value='oldest'>Oldest First</SelectItem>
+                                    <SelectItem value='closing'>Closing Soon</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        )}
+
+                        {actionButtons}
                     </div>
                 </div>
             </div>
@@ -99,7 +155,7 @@ export const FilterBar = ({
                 />
             </div>
 
-            <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4'>
                 <Select value={jobType} onValueChange={setJobType}>
                     <SelectTrigger>
                         <div className='flex items-center'>
@@ -120,7 +176,7 @@ export const FilterBar = ({
                 <Select value={workplaceType} onValueChange={setWorkplaceType}>
                     <SelectTrigger>
                         <div className='flex items-center'>
-                            <Briefcase className='h-4 w-4 mr-2' />
+                            <Building className='h-4 w-4 mr-2' />
                             <SelectValue placeholder='Workplace Type' />
                         </div>
                     </SelectTrigger>
@@ -164,20 +220,8 @@ export const FilterBar = ({
                         </SelectContent>
                     </Select>
                 )}
-            </div>
 
-            <div className='flex justify-end pt-1'>
-                <Button
-                    type='button'
-                    variant='outline'
-                    size='icon'
-                    className='h-9 w-9 shrink-0'
-                    onClick={resetFilters}
-                    aria-label='Reset filters'
-                    title='Reset filters'
-                >
-                    <RefreshCw className='h-4 w-4' />
-                </Button>
+                <div className='flex items-end sm:col-span-2 lg:col-span-1 lg:items-center lg:h-10'>{actionButtons}</div>
             </div>
         </div>
     );

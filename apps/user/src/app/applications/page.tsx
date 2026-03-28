@@ -8,30 +8,38 @@ import { Avatar, AvatarFallback, AvatarImage } from '@jobify/ui/avatar';
 import { Separator } from '@jobify/ui/separator';
 import { Badge } from '@jobify/ui/badge';
 import { Button } from '@jobify/ui/button';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@jobify/ui/dropdown-menu';
 import { Skeleton } from '@jobify/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@jobify/ui/tabs';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@jobify/ui/tooltip';
-import { User as UserIcon, Briefcase, MapPin, Phone, Building, GraduationCap, Lightbulb, Globe, FileText, Calendar, ChevronDown, Filter, SortAsc, SortDesc, Search, Download, Mail, AlertCircle, Info, CheckCircle, XCircle, Clock, } from 'lucide-react';
+import { ApplicationFilterBar } from '@jobify/ui/components/application-filter-bar';
+import { User as UserIcon, Briefcase, MapPin, Phone, Building, GraduationCap, Lightbulb, Globe, FileText, Calendar, ChevronDown, Filter, SortAsc, SortDesc, Search, Download, Mail, AlertCircle, Info, CheckCircle, XCircle, Clock, Users, Star, Send, Video, Handshake, Award, LogOut, Search as SearchIcon, RefreshCw, Building2 } from 'lucide-react';
 import { Application, ApplicationStatus, ApplicationStage, parseApplicationStage } from '@jobify/domain/application';
 import { User } from '@jobify/domain/user';
 import { Job } from '@jobify/domain/job';
 import { getResume } from '@jobify/appwrite-server/storage';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import FiltersPage from '@/components/elements/filters';
 import { formatDate } from '@/lib/job-utils/utils';
 import { jsonArrayFromApi } from '@/app/applications/_lib/utils';
 type SortOption = 'newest' | 'oldest' | 'nameAsc' | 'nameDesc';
-type FilterOptions = {
+type AppFilters = {
     status: ApplicationStatus | 'all';
     stage: ApplicationStage | 'all';
     searchQuery: string;
+    sortBy: SortOption;
 };
+
+const DEFAULT_APP_FILTERS: AppFilters = {
+    status: 'all',
+    stage: 'all',
+    searchQuery: '',
+    sortBy: 'newest',
+};
+
 const StatusBadge = memo(({ status, stage }: {
     status: ApplicationStatus;
     stage: ApplicationStage;
 }) => {
-    const variants = {
+    const statusVariants = {
         [ApplicationStatus.APPLIED]: {
             variant: 'secondary' as const,
             icon: <Clock className='w-3 h-3 mr-1' />,
@@ -45,7 +53,52 @@ const StatusBadge = memo(({ status, stage }: {
             icon: <XCircle className='w-3 h-3 mr-1' />,
         },
     };
-    const { variant, icon } = variants[status];
+
+    const stageVariants = {
+        [ApplicationStage.APPLIED]: {
+            icon: <Send className='w-3 h-3 mr-1' />,
+            color: 'text-blue-600',
+        },
+        [ApplicationStage.SHORTLISTED]: {
+            icon: <Star className='w-3 h-3 mr-1' />,
+            color: 'text-yellow-600',
+        },
+        [ApplicationStage.ASSIGNMENT_SENT]: {
+            icon: <FileText className='w-3 h-3 mr-1' />,
+            color: 'text-purple-600',
+        },
+        [ApplicationStage.ASSIGNMENT_SUBMITTED]: {
+            icon: <Send className='w-3 h-3 mr-1' />,
+            color: 'text-indigo-600',
+        },
+        [ApplicationStage.INTERVIEW_SCHEDULED]: {
+            icon: <Calendar className='w-3 h-3 mr-1' />,
+            color: 'text-green-600',
+        },
+        [ApplicationStage.INTERVIEW_DONE]: {
+            icon: <Video className='w-3 h-3 mr-1' />,
+            color: 'text-teal-600',
+        },
+        [ApplicationStage.OFFER_SENT]: {
+            icon: <Mail className='w-3 h-3 mr-1' />,
+            color: 'text-orange-600',
+        },
+        [ApplicationStage.HIRED]: {
+            icon: <Handshake className='w-3 h-3 mr-1' />,
+            color: 'text-emerald-600',
+        },
+        [ApplicationStage.REJECTED]: {
+            icon: <XCircle className='w-3 h-3 mr-1' />,
+            color: 'text-red-600',
+        },
+        [ApplicationStage.WITHDRAWN]: {
+            icon: <LogOut className='w-3 h-3 mr-1' />,
+            color: 'text-gray-600',
+        },
+    };
+
+    const { variant, icon } = statusVariants[status];
+    const stageInfo = stageVariants[stage];
     
     const formatStage = (stage: ApplicationStage) => {
         return stage.split('_').map(word => 
@@ -58,7 +111,8 @@ const StatusBadge = memo(({ status, stage }: {
             {icon}
             {status}
         </Badge>
-        <Badge variant='outline' className='text-xs inline-flex shrink-0 items-center whitespace-nowrap'>
+        <Badge variant='outline' className={`text-xs inline-flex shrink-0 items-center whitespace-nowrap ${stageInfo.color}`}>
+            {stageInfo.icon}
             {formatStage(stage)}
         </Badge>
     </div>);
@@ -450,22 +504,6 @@ const ApplicationDetail = memo(({ application }: {
     </Card>);
 });
 ApplicationDetail.displayName = 'ApplicationDetail';
-function useDebounce<T extends (...args: any[]) => any>(callback: T, delay: number): T {
-    const callbackRef = useRef(callback);
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-    useEffect(() => {
-        callbackRef.current = callback;
-    }, [callback]);
-    return useCallback(((...args: Parameters<T>) => {
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-        }
-        timeoutRef.current = setTimeout(() => {
-            callbackRef.current(...args);
-            timeoutRef.current = null;
-        }, delay);
-    }) as T, [delay]);
-}
 const EmptyState = memo(({ message }: {
     message: string;
 }) => (<Card className='p-6'>
@@ -503,30 +541,44 @@ const ApplicationCardSkeleton = memo(() => (<Card className='mb-3'>
 </Card>));
 ApplicationCardSkeleton.displayName = 'ApplicationCardSkeleton';
 export default function ApplicationsPage() {
-    const limit = 20;
+    const limit = 100;
     const [applications, setApplications] = useState<Application[]>([]);
     const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
     const [loading, setLoading] = useState(true);
     const [lastId, setLastId] = useState<string | null>(null);
     const [hasMore, setHasMore] = useState(true);
     const loadingRef = useRef(false);
+    const lastIdRef = useRef<string | null>(null);
+    const hasMoreRef = useRef(true);
     const parentRef = useRef<HTMLDivElement>(null);
-    const [sortOption, setSortOption] = useState<SortOption>('newest');
-    const [filterOptions, setFilterOptions] = useState<FilterOptions>({
-        status: 'all',
-        stage: 'all',
-        searchQuery: '',
-    });
+    const [filterDraft, setFilterDraft] = useState<AppFilters>(DEFAULT_APP_FILTERS);
+    const [filterApplied, setFilterApplied] = useState<AppFilters>(DEFAULT_APP_FILTERS);
     const [error, setError] = useState<string | null>(null);
     const [applicationsFetchCompleted, setApplicationsFetchCompleted] = useState(false);
-    const fetchApplications = useCallback(async () => {
-        if (loadingRef.current || !hasMore)
-            return;
-        setLoading(true);
+
+    useEffect(() => {
+        lastIdRef.current = lastId;
+    }, [lastId]);
+    useEffect(() => {
+        hasMoreRef.current = hasMore;
+    }, [hasMore]);
+
+    const fetchApplications = useCallback(async (replace: boolean) => {
+        if (loadingRef.current) return;
+        if (!replace && !hasMoreRef.current) return;
         loadingRef.current = true;
+        setLoading(true);
         setError(null);
+        if (replace) {
+            setApplications([]);
+            setLastId(null);
+            lastIdRef.current = null;
+            setHasMore(true);
+            hasMoreRef.current = true;
+        }
         try {
-            const url = `/api/user-applications?limit=${limit}${lastId ? `&lastId=${lastId}` : ''}`;
+            const cursor = replace ? null : lastIdRef.current;
+            const url = `/api/user-applications?limit=${limit}${cursor ? `&lastId=${encodeURIComponent(cursor)}` : ''}`;
             const res = (await ky.get(url).json()) as any[];
             if (!Array.isArray(res)) {
                 throw new Error('Invalid response format');
@@ -555,64 +607,141 @@ export default function ApplicationsPage() {
                         application.createdBy
                     )
             );
-            setApplications((prevApplications) => [...prevApplications, ...fetchedApplications]);
-            setLastId(fetchedApplications.length ? fetchedApplications[fetchedApplications.length - 1].id : null);
-            setHasMore(fetchedApplications.length === limit);
-            if (selectedApplication === null && fetchedApplications.length > 0) {
-                setSelectedApplication(fetchedApplications[0]);
+            setApplications((prev) => (replace ? fetchedApplications : [...prev, ...fetchedApplications]));
+            const nextLast = fetchedApplications.length ? fetchedApplications[fetchedApplications.length - 1].id : null;
+            setLastId(nextLast);
+            lastIdRef.current = nextLast;
+            const more = fetchedApplications.length === limit;
+            setHasMore(more);
+            hasMoreRef.current = more;
+            if (!replace && fetchedApplications.length > 0) {
+                setSelectedApplication((prev) => prev ?? fetchedApplications[0]);
             }
-        }
-        catch (error) {
-            console.error('Error fetching applications:', error);
+        } catch (err) {
+            console.error('Error fetching applications:', err);
             setError('Failed to fetch applications. Please try again.');
-        }
-        finally {
+        } finally {
             setApplicationsFetchCompleted(true);
             setLoading(false);
             loadingRef.current = false;
         }
-    }, [lastId, limit, selectedApplication]);
-    const debouncedFetchApplications = useDebounce(fetchApplications, 300);
+    }, [limit]);
+
     useEffect(() => {
-        debouncedFetchApplications();
-    }, [debouncedFetchApplications]);
+        void fetchApplications(true);
+    }, [fetchApplications]);
+
     useEffect(() => {
-        if (!parentRef.current)
-            return;
-        const observer = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting && hasMore && !loading) {
-                debouncedFetchApplications();
-            }
-        }, {
-            rootMargin: '200px',
-            threshold: 0.1,
-        });
+        if (!parentRef.current) return;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMoreRef.current && !loadingRef.current) {
+                    void fetchApplications(false);
+                }
+            },
+            { rootMargin: '200px', threshold: 0.1 }
+        );
         const currentElement = parentRef.current;
         observer.observe(currentElement);
         return () => {
-            if (currentElement) {
-                observer.unobserve(currentElement);
-            }
+            if (currentElement) observer.unobserve(currentElement);
         };
-    }, [debouncedFetchApplications, hasMore, loading]);
+    }, [fetchApplications]);
+
+    const applyFilters = useCallback(() => {
+        setFilterApplied({ ...filterDraft });
+        void fetchApplications(true);
+    }, [filterDraft, fetchApplications]);
+
+    const refreshList = useCallback(async () => {
+        setFilterDraft({ ...filterApplied });
+        if (loadingRef.current) return;
+        loadingRef.current = true;
+        setLoading(true);
+        setError(null);
+        setApplications([]);
+        setLastId(null);
+        lastIdRef.current = null;
+        setHasMore(true);
+        hasMoreRef.current = true;
+        try {
+            const all: Application[] = [];
+            let cursor: string | null = null;
+            let more = true;
+            while (more) {
+                const url = `/api/user-applications?limit=${limit}${cursor ? `&lastId=${encodeURIComponent(cursor)}` : ''}`;
+                const res = (await ky.get(url).json()) as any[];
+                if (!Array.isArray(res)) {
+                    throw new Error('Invalid response format');
+                }
+                const batch = res.map(
+                    (application: any) =>
+                        new Application(
+                            application.id,
+                            application.firstName,
+                            application.lastName,
+                            application.email,
+                            application.phone,
+                            application.currentLocation,
+                            application.gender,
+                            jsonArrayFromApi(application.education),
+                            jsonArrayFromApi(application.experience),
+                            jsonArrayFromApi<string>(application.skills),
+                            application.source,
+                            application.resume,
+                            jsonArrayFromApi<string>(application.socialLinks),
+                            application.coverLetter,
+                            application.status,
+                            parseApplicationStage(application.stage),
+                            application.jobId,
+                            application.createdAt,
+                            application.createdBy
+                        )
+                );
+                if (batch.length === 0) break;
+                all.push(...batch);
+                cursor = batch[batch.length - 1].id;
+                more = batch.length === limit;
+            }
+            setApplications(all);
+            const nextLast = all.length > 0 ? all[all.length - 1].id : null;
+            setLastId(nextLast);
+            lastIdRef.current = nextLast;
+            setHasMore(false);
+            hasMoreRef.current = false;
+            setSelectedApplication(all.length > 0 ? all[0] : null);
+        } catch (err) {
+            console.error('Error fetching applications:', err);
+            setError('Failed to fetch applications. Please try again.');
+        } finally {
+            setApplicationsFetchCompleted(true);
+            setLoading(false);
+            loadingRef.current = false;
+        }
+    }, [filterApplied, limit]);
+
     const filteredAndSortedApplications = useMemo(() => {
         let result = [...applications];
-        if (filterOptions.status !== 'all') {
-            result = result.filter((app) => app.status === filterOptions.status);
+        const { status, stage, searchQuery, sortBy } = filterApplied;
+        if (status !== 'all') {
+            result = result.filter((app) => app.status === status);
         }
-        if (filterOptions.stage !== 'all') {
-            result = result.filter((app) => app.stage === filterOptions.stage);
+        if (stage !== 'all') {
+            result = result.filter((app) => app.stage === stage);
         }
-        if (filterOptions.searchQuery) {
-            const query = filterOptions.searchQuery.toLowerCase();
-            result = result.filter((app) => app.firstName.toLowerCase().includes(query) ||
-                app.lastName.toLowerCase().includes(query) ||
-                app.email.toLowerCase().includes(query) ||
-                app.skills.some((skill) => skill.toLowerCase().includes(query)) ||
-                app.experience.some((exp) => exp.profile.toLowerCase().includes(query) || exp.company.toLowerCase().includes(query)));
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            result = result.filter(
+                (app) =>
+                    app.firstName.toLowerCase().includes(query) ||
+                    app.lastName.toLowerCase().includes(query) ||
+                    app.email.toLowerCase().includes(query) ||
+                    app.skills.some((skill) => skill.toLowerCase().includes(query)) ||
+                    app.experience.some((exp) => exp.profile.toLowerCase().includes(query) || exp.company.toLowerCase().includes(query))
+            );
         }
         result.sort((a, b) => {
-            switch (sortOption) {
+            switch (sortBy) {
                 case 'newest':
                     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
                 case 'oldest':
@@ -626,10 +755,7 @@ export default function ApplicationsPage() {
             }
         });
         return result;
-    }, [applications, filterOptions, sortOption]);
-    const handleSearchChange = useDebounce((value: string) => {
-        setFilterOptions((prev) => ({ ...prev, searchQuery: value }));
-    }, 500);
+    }, [applications, filterApplied]);
     const rowVirtualizer = useVirtualizer({
         count: filteredAndSortedApplications.length,
         getScrollElement: () => parentRef.current,
@@ -646,130 +772,33 @@ export default function ApplicationsPage() {
         }
     }, [filteredAndSortedApplications, selectedApplication]);
     return (<NavbarLayout>
-        <div className='mx-auto max-w-full px-4 py-6 sm:px-6'>
-            <div className='flex min-w-0 flex-col space-y-6'>
-                <div className='flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
-                    <div className='min-w-0 max-w-full lg:max-w-2xl lg:pr-4'>
-                        <h1 className='text-2xl font-bold'>Applications</h1>
-                        <p className='text-pretty break-words text-muted-foreground'>
-                            Track your submitted applications and their status
-                        </p>
-                    </div>
-
-                    <div className='flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center'>
-                        <div className='relative w-full sm:w-64'>
-                            <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
-                            <input type='text' placeholder='Search applications...' className='w-full rounded-md border border-input bg-background py-2 pl-8 pr-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2' onChange={(e) => handleSearchChange(e.target.value)} />
-                        </div>
-
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant='outline' className='flex-shrink-0'>
-                                    <Filter className='w-4 h-4 mr-2' />
-                                    Filter
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, status: 'all', stage: 'all' }))}>All</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, status: ApplicationStatus.APPLIED }))}>
-                                    <Clock className='w-4 h-4 mr-2' />
-                                    Applied
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, status: ApplicationStatus.SELECTED }))}>
-                                    <CheckCircle className='w-4 h-4 mr-2' />
-                                    Selected
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, status: ApplicationStatus.REJECTED }))}>
-                                    <XCircle className='w-4 h-4 mr-2' />
-                                    Rejected
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, stage: ApplicationStage.SHORTLISTED }))}>
-                                    <Briefcase className='w-4 h-4 mr-2' />
-                                    Shortlisted
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, stage: ApplicationStage.ASSIGNMENT_SENT }))}>
-                                    <FileText className='w-4 h-4 mr-2' />
-                                    Assignment Sent
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, stage: ApplicationStage.ASSIGNMENT_SUBMITTED }))}>
-                                    <FileText className='w-4 h-4 mr-2' />
-                                    Assignment Submitted
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, stage: ApplicationStage.INTERVIEW_SCHEDULED }))}>
-                                    <Calendar className='w-4 h-4 mr-2' />
-                                    Interview Scheduled
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, stage: ApplicationStage.INTERVIEW_DONE }))}>
-                                    <CheckCircle className='w-4 h-4 mr-2' />
-                                    Interview Done
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, stage: ApplicationStage.OFFER_SENT }))}>
-                                    <Mail className='w-4 h-4 mr-2' />
-                                    Offer Sent
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, stage: ApplicationStage.HIRED }))}>
-                                    <CheckCircle className='w-4 h-4 mr-2' />
-                                    Hired
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, stage: ApplicationStage.WITHDRAWN }))}>
-                                    <XCircle className='w-4 h-4 mr-2' />
-                                    Withdrawn
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant='outline' className='flex-shrink-0'>
-                                    {sortOption === 'newest' || sortOption === 'oldest' ? (<Calendar className='w-4 h-4 mr-2' />) : (<UserIcon className='w-4 h-4 mr-2' />)}
-                                    Sort
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuItem onClick={() => setSortOption('newest')}>
-                                    <SortDesc className='w-4 h-4 mr-2' />
-                                    Newest First
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setSortOption('oldest')}>
-                                    <SortAsc className='w-4 h-4 mr-2' />
-                                    Oldest First
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setSortOption('nameAsc')}>
-                                    <SortAsc className='w-4 h-4 mr-2' />
-                                    Name (A-Z)
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setSortOption('nameDesc')}>
-                                    <SortDesc className='w-4 h-4 mr-2' />
-                                    Name (Z-A)
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
+        <div className='container mx-auto px-4 py-6'>
+            <div className='flex flex-col md:flex-row justify-between items-start md:items-center mb-6'>
+                <div>
+                    <h1 className='text-2xl font-bold'>Applications</h1>
+                    <p className='text-muted-foreground'>
+                        {loading && applications.length === 0
+                            ? 'Loading applications…'
+                            : `${filteredAndSortedApplications.length} ${filteredAndSortedApplications.length === 1 ? 'application' : 'applications'} found`}
+                    </p>
                 </div>
+            </div>
 
+            <ApplicationFilterBar
+                searchQuery={filterDraft.searchQuery}
+                setSearchQuery={(query) => setFilterDraft((prev) => ({ ...prev, searchQuery: query }))}
+                statusFilter={filterDraft.status}
+                setStatusFilter={(status) => setFilterDraft((prev) => ({ ...prev, status: status as ApplicationStatus | 'all' }))}
+                stageFilter={filterDraft.stage}
+                setStageFilter={(stage) => setFilterDraft((prev) => ({ ...prev, stage: stage as ApplicationStage | 'all' }))}
+                onApply={applyFilters}
+                onRefresh={refreshList}
+                sortBy={filterDraft.sortBy}
+                setSortBy={(sort) => setFilterDraft((prev) => ({ ...prev, sortBy: sort }))}
+                compact={false}
+            />
 
-                {(filterOptions.status !== 'all' || filterOptions.searchQuery) && (<div className='flex flex-wrap items-center gap-2 text-sm'>
-                    <span className='text-muted-foreground'>Active filters:</span>
-
-                    {filterOptions.status !== 'all' && (<Badge variant='secondary' className='flex items-center'>
-                        Status: {filterOptions.status}
-                        <Button variant='ghost' size='icon' className='h-4 w-4 ml-1' onClick={() => setFilterOptions((prev) => ({ ...prev, status: 'all' }))}>
-                            <XCircle className='h-3 w-3' />
-                        </Button>
-                    </Badge>)}
-
-                    {filterOptions.searchQuery && (<Badge variant='secondary' className='flex items-center'>
-                        Search: {filterOptions.searchQuery}
-                        <Button variant='ghost' size='icon' className='h-4 w-4 ml-1' onClick={() => setFilterOptions((prev) => ({ ...prev, searchQuery: '' }))}>
-                            <XCircle className='h-3 w-3' />
-                        </Button>
-                    </Badge>)}
-
-                    <Button variant='ghost' size='sm' className='text-xs' onClick={() => setFilterOptions({ status: 'all', stage: 'all', searchQuery: '' })}>
-                        Clear all
-                    </Button>
-                </div>)}
-                <div className='grid min-w-0 grid-cols-1 gap-6 items-start lg:grid-cols-3'>
+            <div className='grid min-w-0 grid-cols-1 gap-6 items-start lg:grid-cols-3'>
                     <div className='flex h-[calc(100vh-220px)] min-h-0 min-w-0 flex-col overflow-hidden lg:col-span-1'>
                         {error && (<Card className='mb-4 border-destructive'>
                             <CardContent className='p-4 flex items-center text-destructive'>
@@ -783,11 +812,11 @@ export default function ApplicationsPage() {
                                 <div className='flex min-w-0 items-center justify-between gap-2'>
                                     <CardTitle className='min-w-0 truncate text-base'>
                                         {applicationsFetchCompleted
-                                            ? filterOptions.status !== 'all'
-                                                ? `${filterOptions.status} Applications (${filteredAndSortedApplications.length})`
+                                            ? filterApplied.status !== 'all'
+                                                ? `${filterApplied.status} Applications (${filteredAndSortedApplications.length})`
                                                 : `All Applications (${filteredAndSortedApplications.length})`
-                                            : filterOptions.status !== 'all'
-                                                ? `${filterOptions.status} Applications`
+                                            : filterApplied.status !== 'all'
+                                                ? `${filterApplied.status} Applications`
                                                 : 'All Applications'}
                                     </CardTitle>
                                     {applicationsFetchCompleted && applications.length > 0 && (
@@ -811,7 +840,7 @@ export default function ApplicationsPage() {
                                     rowVirtualizer.scrollToIndex(newIndex);
                                 }
                             }}>
-                                {loading && applications.length === 0 ? ([...Array(5)].map((_, index) => <ApplicationCardSkeleton key={index} />)) : filteredAndSortedApplications.length === 0 ? (<EmptyState message={filterOptions.status !== 'all' || filterOptions.searchQuery
+                                {loading && applications.length === 0 ? ([...Array(5)].map((_, index) => <ApplicationCardSkeleton key={index} />)) : filteredAndSortedApplications.length === 0 ? (<EmptyState message={filterApplied.status !== 'all' || filterApplied.stage !== 'all' || filterApplied.searchQuery
                                     ? 'No applications match your filters'
                                     : 'No applications found'} />) : (<div className='min-w-0' style={{
                                         height: `${rowVirtualizer.getTotalSize()}px`,
@@ -851,7 +880,6 @@ export default function ApplicationsPage() {
                         </TooltipProvider>
                     </div>
                 </div>
-            </div>
         </div>
     </NavbarLayout>);
 }

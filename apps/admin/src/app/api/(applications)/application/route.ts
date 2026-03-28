@@ -45,9 +45,7 @@ export async function PUT(req: NextRequest) {
         if (sendResult.error) {
             throw new Error(sendResult.error.message);
         }
-
         await updateApplicationStatus(jobId, applicationId, status);
-
         return NextResponse.json({ message: 'Application updated successfully' }, { status: 200 });
     } catch (error: any) {
         console.log('Error while updating application', error);
