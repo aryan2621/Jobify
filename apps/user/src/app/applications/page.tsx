@@ -13,7 +13,7 @@ import { Skeleton } from '@jobify/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@jobify/ui/tabs';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@jobify/ui/tooltip';
 import { User as UserIcon, Briefcase, MapPin, Phone, Building, GraduationCap, Lightbulb, Globe, FileText, Calendar, ChevronDown, Filter, SortAsc, SortDesc, Search, Download, Mail, AlertCircle, Info, CheckCircle, XCircle, Clock, } from 'lucide-react';
-import { Application, ApplicationStatus, parseApplicationStage } from '@jobify/domain/application';
+import { Application, ApplicationStatus, ApplicationStage, parseApplicationStage } from '@jobify/domain/application';
 import { User } from '@jobify/domain/user';
 import { Job } from '@jobify/domain/job';
 import { getResume } from '@jobify/appwrite-server/storage';
@@ -24,10 +24,12 @@ import { jsonArrayFromApi } from '@/app/applications/_lib/utils';
 type SortOption = 'newest' | 'oldest' | 'nameAsc' | 'nameDesc';
 type FilterOptions = {
     status: ApplicationStatus | 'all';
+    stage: ApplicationStage | 'all';
     searchQuery: string;
 };
-const StatusBadge = memo(({ status }: {
+const StatusBadge = memo(({ status, stage }: {
     status: ApplicationStatus;
+    stage: ApplicationStage;
 }) => {
     const variants = {
         [ApplicationStatus.APPLIED]: {
@@ -44,10 +46,22 @@ const StatusBadge = memo(({ status }: {
         },
     };
     const { variant, icon } = variants[status];
-    return (<Badge variant={variant as 'default' | 'secondary' | 'destructive' | 'outline' | null} className='inline-flex shrink-0 items-center whitespace-nowrap'>
-        {icon}
-        {status}
-    </Badge>);
+    
+    const formatStage = (stage: ApplicationStage) => {
+        return stage.split('_').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+    };
+    
+    return (<div className='flex flex-col gap-1'>
+        <Badge variant={variant as 'default' | 'secondary' | 'destructive' | 'outline' | null} className='inline-flex shrink-0 items-center whitespace-nowrap'>
+            {icon}
+            {status}
+        </Badge>
+        <Badge variant='outline' className='text-xs inline-flex shrink-0 items-center whitespace-nowrap'>
+            {formatStage(stage)}
+        </Badge>
+    </div>);
 });
 StatusBadge.displayName = 'StatusBadge';
 const ApplicationCard = memo(({ application, isSelected, onClick, }: {
@@ -81,7 +95,7 @@ const ApplicationCard = memo(({ application, isSelected, onClick, }: {
                     </div>
                 </div>
                 <div className='flex shrink-0 justify-end sm:justify-start'>
-                    <StatusBadge status={application.status} />
+                    <StatusBadge status={application.status} stage={application.stage} />
                 </div>
             </CardHeader>
             <CardContent className='px-4 pb-3 pt-0'>
@@ -235,7 +249,7 @@ const ApplicationDetail = memo(({ application }: {
                     <div className='min-w-0'>
                         <CardTitle className='text-2xl'>{`${application.firstName} ${application.lastName}`}</CardTitle>
                         <div className='mt-1 flex flex-wrap items-center gap-2'>
-                            <StatusBadge status={application.status} />
+                            <StatusBadge status={application.status} stage={application.stage} />
                             <span className='text-sm text-muted-foreground'>Applied {formatDate(application.createdAt)}</span>
                         </div>
                     </div>
@@ -500,6 +514,7 @@ export default function ApplicationsPage() {
     const [sortOption, setSortOption] = useState<SortOption>('newest');
     const [filterOptions, setFilterOptions] = useState<FilterOptions>({
         status: 'all',
+        stage: 'all',
         searchQuery: '',
     });
     const [error, setError] = useState<string | null>(null);
@@ -585,6 +600,9 @@ export default function ApplicationsPage() {
         if (filterOptions.status !== 'all') {
             result = result.filter((app) => app.status === filterOptions.status);
         }
+        if (filterOptions.stage !== 'all') {
+            result = result.filter((app) => app.stage === filterOptions.stage);
+        }
         if (filterOptions.searchQuery) {
             const query = filterOptions.searchQuery.toLowerCase();
             result = result.filter((app) => app.firstName.toLowerCase().includes(query) ||
@@ -652,7 +670,7 @@ export default function ApplicationsPage() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
-                                <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, status: 'all' }))}>All</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, status: 'all', stage: 'all' }))}>All</DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, status: ApplicationStatus.APPLIED }))}>
                                     <Clock className='w-4 h-4 mr-2' />
                                     Applied
@@ -664,6 +682,38 @@ export default function ApplicationsPage() {
                                 <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, status: ApplicationStatus.REJECTED }))}>
                                     <XCircle className='w-4 h-4 mr-2' />
                                     Rejected
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, stage: ApplicationStage.SHORTLISTED }))}>
+                                    <Briefcase className='w-4 h-4 mr-2' />
+                                    Shortlisted
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, stage: ApplicationStage.ASSIGNMENT_SENT }))}>
+                                    <FileText className='w-4 h-4 mr-2' />
+                                    Assignment Sent
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, stage: ApplicationStage.ASSIGNMENT_SUBMITTED }))}>
+                                    <FileText className='w-4 h-4 mr-2' />
+                                    Assignment Submitted
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, stage: ApplicationStage.INTERVIEW_SCHEDULED }))}>
+                                    <Calendar className='w-4 h-4 mr-2' />
+                                    Interview Scheduled
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, stage: ApplicationStage.INTERVIEW_DONE }))}>
+                                    <CheckCircle className='w-4 h-4 mr-2' />
+                                    Interview Done
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, stage: ApplicationStage.OFFER_SENT }))}>
+                                    <Mail className='w-4 h-4 mr-2' />
+                                    Offer Sent
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, stage: ApplicationStage.HIRED }))}>
+                                    <CheckCircle className='w-4 h-4 mr-2' />
+                                    Hired
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setFilterOptions((prev) => ({ ...prev, stage: ApplicationStage.WITHDRAWN }))}>
+                                    <XCircle className='w-4 h-4 mr-2' />
+                                    Withdrawn
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -715,7 +765,7 @@ export default function ApplicationsPage() {
                         </Button>
                     </Badge>)}
 
-                    <Button variant='ghost' size='sm' className='text-xs' onClick={() => setFilterOptions({ status: 'all', searchQuery: '' })}>
+                    <Button variant='ghost' size='sm' className='text-xs' onClick={() => setFilterOptions({ status: 'all', stage: 'all', searchQuery: '' })}>
                         Clear all
                     </Button>
                 </div>)}

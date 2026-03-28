@@ -53,7 +53,7 @@ import {
 } from '@jobify/ui/alert-dialog';
 
 
-import { Application, ApplicationStatus, parseApplicationStage } from '@jobify/domain/application';
+import { Application, ApplicationStatus, ApplicationStage, parseApplicationStage } from '@jobify/domain/application';
 import { Job } from '@jobify/domain/job';
 import { Alert, AlertDescription, AlertTitle } from '@jobify/ui/alert';
 
@@ -77,7 +77,7 @@ function jsonArrayFromApi<T>(raw: unknown): T[] {
     return [];
 }
 
-const StatusBadge = ({ status }: { status: ApplicationStatus }) => {
+const StatusBadge = ({ status, stage }: { status: ApplicationStatus; stage: ApplicationStage }) => {
     const variants = {
         [ApplicationStatus.APPLIED]: {
             variant: 'secondary' as const,
@@ -94,12 +94,23 @@ const StatusBadge = ({ status }: { status: ApplicationStatus }) => {
     };
 
     const { variant, icon } = variants[status];
+    
+    const formatStage = (stage: ApplicationStage) => {
+        return stage.split('_').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+    };
 
     return (
-        <Badge variant={variant} className='flex items-center'>
-            {icon}
-            {status}
-        </Badge>
+        <div className='flex flex-col gap-1'>
+            <Badge variant={variant} className='flex items-center'>
+                {icon}
+                {status}
+            </Badge>
+            <Badge variant='outline' className='text-xs flex items-center'>
+                {formatStage(stage)}
+            </Badge>
+        </div>
     );
 };
 
@@ -136,7 +147,7 @@ const ApplicationCard = ({
                             <span className='text-xs text-muted-foreground'>Updating...</span>
                         </div>
                     ) : (
-                        <StatusBadge status={application.status} />
+                        <StatusBadge status={application.status} stage={application.stage} />
                     )}
                 </div>
 
@@ -179,6 +190,8 @@ const FilterBar = ({
     setSearchQuery,
     statusFilter,
     setStatusFilter,
+    stageFilter,
+    setStageFilter,
     sortOption,
     setSortOption,
     resetFilters,
@@ -187,6 +200,8 @@ const FilterBar = ({
     setSearchQuery: (query: string) => void;
     statusFilter: string;
     setStatusFilter: (status: string) => void;
+    stageFilter: string;
+    setStageFilter: (stage: string) => void;
     sortOption: string;
     setSortOption: (option: string) => void;
     resetFilters: () => void;
@@ -205,7 +220,7 @@ const FilterBar = ({
                         />
                     </div>
 
-                    <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
+                    <div className='grid grid-cols-1 sm:grid-cols-4 gap-4'>
                         <Select value={statusFilter} onValueChange={setStatusFilter}>
                             <SelectTrigger>
                                 <div className='flex items-center'>
@@ -218,6 +233,28 @@ const FilterBar = ({
                                 <SelectItem value={ApplicationStatus.APPLIED}>Pending</SelectItem>
                                 <SelectItem value={ApplicationStatus.SELECTED}>Selected</SelectItem>
                                 <SelectItem value={ApplicationStatus.REJECTED}>Rejected</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <Select value={stageFilter} onValueChange={setStageFilter}>
+                            <SelectTrigger>
+                                <div className='flex items-center'>
+                                    <Filter className='h-4 w-4 mr-2' />
+                                    <SelectValue placeholder='Filter by Stage' />
+                                </div>
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value='all'>All Stages</SelectItem>
+                                <SelectItem value={ApplicationStage.APPLIED}>Applied</SelectItem>
+                                <SelectItem value={ApplicationStage.SHORTLISTED}>Shortlisted</SelectItem>
+                                <SelectItem value={ApplicationStage.ASSIGNMENT_SENT}>Assignment Sent</SelectItem>
+                                <SelectItem value={ApplicationStage.ASSIGNMENT_SUBMITTED}>Assignment Submitted</SelectItem>
+                                <SelectItem value={ApplicationStage.INTERVIEW_SCHEDULED}>Interview Scheduled</SelectItem>
+                                <SelectItem value={ApplicationStage.INTERVIEW_DONE}>Interview Done</SelectItem>
+                                <SelectItem value={ApplicationStage.OFFER_SENT}>Offer Sent</SelectItem>
+                                <SelectItem value={ApplicationStage.HIRED}>Hired</SelectItem>
+                                <SelectItem value={ApplicationStage.REJECTED}>Rejected</SelectItem>
+                                <SelectItem value={ApplicationStage.WITHDRAWN}>Withdrawn</SelectItem>
                             </SelectContent>
                         </Select>
 
@@ -317,7 +354,7 @@ const ApplicationDetail = ({
                                 <CardTitle className='text-xl'>{`${application.firstName} ${application.lastName}`}</CardTitle>
                                 <div className='flex items-center mt-1'>
                                     <p className='text-sm text-muted-foreground mr-3'>{application.email}</p>
-                                    <StatusBadge status={application.status} />
+                                    <StatusBadge status={application.status} stage={application.stage} />
                                 </div>
                             </div>
                         </div>
@@ -660,6 +697,7 @@ export default function AdminApplicationsPage() {
 
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [stageFilter, setStageFilter] = useState('all');
     const [sortOption, setSortOption] = useState('newest');
 
 
@@ -813,11 +851,13 @@ export default function AdminApplicationsPage() {
     const filteredApplications = useMemo(() => {
         let filtered = [...applications];
 
-
         if (statusFilter !== 'all') {
             filtered = filtered.filter((app) => app.status === statusFilter);
         }
 
+        if (stageFilter !== 'all') {
+            filtered = filtered.filter((app) => app.stage === stageFilter);
+        }
 
         if (debouncedSearchQuery) {
             const query = debouncedSearchQuery.toLowerCase();
@@ -827,29 +867,27 @@ export default function AdminApplicationsPage() {
                     app.lastName.toLowerCase().includes(query) ||
                     app.email.toLowerCase().includes(query) ||
                     app.skills.some((skill) => skill.toLowerCase().includes(query)) ||
-                    (app.experience &&
-                        app.experience.some((exp) => exp.profile.toLowerCase().includes(query) || exp.company.toLowerCase().includes(query)))
+                    app.experience.some((exp) => exp.profile.toLowerCase().includes(query) || exp.company.toLowerCase().includes(query))
             );
         }
 
-
-        filtered.sort((a, b) => {
-            switch (sortOption) {
-                case 'newest':
-                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-                case 'oldest':
-                    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-                case 'nameAsc':
-                    return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
-                case 'nameDesc':
-                    return `${b.firstName} ${b.lastName}`.localeCompare(`${a.firstName} ${a.lastName}`);
-                default:
-                    return 0;
-            }
-        });
+        switch (sortOption) {
+            case 'newest':
+                filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                break;
+            case 'oldest':
+                filtered.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+                break;
+            case 'nameAsc':
+                filtered.sort((a, b) => `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`));
+                break;
+            case 'nameDesc':
+                filtered.sort((a, b) => `${b.firstName} ${b.lastName}`.localeCompare(`${a.firstName} ${a.lastName}`));
+                break;
+        }
 
         return filtered;
-    }, [applications, statusFilter, debouncedSearchQuery, sortOption]);
+    }, [applications, statusFilter, stageFilter, debouncedSearchQuery, sortOption]);
 
 
     const selectedJobDetails = useMemo(() => {
@@ -885,9 +923,16 @@ export default function AdminApplicationsPage() {
                             setSearchQuery={setSearchQuery}
                             statusFilter={statusFilter}
                             setStatusFilter={setStatusFilter}
+                            stageFilter={stageFilter}
+                            setStageFilter={setStageFilter}
                             sortOption={sortOption}
                             setSortOption={setSortOption}
-                            resetFilters={resetFilters}
+                            resetFilters={() => {
+                                setSearchQuery('');
+                                setStatusFilter('all');
+                                setStageFilter('all');
+                                setSortOption('newest');
+                            }}
                         />
 
                         {error && (
