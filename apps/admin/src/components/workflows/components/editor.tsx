@@ -70,6 +70,8 @@ export const Editor = ({ workflowId }: EditorProps) => {
                 position: { x: 250, y: 50 },
                 data: { label: 'Start' },
                 sourcePosition: Position.Bottom,
+                selectable: false,
+                style: { border: 'none', background: 'transparent', cursor: 'default' },
             } as any,
             {
                 id: 'end-1',
@@ -77,6 +79,8 @@ export const Editor = ({ workflowId }: EditorProps) => {
                 position: { x: 250, y: 300 },
                 data: { label: 'End' },
                 targetPosition: Position.Top,
+                selectable: false,
+                style: { border: 'none', background: 'transparent', cursor: 'default' },
             } as any,
         ],
         edges: [
@@ -323,8 +327,14 @@ export const Editor = ({ workflowId }: EditorProps) => {
             });
 
 
-            const newNode = nodeFactory(type, { label: `${type.charAt(0).toUpperCase() + type.slice(1)}` }, position, Position.Bottom, Position.Top);
-
+            const newNode = nodeFactory(type, { label: `${type.charAt(0).toUpperCase() + type.slice(1)}` }, position, Position.Bottom, Position.Top) as any;
+            
+            // Ensure even newly dragged nodes have the fix for double borders
+            newNode.style = {
+                ...newNode.style,
+                border: 'none',
+                background: 'transparent'
+            };
 
             setNodes((nds) => nds.concat(newNode));
         },
@@ -334,11 +344,14 @@ export const Editor = ({ workflowId }: EditorProps) => {
 
     const onNodeClick = useCallback(
         (event: React.MouseEvent, node: WorkflowNode) => {
-            setNodes((nds) => nds.map((n) => ({ ...n, selected: n.id === node.id })));
             const isStartOrEnd = node.type === NodeType.START || node.type === NodeType.END;
+            
             if (isStartOrEnd) {
+                setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
                 return;
             }
+
+            setNodes((nds) => nds.map((n) => ({ ...n, selected: n.id === node.id })));
             setSelectedNode(node);
             setSheetOpen(true);
         },
@@ -396,6 +409,8 @@ export const Editor = ({ workflowId }: EditorProps) => {
                         position: { x: 250, y: 50 },
                         data: { label: 'Start' },
                         sourcePosition: Position.Bottom,
+                        selectable: false,
+                        style: { border: 'none', background: 'transparent', cursor: 'default' },
                     } as any,
                     {
                         id: 'end-1',
@@ -403,6 +418,8 @@ export const Editor = ({ workflowId }: EditorProps) => {
                         position: { x: 250, y: 300 },
                         data: { label: 'End' },
                         targetPosition: Position.Top,
+                        selectable: false,
+                        style: { border: 'none', background: 'transparent', cursor: 'default' },
                     } as any,
                 ],
                 edges: [
@@ -453,7 +470,20 @@ export const Editor = ({ workflowId }: EditorProps) => {
                 const response = await ky.get(`/api/get-workflow?workflowId=${workflowId}`).json();
                 const parsedNodes = JSON.parse((response as { nodes: string }).nodes);
                 const parsedEdges = JSON.parse((response as { edges: string }).edges);
-                const nodes = parsedNodes.map((node: any) => deserializeNode(node));
+                const nodes = parsedNodes.map((node: any) => {
+                    const deserialized = deserializeNode(node) as any;
+                    const isStartOrEnd = deserialized.type === NodeType.START || deserialized.type === NodeType.END;
+                    return {
+                        ...deserialized,
+                        selectable: !isStartOrEnd,
+                        style: {
+                            ...deserialized.style,
+                            border: 'none',
+                            background: 'transparent',
+                            ...(isStartOrEnd ? { cursor: 'default' } : {}),
+                        }
+                    };
+                });
 
                 setNodes(nodes);
                 setEdges(edgesWithValidEndpoints(nodes, parsedEdges));

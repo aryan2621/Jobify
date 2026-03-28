@@ -7,8 +7,8 @@ import { isRecognisedError } from '@jobify/domain/error';
 import { toPublicWorkflow } from '@jobify/domain/api-serializers';
 
 export async function GET(req: NextRequest) {
+    const token = req.cookies.get(ADMIN_AUTH_COOKIE_NAME);
     try {
-        const token = req.cookies.get(ADMIN_AUTH_COOKIE_NAME);
         if (!token) {
             throw new UnauthorizedError('You are not authorized to perform this action');
         }

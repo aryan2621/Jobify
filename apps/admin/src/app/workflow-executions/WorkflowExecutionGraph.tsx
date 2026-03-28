@@ -1,13 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { 
-    ReactFlow, 
-    Controls, 
-    Background, 
-    BackgroundVariant, 
-    ConnectionLineType, 
-    Node, 
+import {
+    ReactFlow,
+    Controls,
+    Background,
+    BackgroundVariant,
+    ConnectionLineType,
+    Node,
     Edge,
     ReactFlowProvider,
     useReactFlow
@@ -31,18 +31,18 @@ const edgeTypesConfig = {
     'custom-edge': CustomEdge,
 };
 
-function WorkflowExecutionGraphInner({ 
-    workflowNodes, 
-    workflowEdges, 
-    eventRuns, 
-    selectedRunKey, 
-    onSelectRun 
-}: { 
-    workflowNodes: Node[], 
-    workflowEdges: Edge[], 
-    eventRuns: EventRun[], 
-    selectedRunKey: string, 
-    onSelectRun: (run: EventRun) => void 
+function WorkflowExecutionGraphInner({
+    workflowNodes,
+    workflowEdges,
+    eventRuns,
+    selectedRunKey,
+    onSelectRun
+}: {
+    workflowNodes: Node[],
+    workflowEdges: Edge[],
+    eventRuns: EventRun[],
+    selectedRunKey: string,
+    onSelectRun: (run: EventRun) => void
 }) {
     const { fitView } = useReactFlow();
     const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
@@ -64,10 +64,11 @@ function WorkflowExecutionGraphInner({
 
     const displayNodes = useMemo(() => {
         return workflowNodes.map((node) => {
+            const isStartOrEnd = node.type === NodeType.START || node.type === NodeType.END;
             const run = latestRunsMap.get(node.id);
             let shadow = 'none';
 
-            if (run) {
+            if (run && !isStartOrEnd) {
                 if (run.finalStatus === 'failed') {
                     shadow = '0 0 0 3px rgba(239, 68, 68, 0.5)';
                 } else if (run.finalStatus === 'completed') {
@@ -78,26 +79,23 @@ function WorkflowExecutionGraphInner({
             }
 
             const currentSelectedRun = eventRuns.find((r) => r.key === selectedRunKey);
-            const isRunSelected = currentSelectedRun?.nodeId === node.id;
-            const isFocused = focusedNodeId === node.id;
+            const isRunSelected = currentSelectedRun?.nodeId === node.id && !isStartOrEnd;
 
             if (isRunSelected) {
-                shadow = `0 0 0 5px ${run?.finalStatus === 'failed' ? '#ef4444' : run?.finalStatus === 'completed' ? '#22c55e' : '#3b82f6'}`;
-            } else if (isFocused && shadow === 'none') {
-                shadow = '0 0 0 4px rgba(99, 102, 241, 0.55)';
-            } else if (isFocused && shadow !== 'none') {
-                shadow = `${shadow}, 0 0 0 3px rgba(99, 102, 241, 0.45)`;
             }
 
             return {
                 ...node,
-                selected: isFocused || isRunSelected,
+                selected: false,
+                selectable: false,
                 style: {
                     ...node.style,
+                    border: 'none',
+                    background: 'transparent',
                     boxShadow: shadow !== 'none' ? shadow : undefined,
                     transition: 'all 0.2s ease',
                     borderRadius: '0.65rem',
-                    cursor: 'pointer',
+                    cursor: isStartOrEnd ? 'default' : 'pointer',
                 },
                 draggable: false,
             };
@@ -106,6 +104,9 @@ function WorkflowExecutionGraphInner({
 
     const handleNodeClick = useCallback(
         (_: React.MouseEvent, node: Node) => {
+            if (node.type === NodeType.START || node.type === NodeType.END) {
+                return;
+            }
             setFocusedNodeId(node.id);
             const run = Array.from(eventRuns)
                 .reverse()
@@ -134,7 +135,7 @@ function WorkflowExecutionGraphInner({
                 fitViewOptions={{ padding: 0.2 }}
                 nodesDraggable={false}
                 nodesConnectable={false}
-                elementsSelectable={true}
+                elementsSelectable={false}
                 connectionLineType={ConnectionLineType.Bezier}
                 className='react-flow-readonly'
             >
@@ -145,12 +146,12 @@ function WorkflowExecutionGraphInner({
     );
 }
 
-export function WorkflowExecutionGraph(props: { 
-    workflowNodes: Node[], 
-    workflowEdges: Edge[], 
-    eventRuns: EventRun[], 
-    selectedRunKey: string, 
-    onSelectRun: (run: EventRun) => void 
+export function WorkflowExecutionGraph(props: {
+    workflowNodes: Node[],
+    workflowEdges: Edge[],
+    eventRuns: EventRun[],
+    selectedRunKey: string,
+    onSelectRun: (run: EventRun) => void
 }) {
     return (
         <ReactFlowProvider>

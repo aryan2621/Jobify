@@ -11,7 +11,7 @@ import { Skeleton } from '@jobify/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@jobify/ui/dialog';
 import { ScrollArea } from '@jobify/ui/scroll-area';
 import { useToast } from '@jobify/ui/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, RefreshCcw } from 'lucide-react';
 import { Node, Edge } from '@xyflow/react';
 
 import { WorkflowExecutionGraph } from './WorkflowExecutionGraph';
@@ -204,6 +204,16 @@ export default function WorkflowExecutionsPage() {
                                 </div>
                                 {selectedExecution && (
                                     <div className='flex items-center gap-3 shrink-0'>
+                                        <Button
+                                            variant='ghost'
+                                            size='icon'
+                                            className='h-8 w-8 shrink-0'
+                                            onClick={() => selectedExecution && openExecution(selectedExecution)}
+                                            disabled={isLoadingEvents || isWorkflowLoading}
+                                            title='Refresh execution data'
+                                        >
+                                            <RefreshCcw className={`h-4 w-4 ${(isLoadingEvents || isWorkflowLoading) ? 'animate-spin' : ''}`} />
+                                        </Button>
                                         <ExecutionStatusBadge status={selectedExecution.status} />
                                         <span className='text-xs text-muted-foreground hidden sm:inline'>
                                             Updated {formatDateTime(selectedExecution.updatedAt)}

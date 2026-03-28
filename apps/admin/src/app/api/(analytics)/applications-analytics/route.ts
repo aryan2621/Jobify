@@ -66,9 +66,10 @@ export async function GET(req: NextRequest) {
             { status: 200 }
         );
     } catch (error) {
+        const err = error as any;
         if (isRecognisedError(error)) {
-            console.log('Error while fetching applications analytics', error);
-            return NextResponse.json({ message: error.message }, { status: error.statusCode });
+            console.log('Error while fetching applications analytics', err);
+            return NextResponse.json({ message: err.message }, { status: err.statusCode });
         }
         return NextResponse.json({ message: 'Error while fetching applications analytics' }, { status: 500 });
     }

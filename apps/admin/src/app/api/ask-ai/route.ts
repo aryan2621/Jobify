@@ -9,8 +9,8 @@ const MAX_PROMPT_LENGTH = 10000;
 const ALLOWED_MODELS = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
 
 export async function POST(request: NextRequest) {
+    const token = request.cookies.get(ADMIN_AUTH_COOKIE_NAME);
     try {
-        const token = request.cookies.get(ADMIN_AUTH_COOKIE_NAME);
         if (!token) {
             throw new UnauthorizedError('You are not authorized to use this feature');
         }
